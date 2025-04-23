@@ -5,7 +5,7 @@ using ContinuousLoadAmmo.Patches;
 
 namespace ContinuousLoadAmmo
 {
-    [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.0")]
+    [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.1")]
     public class ContinuousLoadAmmo : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
