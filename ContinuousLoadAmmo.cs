@@ -14,7 +14,7 @@ namespace ContinuousLoadAmmo
         private void Awake()
         {
             LogSource = Logger;
-            SpeedLimit = Config.Bind("", "Speed Limit", 0.31f, new ConfigDescription("How much the player will be slowed down while loading ammo", new AcceptableValueRange<float>(0f, 1f), new ConfigurationManagerAttributes() { ShowRangeAsPercent = true }));
+            SpeedLimit = Config.Bind("", "Speed Limit", 0.31f, new ConfigDescription("The speed limit, as a percentage of the walk speed, set to the player while loading ammo", new AcceptableValueRange<float>(0f, 1f), new ConfigurationManagerAttributes() { ShowRangeAsPercent = true }));
 
             new StartPatch().Enable();
             new InventoryScreenClosePatch().Enable();

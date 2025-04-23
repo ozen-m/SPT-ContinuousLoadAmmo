@@ -13,4 +13,4 @@ Extract the contents of the .zip archive into your SPT directory.
 ### Recommended Mods
 Mods that alter loading speed, to balance at your own preference.
 
-**Disclaimer:** I will not be held responsible for any injuries that may occur, including but not limited to - tripping over obstacles, bumping into walls, falling into a pit, etc., whilst loading ammo. Please proceed with caution and watch your step.
+**Disclaimer:** I will not be held responsible for any injuries that may occur, including but not limited to - tripping over obstacles, bumping into walls, falling into a pit, dying from a scav, etc., whilst loading ammo. Please proceed with caution and watch your step.
