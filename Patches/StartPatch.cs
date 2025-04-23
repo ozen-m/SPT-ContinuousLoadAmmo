@@ -59,13 +59,10 @@ namespace ContinuousLoadAmmo.Patches
         {
             while (IsLoadingAmmo)
             {
-                if (!player.IsInventoryOpened)
+                if (!player.IsInventoryOpened && (Input.GetKeyDown(KeyCode.Mouse0) || Input.GetKeyDown(KeyCode.Mouse1)))
                 {
-                    if (Input.GetKeyDown(KeyCode.Mouse0) || Input.GetKeyDown(KeyCode.Mouse1))
-                    {
-                        IsLoadingAmmo = false;
-                        inventoryController.StopProcesses();
-                    }
+                    IsLoadingAmmo = false;
+                    inventoryController.StopProcesses();
                 }
                 await Task.Yield();
             }
