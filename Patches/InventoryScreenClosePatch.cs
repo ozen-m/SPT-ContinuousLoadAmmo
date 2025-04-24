@@ -39,5 +39,14 @@ namespace ContinuousLoadAmmo.Patches
                 }
             }
         }
+
+        [PatchPostfix]
+        internal static void Postfix()
+        {
+            if (StartPatch.IsLoadingAmmo)
+            {
+                StartPatch.SetLoadingAmmoAnim(true);
+            }
+        }
     }
 }

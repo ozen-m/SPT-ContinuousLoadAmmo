@@ -29,7 +29,6 @@ namespace ContinuousLoadAmmo.Patches
             if (player.IsYourPlayer)
             {
                 IsLoadingAmmo = true;
-                SetLoadingAmmoAnim(IsLoadingAmmo);
                 ListenForCancel(player.InventoryController);
             }
         }
@@ -72,7 +71,7 @@ namespace ContinuousLoadAmmo.Patches
         {
             await task;
             IsLoadingAmmo = false;
-            SetLoadingAmmoAnim(IsLoadingAmmo);
+            SetLoadingAmmoAnim(false);
         }
     }
 }
