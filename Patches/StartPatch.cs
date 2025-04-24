@@ -4,7 +4,6 @@ using EFT.InventoryLogic;
 using SPT.Reflection.Patching;
 using System.Reflection;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace ContinuousLoadAmmo.Patches
 {
@@ -39,19 +38,21 @@ namespace ContinuousLoadAmmo.Patches
             AsyncWrapper(__result);
         }
 
-        public static void SetLoadingAmmoAnim(bool isLoadingAmmo)
+        public static async void SetLoadingAmmoAnim(bool startAnim)
         {
-            if (isLoadingAmmo)
+            if (startAnim)
             {
+                player.TrySaveLastItemInHands();
                 player.SetEmptyHands(null);
                 player.MovementContext.AddStateSpeedLimit(ContinuousLoadAmmo.SpeedLimit.Value, Player.ESpeedLimit.Swamp);
             }
             else
             {
+                await Task.Delay(800);
                 player.TrySetLastEquippedWeapon(true);
                 player.MovementContext.RemoveStateSpeedLimit(Player.ESpeedLimit.Swamp);
             }
-            player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, isLoadingAmmo);
+            player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
         }
 
         private static async void ListenForCancel(InventoryController inventoryController)
