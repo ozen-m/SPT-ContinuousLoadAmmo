@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace ContinuousLoadAmmo
 {
-    [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.1")]
+    [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.2")]
     public class ContinuousLoadAmmo : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
@@ -24,7 +24,7 @@ namespace ContinuousLoadAmmo
             new StartPatch().Enable();
             new InventoryScreenClosePatch().Enable();
 
-            LogSource.LogInfo("ContinuousLoadAmmo plugin loaded!");
+            LogSource.LogInfo("ContinuousLoadAmmo v1.0.2 plugin loaded!");
         }
     }
 }
