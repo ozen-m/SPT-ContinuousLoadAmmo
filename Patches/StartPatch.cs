@@ -33,9 +33,12 @@ namespace ContinuousLoadAmmo.Patches
         }
 
         [PatchPostfix]
-        internal static void Postfix(Task<IResult> __result)
+        internal static async void Postfix(Task<IResult> __result)
         {
-            AsyncWrapper(__result);
+            await __result;
+
+            IsLoadingAmmo = false;
+            SetLoadingAmmoAnim(false);
         }
 
         public static async void SetLoadingAmmoAnim(bool startAnim)
@@ -66,13 +69,6 @@ namespace ContinuousLoadAmmo.Patches
                 }
                 await Task.Yield();
             }
-        }
-
-        private static async void AsyncWrapper(Task<IResult> task)
-        {
-            await task;
-            IsLoadingAmmo = false;
-            SetLoadingAmmoAnim(false);
         }
     }
 }
