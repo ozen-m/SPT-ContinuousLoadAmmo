@@ -49,7 +49,7 @@ namespace ContinuousLoadAmmo.Patches
             }
             else
             {
-                player.TrySetLastEquippedWeapon();
+                player.TrySetLastEquippedWeapon(true);
                 player.MovementContext.RemoveStateSpeedLimit(Player.ESpeedLimit.Swamp);
             }
             player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, isLoadingAmmo);
@@ -59,7 +59,7 @@ namespace ContinuousLoadAmmo.Patches
         {
             while (IsLoadingAmmo)
             {
-                if (!player.IsInventoryOpened && (Input.GetKeyDown(KeyCode.Mouse0) || Input.GetKeyDown(KeyCode.Mouse1)))
+                if (!player.IsInventoryOpened && (ContinuousLoadAmmo.CancelHotkey.Value.IsDown() || ContinuousLoadAmmo.CancelHotkeyAlt.Value.IsDown()))
                 {
                     IsLoadingAmmo = false;
                     inventoryController.StopProcesses();
