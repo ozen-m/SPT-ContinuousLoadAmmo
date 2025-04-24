@@ -4,6 +4,7 @@ using EFT.InventoryLogic;
 using SPT.Reflection.Patching;
 using System.Reflection;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace ContinuousLoadAmmo.Patches
 {
@@ -62,7 +63,7 @@ namespace ContinuousLoadAmmo.Patches
         {
             while (IsLoadingAmmo)
             {
-                if (!player.IsInventoryOpened && (ContinuousLoadAmmo.CancelHotkey.Value.IsDown() || ContinuousLoadAmmo.CancelHotkeyAlt.Value.IsDown()))
+                if (!player.IsInventoryOpened && (Input.GetKeyDown(ContinuousLoadAmmo.CancelHotkey.Value.MainKey) || Input.GetKeyDown(ContinuousLoadAmmo.CancelHotkeyAlt.Value.MainKey)))
                 {
                     IsLoadingAmmo = false;
                     inventoryController.StopProcesses();
