@@ -23,6 +23,8 @@ namespace ContinuousLoadAmmo
 
             new StartPatch().Enable();
             new InventoryScreenClosePatch().Enable();
+            new StartLoadingPatch().Enable();
+            new DestroyPatch().Enable();
         }
     }
 }

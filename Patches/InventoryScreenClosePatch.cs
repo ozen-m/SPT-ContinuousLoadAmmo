@@ -4,6 +4,8 @@ using EFT.UI;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Reflection;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace ContinuousLoadAmmo.Patches
 {
@@ -46,7 +48,38 @@ namespace ContinuousLoadAmmo.Patches
             if (StartPatch.IsLoadingAmmo)
             {
                 StartPatch.SetLoadingAmmoAnim(true);
+                LoadAmmoUIMover();
             }
+        }
+
+        public static async void LoadAmmoUIMover()
+        {
+            int elapsed = 0;
+            int increment = 100;
+            GameObject eftBattleUIScreenGameObject = null;
+            while (eftBattleUIScreenGameObject == null && elapsed < 1000)
+            {
+                await Task.Delay(increment);
+                eftBattleUIScreenGameObject = GameObject.Find("EFTBattleUIScreen Variant");
+                elapsed += increment;
+            }
+            if (eftBattleUIScreenGameObject == null)
+            {
+                ContinuousLoadAmmo.LogSource.LogError("EFTBattleUIScreen game object not found within timeout!");
+                return;
+            }
+            if (!eftBattleUIScreenGameObject.TryGetComponent(out Canvas canvas))
+            {
+                ContinuousLoadAmmo.LogSource.LogError("EFTBattleUIScreen canvas not found!");
+                return;
+            }
+            StartLoadingPatch.itemViewLoadAmmoComponent_0.transform.SetParent(canvas.transform, false);
+
+            RectTransform componentRect = StartLoadingPatch.itemViewLoadAmmoComponent_0.RectTransform();
+            componentRect.anchorMin = new Vector2(0.5f, 0.5f);
+            componentRect.anchorMax = new Vector2(0.5f, 0.5f);
+            componentRect.pivot = new Vector2(0.5f, 0.5f);
+            componentRect.anchoredPosition = new Vector2(0f, -100f);
         }
     }
 }

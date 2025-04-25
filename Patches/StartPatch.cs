@@ -40,6 +40,7 @@ namespace ContinuousLoadAmmo.Patches
 
             IsLoadingAmmo = false;
             SetLoadingAmmoAnim(false);
+            StartLoadingPatch.itemViewLoadAmmoComponent_0.Destroy();
         }
 
         public static async void SetLoadingAmmoAnim(bool startAnim)
