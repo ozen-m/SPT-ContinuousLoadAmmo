@@ -23,7 +23,7 @@ namespace ContinuousLoadAmmo.Patches
         {
             if (StartPatch.IsLoadingAmmo)
             {
-                Player.PlayerInventoryController playerInventoryController = (Player.PlayerInventoryController)inventoryControllerField.GetValue(__instance);
+                Player.PlayerInventoryController playerInventoryController = (Player.PlayerInventoryController)inventoryControllerField.GetValue(__instance) as Player.PlayerInventoryController;
                 if (playerInventoryController != null)
                 {
                     playerInventoryController.SetNextProcessLocked(true);

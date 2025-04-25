@@ -53,7 +53,10 @@ namespace ContinuousLoadAmmo.Patches
             else
             {
                 await Task.Delay(800);
-                player.TrySetLastEquippedWeapon(true);
+                if (player.HandsIsEmpty)
+                {
+                    player.TrySetLastEquippedWeapon(true);
+                }
                 player.MovementContext.RemoveStateSpeedLimit(Player.ESpeedLimit.Swamp);
             }
             player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
