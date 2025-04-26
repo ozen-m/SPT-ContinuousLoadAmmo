@@ -17,6 +17,8 @@ namespace ContinuousLoadAmmo.Patches
         private static GameObject clonedAmmoValueGameObject;
         private static GameObject clonedMagImageGameObject;
         private static TextMeshProUGUI textMesh_0;
+        private static bool IsBusy = false;
+
         protected override MethodBase GetTargetMethod()
         {
             inventoryControllerField = AccessTools.Field(typeof(InventoryScreen), "inventoryController_0");
@@ -28,7 +30,8 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPrefix]
         protected static void Prefix(InventoryScreen __instance)
         {
-            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable)
+            IsBusy = StartPatch.player.InventoryController.HasAnyHandsAction();
+            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable && !IsBusy)
             {
                 Player.PlayerInventoryController playerInventoryController = (Player.PlayerInventoryController)inventoryControllerField.GetValue(__instance) as Player.PlayerInventoryController;
                 if (playerInventoryController != null)
@@ -50,10 +53,9 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPostfix]
         protected static void Postfix()
         {
-            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable)
+            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable && !IsBusy)
             {
                 StartPatch.SetPlayerState(true);
-
                 ShowLoadAmmoUI();
             }
         }
