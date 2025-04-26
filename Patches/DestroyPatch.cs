@@ -17,12 +17,9 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPrefix]
         internal static bool Prefix(InventoryScreen __instance)
         {
-            if (StartPatch.IsLoadingAmmo)
+            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable)
             {
-                if (StartPatch.IsReachable)
-                {
-                    return false;
-                }
+                return false;
             }
             return true;
         }

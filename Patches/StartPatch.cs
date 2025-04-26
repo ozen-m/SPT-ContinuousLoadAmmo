@@ -46,6 +46,8 @@ namespace ContinuousLoadAmmo.Patches
 
             IsLoadingAmmo = false;
             IsReachable = false;
+
+            InventoryScreenClosePatch.DestroyUI();
             SetPlayerState(false);
         }
 

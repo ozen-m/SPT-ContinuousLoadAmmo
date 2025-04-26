@@ -14,6 +14,8 @@ namespace ContinuousLoadAmmo.Patches
     {
         private static FieldInfo inventoryControllerField;
         private static FieldInfo screenControllerField;
+        private static GameObject clonedAmmoValueGameObject;
+        private static GameObject clonedMagImageGameObject;
         private static TextMeshProUGUI textMesh_0;
         protected override MethodBase GetTargetMethod()
         {
@@ -83,7 +85,6 @@ namespace ContinuousLoadAmmo.Patches
                 SetUI(canvas, StartLoadingPatch.itemViewLoadAmmoComponent.gameObject, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
             }
 
-            GameObject clonedAmmoValueGameObject = null;
             if (ContinuousLoadAmmo.loadAmmoTextUI.Value)
             {
                 clonedAmmoValueGameObject = GameObject.Instantiate(StartLoadingPatch.ammoValueTransform.gameObject, canvas.transform);
@@ -91,7 +92,6 @@ namespace ContinuousLoadAmmo.Patches
                 SetUI(canvas, clonedAmmoValueGameObject, new Vector2(0f, -200f), null);
             }
 
-            GameObject clonedMagImageGameObject = null;
             if (ContinuousLoadAmmo.loadMagazineImageUI.Value)
             {
                 clonedMagImageGameObject = GameObject.Instantiate(StartLoadingPatch.imageTransform.gameObject, canvas.transform);
@@ -104,11 +104,6 @@ namespace ContinuousLoadAmmo.Patches
                 UpdateTextValue();
                 await Task.Yield();
             }
-
-            textMesh_0 = null;
-            StartLoadingPatch.itemViewLoadAmmoComponent.Destroy();
-            Object.Destroy(clonedAmmoValueGameObject);
-            Object.Destroy(clonedMagImageGameObject);
         }
 
         private static void SetUI(Canvas canvas, GameObject gameObject, Vector2 offset, Vector3? localScale)
@@ -145,6 +140,17 @@ namespace ContinuousLoadAmmo.Patches
             string value = StartPatch.Magazine.GetAmmoCountByLevel(StartPatch.Magazine.Count, StartPatch.Magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
 
             textMesh_0.SetText(value);
+        }
+
+        public static void DestroyUI()
+        {
+            textMesh_0 = null;
+            if (StartLoadingPatch.itemViewLoadAmmoComponent != null)
+            {
+                StartLoadingPatch.itemViewLoadAmmoComponent.Destroy();
+            }
+            Object.Destroy(clonedAmmoValueGameObject);
+            Object.Destroy(clonedMagImageGameObject);
         }
     }
 }
