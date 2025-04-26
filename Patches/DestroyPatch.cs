@@ -19,7 +19,10 @@ namespace ContinuousLoadAmmo.Patches
         {
             if (StartPatch.IsLoadingAmmo)
             {
-                return false;
+                if (StartPatch.IsReachable)
+                {
+                    return false;
+                }
             }
             return true;
         }

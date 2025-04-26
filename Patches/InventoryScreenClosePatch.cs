@@ -5,6 +5,7 @@ using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Reflection;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 
 namespace ContinuousLoadAmmo.Patches
@@ -13,6 +14,7 @@ namespace ContinuousLoadAmmo.Patches
     {
         private static FieldInfo inventoryControllerField;
         private static FieldInfo screenControllerField;
+        private static TextMeshProUGUI textMesh_0;
         protected override MethodBase GetTargetMethod()
         {
             inventoryControllerField = AccessTools.Field(typeof(InventoryScreen), "inventoryController_0");
@@ -20,10 +22,11 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(InventoryScreen).GetMethod(nameof(InventoryScreen.Close));
         }
 
+        // Patch to NOT stop loading ammo on close
         [PatchPrefix]
-        internal static void Prefix(InventoryScreen __instance)
+        protected static void Prefix(InventoryScreen __instance)
         {
-            if (StartPatch.IsLoadingAmmo)
+            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable)
             {
                 Player.PlayerInventoryController playerInventoryController = (Player.PlayerInventoryController)inventoryControllerField.GetValue(__instance) as Player.PlayerInventoryController;
                 if (playerInventoryController != null)
@@ -43,16 +46,17 @@ namespace ContinuousLoadAmmo.Patches
         }
 
         [PatchPostfix]
-        internal static void Postfix()
+        protected static void Postfix()
         {
-            if (StartPatch.IsLoadingAmmo)
+            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable)
             {
-                StartPatch.SetLoadingAmmoAnim(true);
-                LoadAmmoUIMover();
+                StartPatch.SetPlayerState(true);
+
+                ShowLoadAmmoUI();
             }
         }
 
-        public static async void LoadAmmoUIMover()
+        private static async void ShowLoadAmmoUI()
         {
             int elapsed = 0;
             int increment = 100;
@@ -73,13 +77,74 @@ namespace ContinuousLoadAmmo.Patches
                 ContinuousLoadAmmo.LogSource.LogError("EFTBattleUIScreen canvas not found!");
                 return;
             }
-            StartLoadingPatch.itemViewLoadAmmoComponent_0.transform.SetParent(canvas.transform, false);
 
-            RectTransform componentRect = StartLoadingPatch.itemViewLoadAmmoComponent_0.RectTransform();
+            if (ContinuousLoadAmmo.loadAmmoSpinnerUI.Value)
+            { 
+                SetUI(canvas, StartLoadingPatch.itemViewLoadAmmoComponent.gameObject, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
+            }
+
+            GameObject clonedAmmoValueGameObject = null;
+            if (ContinuousLoadAmmo.loadAmmoTextUI.Value)
+            {
+                clonedAmmoValueGameObject = GameObject.Instantiate(StartLoadingPatch.ammoValueTransform.gameObject, canvas.transform);
+                clonedAmmoValueGameObject.SetActive(true);
+                SetUI(canvas, clonedAmmoValueGameObject, new Vector2(0f, -200f), null);
+            }
+
+            GameObject clonedMagImageGameObject = null;
+            if (ContinuousLoadAmmo.loadMagazineImageUI.Value)
+            {
+                clonedMagImageGameObject = GameObject.Instantiate(StartLoadingPatch.imageTransform.gameObject, canvas.transform);
+                clonedMagImageGameObject.SetActive(true);
+                SetUI(canvas, clonedMagImageGameObject, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
+            }
+
+            while (StartPatch.IsLoadingAmmo)
+            {
+                UpdateTextValue();
+                await Task.Yield();
+            }
+
+            textMesh_0 = null;
+            StartLoadingPatch.itemViewLoadAmmoComponent.Destroy();
+            Object.Destroy(clonedAmmoValueGameObject);
+            Object.Destroy(clonedMagImageGameObject);
+        }
+
+        private static void SetUI(Canvas canvas, GameObject gameObject, Vector2 offset, Vector3? localScale)
+        {
+            gameObject.transform.SetParent(canvas.transform, false);
+
+            RectTransform componentRect = gameObject.RectTransform();
+            componentRect.localScale = localScale != null ? (Vector3)localScale : new Vector3(1f, 1f, 1f);
             componentRect.anchorMin = new Vector2(0.5f, 0.5f);
             componentRect.anchorMax = new Vector2(0.5f, 0.5f);
             componentRect.pivot = new Vector2(0.5f, 0.5f);
-            componentRect.anchoredPosition = new Vector2(0f, -100f);
+            componentRect.anchoredPosition = offset;
+
+            if (!gameObject.TryGetComponent<TextMeshProUGUI>(out TextMeshProUGUI textMesh))
+            {
+                return;
+            }
+            textMesh.enableWordWrapping = false;
+            textMesh.overflowMode = TextOverflowModes.Overflow;
+            textMesh.alignment = TextAlignmentOptions.Center;
+            textMesh_0 = textMesh;
+        }
+
+        private static void UpdateTextValue()
+        {
+            if (textMesh_0 == null) return;
+            int skill = Mathf.Max(
+                        [
+                            StartPatch.player.Profile.MagDrillsMastering,
+                            StartPatch.player.Profile.CheckedMagazineSkillLevel(StartPatch.Magazine.Id),
+                            StartPatch.Magazine.CheckOverride
+                        ]);
+            //StartPatch.player.InventoryController.CheckedMagazine(StartPatch.Magazine)
+            string value = StartPatch.Magazine.GetAmmoCountByLevel(StartPatch.Magazine.Count, StartPatch.Magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
+
+            textMesh_0.SetText(value);
         }
     }
 }

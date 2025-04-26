@@ -2,6 +2,7 @@
 using EFT;
 using EFT.InventoryLogic;
 using SPT.Reflection.Patching;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -10,8 +11,10 @@ namespace ContinuousLoadAmmo.Patches
 {
     internal class StartPatch : ModulePatch
     {
-        private static Player player;
+        internal static Player player;
         internal static bool IsLoadingAmmo = false;
+        internal static bool IsReachable = false;
+        internal static MagazineItemClass Magazine;
 
         protected override MethodBase GetTargetMethod()
         {
@@ -19,7 +22,7 @@ namespace ContinuousLoadAmmo.Patches
         }
 
         [PatchPrefix]
-        internal static void Prefix()
+        protected static void Prefix(Player.PlayerInventoryController.Class1085 __instance)
         {
             if (player == null)
             {
@@ -29,21 +32,24 @@ namespace ContinuousLoadAmmo.Patches
             if (player.IsYourPlayer)
             {
                 IsLoadingAmmo = true;
+                Magazine = __instance.magazineItemClass;
+                IsReachable = IsAtReachablePlace(player.InventoryController, Magazine) && IsAtReachablePlace(player.InventoryController, __instance.ammoItemClass);
+
                 ListenForCancel(player.InventoryController);
             }
         }
 
         [PatchPostfix]
-        internal static async void Postfix(Task<IResult> __result)
+        protected static async void Postfix(Task<IResult> __result)
         {
             await __result;
 
             IsLoadingAmmo = false;
-            SetLoadingAmmoAnim(false);
-            StartLoadingPatch.itemViewLoadAmmoComponent_0.Destroy();
+            IsReachable = false;
+            SetPlayerState(false);
         }
 
-        public static async void SetLoadingAmmoAnim(bool startAnim)
+        public static async void SetPlayerState(bool startAnim)
         {
             if (startAnim)
             {
@@ -74,6 +80,26 @@ namespace ContinuousLoadAmmo.Patches
                 }
                 await Task.Yield();
             }
+        }
+
+        // Base EFT code with modifications
+        private static bool IsAtReachablePlace(InventoryController inventoryController, Item item)
+        {
+            if (item.CurrentAddress == null)
+            {
+                return false;
+            }
+            IContainer container = item.Parent.Container as IContainer;
+            if (inventoryController.Inventory.Stash == null || container != inventoryController.Inventory.Stash.Grid)
+            {
+                EquipmentSlot[] slots = ContinuousLoadAmmo.ReachableOnly.Value ? Inventory.FastAccessSlots : (EquipmentSlot[])System.Enum.GetValues(typeof(EquipmentSlot));
+                CompoundItem compoundItem = item as CompoundItem;
+                if ((compoundItem == null || !compoundItem.MissingVitalParts.Any<Slot>()) && inventoryController.Inventory.GetItemsInSlots(slots).Contains(item) && inventoryController.Examined(item))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

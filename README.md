@@ -2,10 +2,15 @@
 You are now able to continuously load ammo while outside your inventory!
 
 Walk freely while waiting for your magazines to top up. You may cancel loading ammo by
-clicking the left/right mouse buttons, or by opening your inventory.
+clicking the left/right mouse buttons (configurable), or by opening your inventory.
 
 ### Configuration
-In the configuration manager (`F12`), you can change the walking speed limit. Default is `30%`.
+In the configuration manager (`F12`)
+
+The speed limit, as a percentage of the walk speed, set to the player while loading ammo. Default is `30%`.
+Allow loading ammo outside the inventory only when Magazine and Ammo is in your Vest or Pockets. Default is `true`.
+Key used to cancel loading ammo outside the inventory. Default is left and right mouse buttons.
+Show UI elements outside the inventory. Default is `true`.
 
 ### Installation
 Extract the contents of the .zip archive into your SPT directory.
