@@ -60,14 +60,15 @@ namespace ContinuousLoadAmmo.Patches
 
         private static async void ShowLoadAmmoUI()
         {
-            int elapsed = 0;
-            int increment = 100;
+            int elapsedTime = 0;
+            int timeInterval = 100;
             GameObject eftBattleUIScreenGameObject = null;
-            while (eftBattleUIScreenGameObject == null && elapsed < 1000)
+            while (elapsedTime < 1500)
             {
-                await Task.Delay(increment);
                 eftBattleUIScreenGameObject = GameObject.Find("EFTBattleUIScreen Variant");
-                elapsed += increment;
+                if (eftBattleUIScreenGameObject != null) break;
+                await Task.Delay(timeInterval);
+                elapsedTime += timeInterval;
             }
             if (eftBattleUIScreenGameObject == null)
             {
@@ -82,21 +83,21 @@ namespace ContinuousLoadAmmo.Patches
 
             if (ContinuousLoadAmmo.loadAmmoSpinnerUI.Value)
             { 
-                SetUI(canvas, StartLoadingPatch.itemViewLoadAmmoComponent.gameObject, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
+                SetUI(StartLoadingPatch.itemViewLoadAmmoComponent.gameObject, canvas, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
             }
 
             if (ContinuousLoadAmmo.loadAmmoTextUI.Value)
             {
                 clonedAmmoValueGameObject = GameObject.Instantiate(StartLoadingPatch.ammoValueTransform.gameObject, canvas.transform);
                 clonedAmmoValueGameObject.SetActive(true);
-                SetUI(canvas, clonedAmmoValueGameObject, new Vector2(0f, -200f), null);
+                SetUI(clonedAmmoValueGameObject, canvas, new Vector2(0f, -200f), null);
             }
 
             if (ContinuousLoadAmmo.loadMagazineImageUI.Value)
             {
                 clonedMagImageGameObject = GameObject.Instantiate(StartLoadingPatch.imageTransform.gameObject, canvas.transform);
                 clonedMagImageGameObject.SetActive(true);
-                SetUI(canvas, clonedMagImageGameObject, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
+                SetUI(clonedMagImageGameObject, canvas, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
             }
 
             while (StartPatch.IsLoadingAmmo)
@@ -106,7 +107,7 @@ namespace ContinuousLoadAmmo.Patches
             }
         }
 
-        private static void SetUI(Canvas canvas, GameObject gameObject, Vector2 offset, Vector3? localScale)
+        private static void SetUI(GameObject gameObject, Canvas canvas, Vector2? offset, Vector3? localScale)
         {
             gameObject.transform.SetParent(canvas.transform, false);
 
@@ -115,7 +116,7 @@ namespace ContinuousLoadAmmo.Patches
             componentRect.anchorMin = new Vector2(0.5f, 0.5f);
             componentRect.anchorMax = new Vector2(0.5f, 0.5f);
             componentRect.pivot = new Vector2(0.5f, 0.5f);
-            componentRect.anchoredPosition = offset;
+            componentRect.anchoredPosition = offset != null ? (Vector2)offset : new Vector2(0f, 0f);
 
             if (!gameObject.TryGetComponent<TextMeshProUGUI>(out TextMeshProUGUI textMesh))
             {
