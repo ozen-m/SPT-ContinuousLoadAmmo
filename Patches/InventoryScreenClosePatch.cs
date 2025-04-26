@@ -1,5 +1,4 @@
 ﻿using EFT;
-using EFT.InventoryLogic;
 using EFT.UI;
 using HarmonyLib;
 using SPT.Reflection.Patching;
@@ -12,8 +11,8 @@ namespace ContinuousLoadAmmo.Patches
 {
     internal class InventoryScreenClosePatch : ModulePatch
     {
-        private static FieldInfo inventoryControllerField;
-        private static FieldInfo screenControllerField;
+        private static FieldInfo playerField;
+        private static Player player;
         private static GameObject clonedAmmoValueGameObject;
         private static GameObject clonedMagImageGameObject;
         private static TextMeshProUGUI textMesh_0;
@@ -21,31 +20,38 @@ namespace ContinuousLoadAmmo.Patches
 
         protected override MethodBase GetTargetMethod()
         {
-            inventoryControllerField = AccessTools.Field(typeof(InventoryScreen), "inventoryController_0");
-            screenControllerField = AccessTools.Field(typeof(InventoryScreen), "ScreenController");
+            playerField = AccessTools.Field(typeof(Player.PlayerInventoryController), "player_0");
             return typeof(InventoryScreen).GetMethod(nameof(InventoryScreen.Close));
         }
 
         // Patch to NOT stop loading ammo on close
         [PatchPrefix]
-        protected static void Prefix(InventoryScreen __instance)
+        protected static void Prefix(InventoryScreen __instance, ref Player.PlayerInventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
         {
-            IsBusy = StartPatch.player.InventoryController.HasAnyHandsAction();
+            if (player == null)
+            {
+                if ((player = (Player)playerField.GetValue(___inventoryController_0)) == null)
+                {
+                    ContinuousLoadAmmo.LogSource.LogError($"InventoryScreenClosePatch::Prefix Player could not be found!");
+                    return;
+                }
+            }
+            IsBusy = player.InventoryController.HasAnyHandsAction();
+
             if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable && !IsBusy)
             {
-                Player.PlayerInventoryController playerInventoryController = (Player.PlayerInventoryController)inventoryControllerField.GetValue(__instance) as Player.PlayerInventoryController;
-                if (playerInventoryController != null)
+                if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
                 {
                     playerInventoryController.SetNextProcessLocked(true);
                 }
-                if (screenControllerField.GetValue(__instance) is InventoryScreen.GClass3583 || screenControllerField.GetValue(__instance) is InventoryScreen.GClass3586)
+                if (___ScreenController is InventoryScreen.GClass3583 || ___ScreenController is InventoryScreen.GClass3586)
                 {
                     CameraClass.Instance.Blur(false, 0.5f);
                 }
-                InventoryController inventoryController = (InventoryController)inventoryControllerField.GetValue(__instance);
-                if (inventoryController != null)
+                if (___inventoryController_0 != null)
                 {
-                    inventoryControllerField.SetValue(__instance, null);
+                    // Skip stop process after prefix
+                    ___inventoryController_0 = null;
                 }
             }
         }
@@ -92,7 +98,7 @@ namespace ContinuousLoadAmmo.Patches
             {
                 clonedAmmoValueGameObject = GameObject.Instantiate(StartLoadingPatch.ammoValueTransform.gameObject, canvas.transform);
                 clonedAmmoValueGameObject.SetActive(true);
-                SetUI(clonedAmmoValueGameObject, canvas, new Vector2(0f, -200f), null);
+                SetUI(clonedAmmoValueGameObject, canvas, new Vector2(0f, -190f), null);
             }
 
             if (ContinuousLoadAmmo.loadMagazineImageUI.Value)
@@ -135,11 +141,11 @@ namespace ContinuousLoadAmmo.Patches
             if (textMesh_0 == null) return;
             int skill = Mathf.Max(
                         [
-                            StartPatch.player.Profile.MagDrillsMastering,
-                            StartPatch.player.Profile.CheckedMagazineSkillLevel(StartPatch.Magazine.Id),
+                            player.Profile.MagDrillsMastering,
+                            player.Profile.CheckedMagazineSkillLevel(StartPatch.Magazine.Id),
                             StartPatch.Magazine.CheckOverride
                         ]);
-            //StartPatch.player.InventoryController.CheckedMagazine(StartPatch.Magazine)
+            //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine)
             string value = StartPatch.Magazine.GetAmmoCountByLevel(StartPatch.Magazine.Count, StartPatch.Magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
 
             textMesh_0.SetText(value);
