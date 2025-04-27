@@ -13,6 +13,7 @@ namespace ContinuousLoadAmmo.Patches
     {
         private static FieldInfo playerField;
         private static Player player;
+        private static Canvas EFTBattleUIScreenCanvas;
         private static GameObject clonedAmmoValueGameObject;
         private static GameObject clonedMagImageGameObject;
         private static TextMeshProUGUI textMesh_0;
@@ -69,45 +70,31 @@ namespace ContinuousLoadAmmo.Patches
 
         private static async void ShowLoadAmmoUI()
         {
-            int elapsedTime = 0;
-            int timeInterval = 100;
-            GameObject eftBattleUIScreenGameObject = null;
-            while (elapsedTime < 1500)
+            if (EFTBattleUIScreenCanvas == null)
             {
-                eftBattleUIScreenGameObject = GameObject.Find("EFTBattleUIScreen Variant");
-                if (eftBattleUIScreenGameObject != null) break;
-                await Task.Delay(timeInterval);
-                elapsedTime += timeInterval;
+                if (!await TryGetCanvas())
+                {
+                    return;
+                }
             }
-            if (eftBattleUIScreenGameObject == null)
-            {
-                ContinuousLoadAmmo.LogSource.LogError("EFTBattleUIScreen game object not found within timeout!");
-                return;
-            }
-            if (!eftBattleUIScreenGameObject.TryGetComponent(out Canvas canvas))
-            {
-                ContinuousLoadAmmo.LogSource.LogError("EFTBattleUIScreen canvas not found!");
-                return;
-            }
-
 
             if (ContinuousLoadAmmo.loadAmmoSpinnerUI.Value)
             {
                 StartLoadingPatch.itemViewLoadAmmoComponent.SetStopButtonStatus(false);
-                StartLoadingPatch.itemViewLoadAmmoComponent.gameObject.transform.SetParent(canvas.transform, false);
+                StartLoadingPatch.itemViewLoadAmmoComponent.gameObject.transform.SetParent(EFTBattleUIScreenCanvas.transform, false);
                 SetUI(StartLoadingPatch.itemViewLoadAmmoComponent.gameObject, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
             }
 
             if (ContinuousLoadAmmo.loadAmmoTextUI.Value)
             {
-                clonedAmmoValueGameObject = GameObject.Instantiate(StartLoadingPatch.ammoValueTransform.gameObject, canvas.transform);
+                clonedAmmoValueGameObject = GameObject.Instantiate(StartLoadingPatch.ammoValueTransform.gameObject, EFTBattleUIScreenCanvas.transform);
                 clonedAmmoValueGameObject.SetActive(true);
                 SetUI(clonedAmmoValueGameObject, new Vector2(0f, -190f), null);
             }
 
             if (ContinuousLoadAmmo.loadMagazineImageUI.Value)
             {
-                clonedMagImageGameObject = GameObject.Instantiate(StartLoadingPatch.imageTransform.gameObject, canvas.transform);
+                clonedMagImageGameObject = GameObject.Instantiate(StartLoadingPatch.imageTransform.gameObject, EFTBattleUIScreenCanvas.transform);
                 clonedMagImageGameObject.SetActive(true);
                 SetUI(clonedMagImageGameObject, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
             }
@@ -162,6 +149,31 @@ namespace ContinuousLoadAmmo.Patches
             }
             Object.Destroy(clonedAmmoValueGameObject);
             Object.Destroy(clonedMagImageGameObject);
+        }
+
+        private static async Task<bool> TryGetCanvas()
+        {
+            int elapsedTime = 0;
+            int timeInterval = 100;
+            GameObject eftBattleUIScreenGameObject = null;
+            while (elapsedTime < 1500)
+            {
+                eftBattleUIScreenGameObject = GameObject.Find("EFTBattleUIScreen Variant");
+                if (eftBattleUIScreenGameObject != null) break;
+                await Task.Delay(timeInterval);
+                elapsedTime += timeInterval;
+            }
+            if (eftBattleUIScreenGameObject == null)
+            {
+                ContinuousLoadAmmo.LogSource.LogError("InventoryScreenClosePatch::TryGetCanvas EFTBattleUIScreen game object not found within timeout!");
+                return false;
+            }
+            if (!eftBattleUIScreenGameObject.TryGetComponent(out EFTBattleUIScreenCanvas))
+            {
+                ContinuousLoadAmmo.LogSource.LogError("InventoryScreenClosePatch::TryGetCanvas EFTBattleUIScreen canvas not found!");
+                return false;
+            }
+            return true;
         }
     }
 }
