@@ -92,21 +92,23 @@ namespace ContinuousLoadAmmo.Patches
 
             if (ContinuousLoadAmmo.loadAmmoSpinnerUI.Value)
             {
-                SetUI(StartLoadingPatch.itemViewLoadAmmoComponent.gameObject, canvas, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
+                StartLoadingPatch.itemViewLoadAmmoComponent.SetStopButtonStatus(false);
+                StartLoadingPatch.itemViewLoadAmmoComponent.gameObject.transform.SetParent(canvas.transform, false);
+                SetUI(StartLoadingPatch.itemViewLoadAmmoComponent.gameObject, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
             }
 
             if (ContinuousLoadAmmo.loadAmmoTextUI.Value)
             {
                 clonedAmmoValueGameObject = GameObject.Instantiate(StartLoadingPatch.ammoValueTransform.gameObject, canvas.transform);
                 clonedAmmoValueGameObject.SetActive(true);
-                SetUI(clonedAmmoValueGameObject, canvas, new Vector2(0f, -190f), null);
+                SetUI(clonedAmmoValueGameObject, new Vector2(0f, -190f), null);
             }
 
             if (ContinuousLoadAmmo.loadMagazineImageUI.Value)
             {
                 clonedMagImageGameObject = GameObject.Instantiate(StartLoadingPatch.imageTransform.gameObject, canvas.transform);
                 clonedMagImageGameObject.SetActive(true);
-                SetUI(clonedMagImageGameObject, canvas, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
+                SetUI(clonedMagImageGameObject, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
             }
 
             while (StartPatch.IsLoadingAmmo)
@@ -116,9 +118,8 @@ namespace ContinuousLoadAmmo.Patches
             }
         }
 
-        private static void SetUI(GameObject gameObject, Canvas canvas, Vector2? offset, Vector3? localScale)
+        private static void SetUI(GameObject gameObject, Vector2? offset, Vector3? localScale)
         {
-            gameObject.transform.SetParent(canvas.transform, false);
 
             RectTransform componentRect = gameObject.RectTransform();
             componentRect.localScale = localScale != null ? (Vector3)localScale : new Vector3(1f, 1f, 1f);
