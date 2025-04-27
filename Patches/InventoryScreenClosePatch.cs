@@ -28,18 +28,19 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPrefix]
         protected static void Prefix(InventoryScreen __instance, ref Player.PlayerInventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
         {
-            if (player == null)
+            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable)
             {
-                if ((player = (Player)playerField.GetValue(___inventoryController_0)) == null)
+                if (player == null)
                 {
-                    ContinuousLoadAmmo.LogSource.LogError($"InventoryScreenClosePatch::Prefix Player could not be found!");
-                    return;
+                    if ((player = (Player)playerField.GetValue(___inventoryController_0)) == null)
+                    {
+                        ContinuousLoadAmmo.LogSource.LogError($"InventoryScreenClosePatch::Prefix Player could not be found!");
+                        return;
+                    }
                 }
-            }
-            IsBusy = player.InventoryController.HasAnyHandsAction();
+                IsBusy = player.InventoryController.HasAnyHandsAction();
+                if (IsBusy) return;
 
-            if (StartPatch.IsLoadingAmmo && StartPatch.IsReachable && !IsBusy)
-            {
                 if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
                 {
                     playerInventoryController.SetNextProcessLocked(true);
@@ -90,7 +91,7 @@ namespace ContinuousLoadAmmo.Patches
             }
 
             if (ContinuousLoadAmmo.loadAmmoSpinnerUI.Value)
-            { 
+            {
                 SetUI(StartLoadingPatch.itemViewLoadAmmoComponent.gameObject, canvas, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
             }
 
