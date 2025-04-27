@@ -29,7 +29,8 @@ namespace ContinuousLoadAmmo
             loadAmmoTextUI = Config.Bind("UI", "Show Text", true, new ConfigDescription("Show magazine count and capacity UI outside the inventory", null, new ConfigurationManagerAttributes() { Order = 1 }));
             loadMagazineImageUI = Config.Bind("UI", "Show Magazine", true, new ConfigDescription("Show the magazine being loaded outside the inventory", null, new ConfigurationManagerAttributes() { Order = 0 }));
 
-            new StartPatch().Enable();
+            new LoadMagazineStartPatch().Enable();
+            new UnoadMagazineStartPatch().Enable();
             new InventoryScreenClosePatch().Enable();
             new StartLoadingPatch().Enable();
             new DestroyPatch().Enable();

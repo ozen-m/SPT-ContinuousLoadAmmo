@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    internal class StartPatch : ModulePatch
+    internal class LoadMagazineStartPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {

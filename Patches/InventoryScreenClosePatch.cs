@@ -17,7 +17,7 @@ namespace ContinuousLoadAmmo.Patches
 
         // Patch to NOT stop loading ammo on close
         [PatchPrefix]
-        protected static void Prefix(InventoryScreen __instance, ref Player.PlayerInventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
+        protected static void Prefix(ref Player.PlayerInventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
         {
             if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable)
             {
