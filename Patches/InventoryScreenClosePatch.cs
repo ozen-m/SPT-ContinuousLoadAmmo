@@ -90,6 +90,7 @@ namespace ContinuousLoadAmmo.Patches
                 return;
             }
 
+
             if (ContinuousLoadAmmo.loadAmmoSpinnerUI.Value)
             {
                 StartLoadingPatch.itemViewLoadAmmoComponent.SetStopButtonStatus(false);
@@ -120,7 +121,6 @@ namespace ContinuousLoadAmmo.Patches
 
         private static void SetUI(GameObject gameObject, Vector2? offset, Vector3? localScale)
         {
-
             RectTransform componentRect = gameObject.RectTransform();
             componentRect.localScale = localScale != null ? (Vector3)localScale : new Vector3(1f, 1f, 1f);
             componentRect.anchorMin = new Vector2(0.5f, 0.5f);

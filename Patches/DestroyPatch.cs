@@ -1,6 +1,4 @@
-﻿using EFT;
-using EFT.InventoryLogic;
-using EFT.UI;
+﻿using EFT.UI;
 using EFT.UI.DragAndDrop;
 using SPT.Reflection.Patching;
 using System.Reflection;
