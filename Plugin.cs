@@ -7,7 +7,7 @@ using UnityEngine;
 namespace ContinuousLoadAmmo
 {
     [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.4")]
-    public class ContinuousLoadAmmo : BaseUnityPlugin
+    public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
         public static ConfigEntry<float> SpeedLimit;

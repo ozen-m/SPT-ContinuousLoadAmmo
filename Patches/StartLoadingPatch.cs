@@ -1,4 +1,5 @@
-﻿using EFT.UI;
+﻿using ContinuousLoadAmmo.Controllers;
+using EFT.UI;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
 using SPT.Reflection.Patching;
@@ -10,9 +11,6 @@ namespace ContinuousLoadAmmo.Patches
     internal class StartLoadingPatch : ModulePatch
     {
         private static FieldInfo itemViewLoadAmmoComponentField;
-        internal static ItemViewLoadAmmoComponent itemViewLoadAmmoComponent;
-        internal static Transform ammoValueTransform;
-        internal static Transform imageTransform;
 
         protected override MethodBase GetTargetMethod()
         {
@@ -20,22 +18,21 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(ItemViewAnimation).GetMethod(nameof(ItemViewAnimation.StartLoading));
         }
 
-        // UI
         [PatchPostfix]
         protected static void Postfix(ItemViewAnimation __instance)
         {
-            if (StartPatch.IsLoadingAmmo)
+            if (LoadAmmo.IsLoadingAmmo)
             {
-                itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
+                LoadAmmoUI.itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
 
                 GameObject instanceGameObject = __instance.gameObject;
-                if (ContinuousLoadAmmo.loadAmmoTextUI.Value)
+                if (Plugin.loadAmmoTextUI.Value)
                 {
-                    ammoValueTransform = instanceGameObject.transform.Find("Info Panel/BottomLayoutGroup/Value");
+                    LoadAmmoUI.ammoValueTransform = instanceGameObject.transform.Find("Info Panel/BottomLayoutGroup/Value");
                 }
-                if (ContinuousLoadAmmo.loadMagazineImageUI.Value)
+                if (Plugin.loadMagazineImageUI.Value)
                 {
-                    imageTransform = instanceGameObject.transform.Find("Image");
+                    LoadAmmoUI.imageTransform = instanceGameObject.transform.Find("Image");
                 }
             }
         }
