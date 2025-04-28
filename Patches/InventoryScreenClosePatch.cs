@@ -29,6 +29,8 @@ namespace ContinuousLoadAmmo.Patches
                 IsBusy = LoadAmmo.MainPlayer.InventoryController.HasAnyHandsAction();
                 if (IsBusy) return;
 
+                LoadAmmo.IsOutsideInventory = true;
+
                 if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
                 {
                     playerInventoryController.SetNextProcessLocked(true);

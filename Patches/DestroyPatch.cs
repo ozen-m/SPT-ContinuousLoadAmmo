@@ -1,5 +1,4 @@
 ﻿using ContinuousLoadAmmo.Controllers;
-using EFT.UI;
 using EFT.UI.DragAndDrop;
 using SPT.Reflection.Patching;
 using System.Reflection;
@@ -14,9 +13,9 @@ namespace ContinuousLoadAmmo.Patches
         }
 
         [PatchPrefix]
-        protected static bool Prefix(InventoryScreen __instance)
+        protected static bool Prefix()
         {
-            if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable)
+            if (LoadAmmo.IsOutsideInventory)
             {
                 return false;
             }

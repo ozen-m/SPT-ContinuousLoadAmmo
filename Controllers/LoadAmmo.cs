@@ -12,6 +12,7 @@ namespace ContinuousLoadAmmo.Controllers
         private static Player _mainPlayer = null;
         public static bool IsLoadingAmmo = false;
         public static bool IsReachable = false;
+        public static bool IsOutsideInventory = false;
         public static MagazineItemClass Magazine;
 
         public static Player MainPlayer

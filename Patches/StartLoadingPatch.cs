@@ -23,6 +23,7 @@ namespace ContinuousLoadAmmo.Patches
         {
             if (LoadAmmo.IsLoadingAmmo)
             {
+                if (LoadAmmoUI.itemViewLoadAmmoComponent != null) return;
                 LoadAmmoUI.itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
 
                 GameObject instanceGameObject = __instance.gameObject;
