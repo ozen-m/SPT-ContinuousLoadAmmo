@@ -52,7 +52,7 @@ namespace ContinuousLoadAmmo.Controllers
             {
                 if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey)))
                 {
-                    IsLoadingAmmo = false;
+                    Reset();
                     inventoryController.StopProcesses();
                 }
                 await Task.Yield();
@@ -77,6 +77,14 @@ namespace ContinuousLoadAmmo.Controllers
                 }
             }
             return false;
+        }
+
+        public static void Reset()
+        {
+            IsLoadingAmmo = false;
+            IsReachable = false;
+            IsOutsideInventory = false;
+            Magazine = null;
         }
     }
 }

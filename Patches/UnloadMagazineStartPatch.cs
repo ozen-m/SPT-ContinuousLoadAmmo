@@ -29,11 +29,9 @@ namespace ContinuousLoadAmmo.Patches
         {
             await __result;
 
-            LoadAmmo.IsLoadingAmmo = false;
-            LoadAmmo.IsReachable = false;
-
-            LoadAmmoUI.DestroyUI();
+            LoadAmmo.Reset();
             LoadAmmo.SetPlayerState(false);
+            LoadAmmoUI.DestroyUI();
         }
     }
 }
