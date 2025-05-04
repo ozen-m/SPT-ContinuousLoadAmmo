@@ -1,4 +1,5 @@
 ﻿using EFT.UI.DragAndDrop;
+using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -15,7 +16,7 @@ namespace ContinuousLoadAmmo.Controllers
         private static GameObject clonedMagImageGameObject;
         private static TextMeshProUGUI textMesh_0;
 
-        public static async void ShowLoadAmmoUI()
+        public static async void ShowLoadAmmoUI(CancellationToken token)
         {
             if (EFTBattleUIScreenCanvas == null)
             {
@@ -24,6 +25,7 @@ namespace ContinuousLoadAmmo.Controllers
                     return;
                 }
             }
+            token.ThrowIfCancellationRequested();
 
             if (Plugin.loadAmmoSpinnerUI.Value)
             {
@@ -46,11 +48,7 @@ namespace ContinuousLoadAmmo.Controllers
                 SetUI(clonedMagImageGameObject, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
             }
 
-            while (LoadAmmo.IsLoadingAmmo)
-            {
-                UpdateTextValue();
-                await Task.Yield();
-            }
+            UpdateTextValue(token);
         }
 
         private static void SetUI(GameObject gameObject, Vector2? offset, Vector3? localScale)
@@ -72,7 +70,7 @@ namespace ContinuousLoadAmmo.Controllers
             textMesh_0 = textMesh;
         }
 
-        private static void UpdateTextValue()
+        private static async void UpdateTextValue(CancellationToken token)
         {
             if (textMesh_0 == null) return;
             int skill = Mathf.Max(
@@ -82,9 +80,14 @@ namespace ContinuousLoadAmmo.Controllers
                     LoadAmmo.Magazine.CheckOverride
                         ]);
             //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine)
-            string value = LoadAmmo.Magazine.GetAmmoCountByLevel(LoadAmmo.Magazine.Count, LoadAmmo.Magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
 
-            textMesh_0.SetText(value);
+            while (!token.IsCancellationRequested)
+            {
+                string value = LoadAmmo.Magazine.GetAmmoCountByLevel(LoadAmmo.Magazine.Count, LoadAmmo.Magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
+                textMesh_0.SetText(value);
+
+                await Task.Yield();
+            }
         }
 
         public static void DestroyUI()
@@ -107,6 +110,7 @@ namespace ContinuousLoadAmmo.Controllers
             {
                 eftBattleUIScreenGameObject = GameObject.Find("EFTBattleUIScreen Variant");
                 if (eftBattleUIScreenGameObject != null) break;
+
                 await Task.Delay(timeInterval);
                 elapsedTime += timeInterval;
             }

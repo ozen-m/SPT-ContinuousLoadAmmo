@@ -3,6 +3,7 @@ using EFT;
 using EFT.UI;
 using SPT.Reflection.Patching;
 using System.Reflection;
+using System.Threading;
 
 namespace ContinuousLoadAmmo.Patches
 {
@@ -15,7 +16,7 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(InventoryScreen).GetMethod(nameof(InventoryScreen.Close));
         }
 
-        // Patch to NOT stop loading ammo on close
+        // UI, Patch to NOT stop loading ammo on close
         [PatchPrefix]
         protected static void Prefix(ref Player.PlayerInventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
         {
@@ -44,6 +45,11 @@ namespace ContinuousLoadAmmo.Patches
                     // Skip stop process after prefix
                     ___inventoryController_0 = null;
                 }
+
+                if (LoadAmmo.cancellationTokenSource != null)
+                    LoadAmmo.cancellationTokenSource.Cancel();
+                LoadAmmo.cancellationTokenSource = new CancellationTokenSource();
+                LoadAmmo.ListenForCancel(LoadAmmo.MainPlayer.InventoryController, LoadAmmo.cancellationTokenSource.Token);
             }
         }
 
@@ -53,7 +59,7 @@ namespace ContinuousLoadAmmo.Patches
             if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable && !IsBusy)
             {
                 LoadAmmo.SetPlayerState(true);
-                LoadAmmoUI.ShowLoadAmmoUI();
+                LoadAmmoUI.ShowLoadAmmoUI(LoadAmmo.cancellationTokenSource.Token);
             }
         }
     }

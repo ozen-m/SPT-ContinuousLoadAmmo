@@ -20,8 +20,6 @@ namespace ContinuousLoadAmmo.Patches
             LoadAmmo.IsLoadingAmmo = true;
             LoadAmmo.Magazine = __instance.magazineItemClass;
             LoadAmmo.IsReachable = LoadAmmo.IsAtReachablePlace(LoadAmmo.MainPlayer.InventoryController, LoadAmmo.Magazine) && LoadAmmo.IsAtReachablePlace(LoadAmmo.MainPlayer.InventoryController, __instance.ammoItemClass);
-
-            LoadAmmo.ListenForCancel(LoadAmmo.MainPlayer.InventoryController);
         }
 
         [PatchPostfix]

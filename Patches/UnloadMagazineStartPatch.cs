@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    internal class UnoadMagazineStartPatch : ModulePatch
+    internal class UnloadMagazineStartPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -20,8 +20,6 @@ namespace ContinuousLoadAmmo.Patches
             LoadAmmo.IsLoadingAmmo = true;
             LoadAmmo.Magazine = __instance.magazineItemClass;
             LoadAmmo.IsReachable = LoadAmmo.IsAtReachablePlace(LoadAmmo.MainPlayer.InventoryController, LoadAmmo.Magazine);
-
-            LoadAmmo.ListenForCancel(LoadAmmo.MainPlayer.InventoryController);
         }
 
         [PatchPostfix]

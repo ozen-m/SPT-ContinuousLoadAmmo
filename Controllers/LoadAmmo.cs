@@ -3,6 +3,7 @@ using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ namespace ContinuousLoadAmmo.Controllers
     {
         private static Player _mainPlayer = null;
         public static MagazineItemClass Magazine;
+        public static CancellationTokenSource cancellationTokenSource;
         public static bool IsLoadingAmmo = false;
         public static bool IsReachable = false;
         public static bool IsOutsideInventory = false;
@@ -59,9 +61,9 @@ namespace ContinuousLoadAmmo.Controllers
             MainPlayer.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
         }
 
-        public static async void ListenForCancel(InventoryController inventoryController)
+        public static async void ListenForCancel(InventoryController inventoryController, CancellationToken token)
         {
-            while (IsLoadingAmmo)
+            while (!token.IsCancellationRequested)
             {
                 if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey)))
                 {
@@ -94,6 +96,8 @@ namespace ContinuousLoadAmmo.Controllers
 
         public static void Reset()
         {
+            if (cancellationTokenSource != null)
+                cancellationTokenSource.Cancel();
             IsLoadingAmmo = false;
             IsReachable = false;
             IsOutsideInventory = false;
