@@ -22,17 +22,20 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPostfix]
         protected static void Postfix(ItemViewAnimation __instance)
         {
-            if (LoadAmmoUI.itemViewLoadAmmoComponent != null) return;
+            if (LoadAmmoUI.itemViewLoadAmmoComponent != null)
+            {
+                return;
+            }
             LoadAmmoUI.itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
 
-            GameObject instanceGameObject = __instance.gameObject;
+            Transform instanceTransform = __instance.transform;
             if (Plugin.loadAmmoTextUI.Value)
             {
-                LoadAmmoUI.ammoValueTransform = instanceGameObject.transform.Find("Info Panel/BottomLayoutGroup/Value");
+                LoadAmmoUI._ammoValueTransform = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value");
             }
             if (Plugin.loadMagazineImageUI.Value)
             {
-                LoadAmmoUI.imageTransform = instanceGameObject.transform.Find("Image");
+                LoadAmmoUI._imageTransform = instanceTransform.Find("Image");
             }
         }
     }

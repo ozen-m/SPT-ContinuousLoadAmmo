@@ -26,9 +26,12 @@ namespace ContinuousLoadAmmo.Patches
                     Plugin.LogSource.LogError("InventoryScreenClosePatch::Prefix MainPlayer not found!");
                     return;
                 }
-                IsBusy = LoadAmmo.MainPlayer.InventoryController.HasAnyHandsAction();
-                if (IsBusy) return;
 
+                IsBusy = LoadAmmo.MainPlayer.InventoryController.HasAnyHandsAction();
+                if (IsBusy)
+                {
+                    return;
+                }
                 LoadAmmo.IsOutsideInventory = true;
                 LoadAmmo.ListenForCancel(LoadAmmo.MainPlayer.InventoryController);
 
@@ -54,7 +57,7 @@ namespace ContinuousLoadAmmo.Patches
             if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable && !IsBusy)
             {
                 LoadAmmo.SetPlayerState(true);
-                LoadAmmoUI.ShowLoadAmmoUI(LoadAmmo.cancellationTokenSource.Token);
+                LoadAmmoUI.ShowLoadAmmoUI();
             }
         }
     }
