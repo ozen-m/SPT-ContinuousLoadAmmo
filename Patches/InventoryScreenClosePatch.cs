@@ -3,7 +3,6 @@ using EFT;
 using EFT.UI;
 using SPT.Reflection.Patching;
 using System.Reflection;
-using System.Threading;
 
 namespace ContinuousLoadAmmo.Patches
 {
@@ -31,6 +30,7 @@ namespace ContinuousLoadAmmo.Patches
                 if (IsBusy) return;
 
                 LoadAmmo.IsOutsideInventory = true;
+                LoadAmmo.ListenForCancel(LoadAmmo.MainPlayer.InventoryController);
 
                 if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
                 {
@@ -45,11 +45,6 @@ namespace ContinuousLoadAmmo.Patches
                     // Skip stop process after prefix
                     ___inventoryController_0 = null;
                 }
-
-                if (LoadAmmo.cancellationTokenSource != null)
-                    LoadAmmo.cancellationTokenSource.Cancel();
-                LoadAmmo.cancellationTokenSource = new CancellationTokenSource();
-                LoadAmmo.ListenForCancel(LoadAmmo.MainPlayer.InventoryController, LoadAmmo.cancellationTokenSource.Token);
             }
         }
 

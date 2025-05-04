@@ -1,5 +1,4 @@
 ﻿using EFT.UI.DragAndDrop;
-using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -16,7 +15,7 @@ namespace ContinuousLoadAmmo.Controllers
         private static GameObject clonedMagImageGameObject;
         private static TextMeshProUGUI textMesh_0;
 
-        public static async void ShowLoadAmmoUI(CancellationToken token)
+        public static async void ShowLoadAmmoUI()
         {
             if (EFTBattleUIScreenCanvas == null)
             {
@@ -25,7 +24,6 @@ namespace ContinuousLoadAmmo.Controllers
                     return;
                 }
             }
-            token.ThrowIfCancellationRequested();
 
             if (Plugin.loadAmmoSpinnerUI.Value)
             {
@@ -48,7 +46,7 @@ namespace ContinuousLoadAmmo.Controllers
                 SetUI(clonedMagImageGameObject, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
             }
 
-            UpdateTextValue(token);
+            UpdateTextValue();
         }
 
         private static void SetUI(GameObject gameObject, Vector2? offset, Vector3? localScale)
@@ -70,7 +68,7 @@ namespace ContinuousLoadAmmo.Controllers
             textMesh_0 = textMesh;
         }
 
-        private static async void UpdateTextValue(CancellationToken token)
+        private static async void UpdateTextValue()
         {
             if (textMesh_0 == null) return;
             int skill = Mathf.Max(
@@ -81,7 +79,7 @@ namespace ContinuousLoadAmmo.Controllers
                         ]);
             //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine)
 
-            while (!token.IsCancellationRequested)
+            while (LoadAmmo.IsLoadingAmmo)
             {
                 string value = LoadAmmo.Magazine.GetAmmoCountByLevel(LoadAmmo.Magazine.Count, LoadAmmo.Magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
                 textMesh_0.SetText(value);
