@@ -67,11 +67,13 @@ namespace ContinuousLoadAmmo.Controllers
             {
                 if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey)))
                 {
-                    Reset();
-                    inventoryController.StopProcesses();
+                    break;
                 }
                 await Task.Yield();
             }
+
+            Reset();
+            inventoryController.StopProcesses();
         }
 
         // Base EFT code with modifications
