@@ -18,23 +18,21 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(ItemViewAnimation).GetMethod(nameof(ItemViewAnimation.StartLoading));
         }
 
+        // UI
         [PatchPostfix]
         protected static void Postfix(ItemViewAnimation __instance)
         {
-            if (LoadAmmo.IsLoadingAmmo)
-            {
-                if (LoadAmmoUI.itemViewLoadAmmoComponent != null) return;
-                LoadAmmoUI.itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
+            if (LoadAmmoUI.itemViewLoadAmmoComponent != null) return;
+            LoadAmmoUI.itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
 
-                GameObject instanceGameObject = __instance.gameObject;
-                if (Plugin.loadAmmoTextUI.Value)
-                {
-                    LoadAmmoUI.ammoValueTransform = instanceGameObject.transform.Find("Info Panel/BottomLayoutGroup/Value");
-                }
-                if (Plugin.loadMagazineImageUI.Value)
-                {
-                    LoadAmmoUI.imageTransform = instanceGameObject.transform.Find("Image");
-                }
+            GameObject instanceGameObject = __instance.gameObject;
+            if (Plugin.loadAmmoTextUI.Value)
+            {
+                LoadAmmoUI.ammoValueTransform = instanceGameObject.transform.Find("Info Panel/BottomLayoutGroup/Value");
+            }
+            if (Plugin.loadMagazineImageUI.Value)
+            {
+                LoadAmmoUI.imageTransform = instanceGameObject.transform.Find("Image");
             }
         }
     }
