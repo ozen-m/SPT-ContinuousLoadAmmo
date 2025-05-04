@@ -8,8 +8,6 @@ namespace ContinuousLoadAmmo.Patches
 {
     internal class InventoryScreenClosePatch : ModulePatch
     {
-        private static bool IsBusy = false;
-
         protected override MethodBase GetTargetMethod()
         {
             return typeof(InventoryScreen).GetMethod(nameof(InventoryScreen.Close));
@@ -17,23 +15,19 @@ namespace ContinuousLoadAmmo.Patches
 
         // UI, Patch to NOT stop loading ammo on close
         [PatchPrefix]
-        protected static void Prefix(ref Player.PlayerInventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
+        protected static void Prefix(ref Player.PlayerInventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController, out bool __state)
         {
+            // bool IsBusy
+            __state = false;
             if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable)
             {
-                if (LoadAmmo.MainPlayer == null)
-                {
-                    Plugin.LogSource.LogError("InventoryScreenClosePatch::Prefix MainPlayer not found!");
-                    return;
-                }
-
-                IsBusy = LoadAmmo.MainPlayer.InventoryController.HasAnyHandsAction();
-                if (IsBusy)
+                __state = ___inventoryController_0.HasAnyHandsAction();
+                if (__state)
                 {
                     return;
                 }
                 LoadAmmo.IsOutsideInventory = true;
-                LoadAmmo.ListenForCancel(LoadAmmo.MainPlayer.InventoryController);
+                LoadAmmo.ListenForCancel(___inventoryController_0);
 
                 if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
                 {
@@ -52,9 +46,9 @@ namespace ContinuousLoadAmmo.Patches
         }
 
         [PatchPostfix]
-        protected static void Postfix()
+        protected static void Postfix(bool __state)
         {
-            if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable && !IsBusy)
+            if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable && !__state)
             {
                 LoadAmmo.SetPlayerState(true);
                 LoadAmmoUI.ShowLoadAmmoUI();

@@ -61,6 +61,8 @@ namespace ContinuousLoadAmmo.Controllers
 
         public static async void ListenForCancel(InventoryController inventoryController)
         {
+            // Delay is for anim timing
+            await Task.Delay(800);
             while (IsLoadingAmmo)
             {
                 if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey)))
