@@ -1,4 +1,5 @@
-﻿using EFT.UI;
+﻿using ContinuousLoadAmmo.Controllers;
+using EFT.UI;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
 using SPT.Reflection.Patching;
@@ -10,9 +11,6 @@ namespace ContinuousLoadAmmo.Patches
     internal class StartLoadingPatch : ModulePatch
     {
         private static FieldInfo itemViewLoadAmmoComponentField;
-        internal static ItemViewLoadAmmoComponent itemViewLoadAmmoComponent;
-        internal static Transform ammoValueTransform;
-        internal static Transform imageTransform;
 
         protected override MethodBase GetTargetMethod()
         {
@@ -24,19 +22,20 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPostfix]
         protected static void Postfix(ItemViewAnimation __instance)
         {
-            if (StartPatch.IsLoadingAmmo)
+            if (LoadAmmoUI.itemViewLoadAmmoComponent != null)
             {
-                itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
+                return;
+            }
+            LoadAmmoUI.itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
 
-                GameObject instanceGameObject = __instance.gameObject;
-                if (ContinuousLoadAmmo.loadAmmoTextUI.Value)
-                {
-                    ammoValueTransform = instanceGameObject.transform.Find("Info Panel/BottomLayoutGroup/Value");
-                }
-                if (ContinuousLoadAmmo.loadMagazineImageUI.Value)
-                {
-                    imageTransform = instanceGameObject.transform.Find("Image");
-                }
+            Transform instanceTransform = __instance.transform;
+            if (Plugin.loadAmmoTextUI.Value)
+            {
+                LoadAmmoUI._ammoValueTransform = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value");
+            }
+            if (Plugin.loadMagazineImageUI.Value)
+            {
+                LoadAmmoUI._imageTransform = instanceTransform.Find("Image");
             }
         }
     }

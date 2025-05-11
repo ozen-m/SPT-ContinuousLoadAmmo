@@ -1,5 +1,5 @@
-﻿using EFT;
-using EFT.UI;
+﻿using ContinuousLoadAmmo.Controllers;
+using EFT;
 using SPT.Reflection.Patching;
 using System.Reflection;
 
@@ -12,12 +12,11 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(Player.PlayerInventoryController).GetMethod(nameof(Player.PlayerInventoryController.InventoryCheckMagazine));
         }
 
-        // Fixes: Examining another magazine while loading ammo leaves behind UI element
+        // Fixes: Examining another magazine while loading ammo breaks UI
         [PatchPrefix]
-        internal static void Prefix()
+        protected static void Prefix()
         {
-            StartPatch.IsLoadingAmmo = false;
-            StartPatch.IsReachable = false;
+            LoadAmmo.Reset();
         }
     }
 }

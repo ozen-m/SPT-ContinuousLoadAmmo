@@ -6,8 +6,8 @@ using UnityEngine;
 
 namespace ContinuousLoadAmmo
 {
-    [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.4")]
-    public class ContinuousLoadAmmo : BaseUnityPlugin
+    [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.5")]
+    public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
         public static ConfigEntry<float> SpeedLimit;
@@ -29,11 +29,13 @@ namespace ContinuousLoadAmmo
             loadAmmoTextUI = Config.Bind("UI", "Show Text", true, new ConfigDescription("Show magazine count and capacity UI outside the inventory", null, new ConfigurationManagerAttributes() { Order = 1 }));
             loadMagazineImageUI = Config.Bind("UI", "Show Magazine", true, new ConfigDescription("Show the magazine being loaded outside the inventory", null, new ConfigurationManagerAttributes() { Order = 0 }));
 
-            new StartPatch().Enable();
+            new LoadMagazineStartPatch().Enable();
+            new UnloadMagazineStartPatch().Enable();
             new InventoryScreenClosePatch().Enable();
             new StartLoadingPatch().Enable();
             new DestroyPatch().Enable();
             new InventoryCheckMagazinePatch().Enable();
+            new LocalGameStopPatch().Enable();
         }
     }
 }
