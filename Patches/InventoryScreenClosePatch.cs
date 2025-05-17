@@ -1,5 +1,6 @@
 ﻿using ContinuousLoadAmmo.Controllers;
 using EFT;
+using EFT.InventoryLogic;
 using EFT.UI;
 using SPT.Reflection.Patching;
 using System.Reflection;
@@ -15,7 +16,7 @@ namespace ContinuousLoadAmmo.Patches
 
         // UI, Patch to NOT stop loading ammo on close
         [PatchPrefix]
-        protected static void Prefix(ref Player.PlayerInventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController, out bool __state)
+        protected static void Prefix(ref InventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController, out bool __state)
         {
             // bool IsBusy
             __state = false;

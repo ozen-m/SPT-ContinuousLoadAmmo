@@ -22,10 +22,6 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPostfix]
         protected static void Postfix(ItemViewAnimation __instance)
         {
-            if (LoadAmmoUI.itemViewLoadAmmoComponent != null)
-            {
-                return;
-            }
             LoadAmmoUI.itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
 
             Transform instanceTransform = __instance.transform;
