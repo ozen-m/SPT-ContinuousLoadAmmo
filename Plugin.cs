@@ -36,6 +36,7 @@ namespace ContinuousLoadAmmo
             new DestroyPatch().Enable();
             new InventoryCheckMagazinePatch().Enable();
             new LocalGameStopPatch().Enable();
+            //new MapScreenShowPatch().Enable();
         }
     }
 }
