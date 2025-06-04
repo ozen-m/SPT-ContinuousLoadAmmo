@@ -27,11 +27,11 @@ namespace ContinuousLoadAmmo.Patches
             Transform instanceTransform = __instance.transform;
             if (Plugin.loadAmmoTextUI.Value)
             {
-                LoadAmmoUI._ammoValueTransform = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value");
+                LoadAmmoUI._ammoValueTransform = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value") ?? instanceTransform.Find("Info Panel/RightLayout/BottomVerticalGroup/Value");
             }
             if (Plugin.loadMagazineImageUI.Value)
             {
-                LoadAmmoUI._imageTransform = instanceTransform.Find("Image");
+                LoadAmmoUI._imageTransform = instanceTransform.Find("Image") ?? instanceTransform.Find("Item Image");
             }
         }
     }

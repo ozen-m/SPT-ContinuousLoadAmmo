@@ -86,7 +86,7 @@ namespace ContinuousLoadAmmo.Controllers
             IContainer container = item.Parent.Container as IContainer;
             if (inventoryController.Inventory.Stash == null || container != inventoryController.Inventory.Stash.Grid)
             {
-                EquipmentSlot[] slots = Plugin.ReachableOnly.Value ? Inventory.FastAccessSlots.AddToArray(EquipmentSlot.SecuredContainer) : (EquipmentSlot[])System.Enum.GetValues(typeof(EquipmentSlot));
+                EquipmentSlot[] slots = Plugin.ReachableOnly.Value ? Inventory.BindAvailableSlotsExtended.AddToArray(EquipmentSlot.SecuredContainer) : (EquipmentSlot[])System.Enum.GetValues(typeof(EquipmentSlot));
                 CompoundItem compoundItem = item as CompoundItem;
                 if ((compoundItem == null || !compoundItem.MissingVitalParts.Any()) && inventoryController.Inventory.GetItemsInSlots(slots).Contains(item) && inventoryController.Examined(item))
                 {
