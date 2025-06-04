@@ -31,29 +31,58 @@ namespace ContinuousLoadAmmo.Controllers
 
         public static void ShowLoadAmmoUI()
         {
-            if (Plugin.loadAmmoSpinnerUI.Value)
+            try
             {
-                itemViewLoadAmmoComponent.SetStopButtonStatus(false);
-
-                Transform transform = itemViewLoadAmmoComponent.transform;
-                transform.SetParent(EFTBattleUIScreenTransform, false);
-                SetUI(transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
-            }
-
-            if (Plugin.loadAmmoTextUI.Value)
-            {
-                clonedAmmoValueTransform = Object.Instantiate(_ammoValueTransform, EFTBattleUIScreenTransform);
-                SetUI(clonedAmmoValueTransform, new Vector2(0f, -190f));
-                if (clonedAmmoValueTransform.TryGetComponent(out TextMeshProUGUI textMesh))
+                if (Plugin.loadAmmoSpinnerUI.Value)
                 {
-                    UpdateTextValue(textMesh);
+                    if (itemViewLoadAmmoComponent != null)
+                    {
+                        itemViewLoadAmmoComponent.gameObject.SetActive(true);
+                        itemViewLoadAmmoComponent.SetStopButtonStatus(false);
+
+                        Transform transform = itemViewLoadAmmoComponent.transform;
+                        transform.SetParent(EFTBattleUIScreenTransform, false);
+                        SetUI(transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
+                    }
+                    else
+                    {
+                        Plugin.LogSource.LogDebug($"itemViewLoadAmmoComponent is null");
+                    }
+                }
+
+                if (Plugin.loadAmmoTextUI.Value)
+                {
+                    if (_ammoValueTransform != null)
+                    {
+                        clonedAmmoValueTransform = Object.Instantiate(_ammoValueTransform, EFTBattleUIScreenTransform);
+                        SetUI(clonedAmmoValueTransform, new Vector2(0f, -190f));
+                        if (clonedAmmoValueTransform.TryGetComponent(out TextMeshProUGUI textMesh))
+                        {
+                            UpdateTextValue(textMesh);
+                        }
+                    }
+                    else
+                    {
+                        Plugin.LogSource.LogDebug($"_ammoValueTransform is null");
+                    }
+                }
+
+                if (Plugin.loadMagazineImageUI.Value)
+                {
+                    if (_imageTransform != null)
+                    {
+                        clonedMagImageTransform = Object.Instantiate(_imageTransform, EFTBattleUIScreenTransform);
+                        SetUI(clonedMagImageTransform, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
+                    }
+                    else
+                    {
+                        Plugin.LogSource.LogDebug($"_imageTransform is null");
+                    }
                 }
             }
-
-            if (Plugin.loadMagazineImageUI.Value)
+            catch (System.Exception ex)
             {
-                clonedMagImageTransform = Object.Instantiate(_imageTransform, EFTBattleUIScreenTransform);
-                SetUI(clonedMagImageTransform, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
+                Plugin.LogSource.LogError($"Exception: {ex.Message}\n{ex.StackTrace}\n{ex.InnerException}");
             }
         }
 
