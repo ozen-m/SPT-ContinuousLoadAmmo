@@ -25,11 +25,11 @@ namespace ContinuousLoadAmmo.Patches
             LoadAmmoUI.itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(__instance);
 
             Transform instanceTransform = __instance.transform;
-            if (Plugin.loadAmmoTextUI.Value)
+            if (Plugin.LoadAmmoTextUI.Value)
             {
                 LoadAmmoUI._ammoValueTransform = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value") ?? instanceTransform.Find("Info Panel/RightLayout/BottomVerticalGroup/Value");
             }
-            if (Plugin.loadMagazineImageUI.Value)
+            if (Plugin.LoadMagazineImageUI.Value)
             {
                 LoadAmmoUI._imageTransform = instanceTransform.Find("Image") ?? instanceTransform.Find("Item Image");
             }

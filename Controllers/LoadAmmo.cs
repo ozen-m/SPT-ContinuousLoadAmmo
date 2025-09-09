@@ -15,7 +15,7 @@ namespace ContinuousLoadAmmo.Controllers
         public static bool IsLoadingAmmo = false;
         public static bool IsReachable = false;
         public static bool IsOutsideInventory = false;
-        private static bool IsSpeedLimitSetByUs = false;
+        private static bool isSpeedLimitSetByUs = false;
 
         public static Player MainPlayer
         {
@@ -38,7 +38,7 @@ namespace ContinuousLoadAmmo.Controllers
                 if (!MainPlayer.MovementContext._speedLimits.ContainsKey(Player.ESpeedLimit.Swamp))
                 {
                     MainPlayer.MovementContext.AddStateSpeedLimit(Plugin.SpeedLimit.Value, Player.ESpeedLimit.Swamp);
-                    IsSpeedLimitSetByUs = true;
+                    isSpeedLimitSetByUs = true;
                 }
             }
             else
@@ -48,12 +48,12 @@ namespace ContinuousLoadAmmo.Controllers
                 {
                     MainPlayer.TrySetLastEquippedWeapon(true);
                 }
-                if (IsSpeedLimitSetByUs)
+                if (isSpeedLimitSetByUs)
                 {
                     MainPlayer.MovementContext.RemoveStateSpeedLimit(Player.ESpeedLimit.Swamp);
 
                     // Reset
-                    IsSpeedLimitSetByUs = false;
+                    isSpeedLimitSetByUs = false;
                 }
             }
             MainPlayer.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
@@ -63,6 +63,7 @@ namespace ContinuousLoadAmmo.Controllers
         {
             // Delay is for anim timing
             await Task.Delay(800);
+
             while (IsLoadingAmmo)
             {
                 if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey)))

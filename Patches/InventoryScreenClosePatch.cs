@@ -52,7 +52,7 @@ namespace ContinuousLoadAmmo.Patches
             if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable && !__state)
             {
                 LoadAmmo.SetPlayerState(true);
-                LoadAmmoUI.ShowLoadAmmoUI();
+                LoadAmmoUI.Show();
             }
         }
     }

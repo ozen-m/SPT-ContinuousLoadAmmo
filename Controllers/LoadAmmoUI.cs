@@ -10,12 +10,12 @@ namespace ContinuousLoadAmmo.Controllers
     internal static class LoadAmmoUI
     {
         internal static ItemViewLoadAmmoComponent itemViewLoadAmmoComponent;
-        private static Transform _eftBattleUIScreenTransform;
         internal static Transform _ammoValueTransform;
         internal static Transform _imageTransform;
         private static Transform clonedAmmoValueTransform;
         private static Transform clonedMagImageTransform;
 
+        private static Transform _eftBattleUIScreenTransform;
         private static Transform EFTBattleUIScreenTransform
         {
             get
@@ -29,11 +29,11 @@ namespace ContinuousLoadAmmo.Controllers
 
         }
 
-        public static void ShowLoadAmmoUI()
+        public static void Show()
         {
             try
             {
-                if (Plugin.loadAmmoSpinnerUI.Value)
+                if (Plugin.LoadAmmoSpinnerUI.Value)
                 {
                     if (itemViewLoadAmmoComponent != null)
                     {
@@ -46,11 +46,11 @@ namespace ContinuousLoadAmmo.Controllers
                     }
                     else
                     {
-                        Plugin.LogSource.LogDebug($"itemViewLoadAmmoComponent is null");
+                        Plugin.LogSource.LogDebug("itemViewLoadAmmoComponent is null");
                     }
                 }
 
-                if (Plugin.loadAmmoTextUI.Value)
+                if (Plugin.LoadAmmoTextUI.Value)
                 {
                     if (_ammoValueTransform != null)
                     {
@@ -63,11 +63,11 @@ namespace ContinuousLoadAmmo.Controllers
                     }
                     else
                     {
-                        Plugin.LogSource.LogDebug($"_ammoValueTransform is null");
+                        Plugin.LogSource.LogDebug("_ammoValueTransform is null");
                     }
                 }
 
-                if (Plugin.loadMagazineImageUI.Value)
+                if (Plugin.LoadMagazineImageUI.Value)
                 {
                     if (_imageTransform != null)
                     {
@@ -76,21 +76,21 @@ namespace ContinuousLoadAmmo.Controllers
                     }
                     else
                     {
-                        Plugin.LogSource.LogDebug($"_imageTransform is null");
+                        Plugin.LogSource.LogDebug("_imageTransform is null");
                     }
                 }
             }
             catch (System.Exception ex)
             {
-                Plugin.LogSource.LogError($"Exception: {ex.Message}\n{ex.StackTrace}\n{ex.InnerException}");
+                Plugin.LogSource.LogError($"LoadAmmoUI::ShowLoadAmmoUI {ex.Message}\n{ex.StackTrace}\n{ex.InnerException}");
             }
         }
 
-        private static void SetUI(Transform transform, Vector2? offset = null, Vector3? localScale = null)
+        private static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
         {
             RectTransform rectTransform = (RectTransform)transform;
             rectTransform.anchoredPosition = offset != null ? (Vector2)offset : Vector2.zero;
-            rectTransform.localScale = localScale != null ? (Vector3)localScale : Vector3.one;
+            rectTransform.localScale = scale != null ? (Vector3)scale : Vector3.one;
             rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
             rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
