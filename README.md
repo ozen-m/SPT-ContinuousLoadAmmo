@@ -8,6 +8,7 @@ In the configuration manager (`F12`)
 
 - The speed limit, as a percentage of the walk speed, set to the player while un/loading ammo. Default is `30%`.
 - Allow loading ammo outside the inventory only when Magazine and Ammo is in your Vest, Pockets or Secure Container. Default is `true`.
+- Allow top-loading of weapons (Mosin, SKS, etc.) with ammo outside the inventory via this mod. Default is ``false``.
 - Key used to cancel un/loading ammo outside the inventory. Default is left and right mouse buttons.
 - Show UI elements outside the inventory. Default is `true`.
 

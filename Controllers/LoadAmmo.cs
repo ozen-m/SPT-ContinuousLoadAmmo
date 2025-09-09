@@ -15,7 +15,6 @@ namespace ContinuousLoadAmmo.Controllers
         public static bool IsLoadingAmmo = false;
         public static bool IsReachable = false;
         public static bool IsOutsideInventory = false;
-        private static bool isSpeedLimitSetByUs = false;
 
         public static Player MainPlayer
         {
@@ -35,11 +34,7 @@ namespace ContinuousLoadAmmo.Controllers
             {
                 MainPlayer.TrySaveLastItemInHands();
                 MainPlayer.SetEmptyHands(null);
-                if (!MainPlayer.MovementContext._speedLimits.ContainsKey(Player.ESpeedLimit.Swamp))
-                {
-                    MainPlayer.MovementContext.AddStateSpeedLimit(Plugin.SpeedLimit.Value, Player.ESpeedLimit.Swamp);
-                    isSpeedLimitSetByUs = true;
-                }
+                MainPlayer.MovementContext.ChangeSpeedLimit(Plugin.SpeedLimit.Value, Player.ESpeedLimit.BarbedWire);
             }
             else
             {
@@ -48,13 +43,7 @@ namespace ContinuousLoadAmmo.Controllers
                 {
                     MainPlayer.TrySetLastEquippedWeapon(true);
                 }
-                if (isSpeedLimitSetByUs)
-                {
-                    MainPlayer.MovementContext.RemoveStateSpeedLimit(Player.ESpeedLimit.Swamp);
-
-                    // Reset
-                    isSpeedLimitSetByUs = false;
-                }
+                MainPlayer.MovementContext.RemoveStateSpeedLimit(Player.ESpeedLimit.BarbedWire);
             }
             MainPlayer.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
         }
