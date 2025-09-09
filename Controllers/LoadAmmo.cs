@@ -66,7 +66,7 @@ namespace ContinuousLoadAmmo.Controllers
 
             while (IsLoadingAmmo)
             {
-                if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey)))
+                if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey) || !MainPlayer.HandsIsEmpty))
                 {
                     break;
                 }
@@ -87,7 +87,7 @@ namespace ContinuousLoadAmmo.Controllers
             IContainer container = item.Parent.Container as IContainer;
             if (inventoryController.Inventory.Stash == null || container != inventoryController.Inventory.Stash.Grid)
             {
-                EquipmentSlot[] slots = Plugin.ReachableOnly.Value ? Inventory.BindAvailableSlotsExtended.AddToArray(EquipmentSlot.SecuredContainer) : (EquipmentSlot[])System.Enum.GetValues(typeof(EquipmentSlot));
+                EquipmentSlot[] slots = Plugin.ReachableOnly.Value ? (Plugin.WeaponTopLoad.Value ? Inventory.BindAvailableSlotsExtended.AddToArray(EquipmentSlot.SecuredContainer) : Inventory.FastAccessSlots.AddToArray(EquipmentSlot.SecuredContainer)) : InventoryEquipment.AllSlotNames;
                 CompoundItem compoundItem = item as CompoundItem;
                 if ((compoundItem == null || !compoundItem.MissingVitalParts.Any()) && inventoryController.Inventory.GetItemsInSlots(slots).Contains(item) && inventoryController.Examined(item))
                 {
