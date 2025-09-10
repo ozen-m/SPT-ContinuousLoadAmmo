@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace ContinuousLoadAmmo
 {
-    [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.6")]
+    [BepInPlugin("com.ozen.ContinuousLoadAmmo", "ContinuousLoadAmmo", "1.0.7")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
