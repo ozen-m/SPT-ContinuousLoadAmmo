@@ -50,20 +50,15 @@ namespace ContinuousLoadAmmo.Controllers
 
         public static async void ListenForCancel(InventoryController inventoryController)
         {
-            // Delay is for anim timing
-            await Task.Delay(800);
-
             while (IsLoadingAmmo)
             {
-                if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey) || !MainPlayer.HandsIsEmpty))
+                if (!MainPlayer.IsInventoryOpened && !inventoryController.HasAnyHandsAction() && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey) || !MainPlayer.HandsIsEmpty))
                 {
+                    inventoryController.StopProcesses();
                     break;
                 }
                 await Task.Yield();
             }
-
-            Reset();
-            inventoryController.StopProcesses();
         }
 
         // Base EFT code with modifications
