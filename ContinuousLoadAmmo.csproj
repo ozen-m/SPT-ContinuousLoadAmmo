@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>ContinuousLoadAmmo</AssemblyName>
     <Description></Description>
-    <Version>1.0.7</Version>
+    <Version>1.0.8</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <BaseOutputPath></BaseOutputPath>
@@ -65,6 +65,6 @@
     <RepositoryUrl>https://github.com/ozen-m/SPT-ContinuousLoadAmmo</RepositoryUrl>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\..\BepInEx\plugins\$(TargetFileName)&quot;&#xD;&#xA;&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)\Dist\BepInEx\plugins\$(TargetFileName)&quot;&#xD;&#xA;powershell -command Compress-Archive -Path $(ProjectDir)Dist\BepInEx -DestinationPath $(ProjectDir)Dist\ozen-ContinuousLoadAmmo.zip -Force&#xD;&#xA;)" />
+    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\..\BepInEx\plugins\$(TargetFileName)&quot;&#xD;&#xA;copy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\..\BepInEx\plugins\$(TargetName).pdb&quot;&#xD;&#xA;&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)\Dist\BepInEx\plugins\$(TargetFileName)&quot;&#xD;&#xA;powershell -command Compress-Archive -Path $(ProjectDir)Dist\BepInEx -DestinationPath $(ProjectDir)Dist\ozen-ContinuousLoadAmmo.zip -Force&#xD;&#xA;)" />
   </Target>
 </Project>

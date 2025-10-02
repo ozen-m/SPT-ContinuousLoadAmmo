@@ -46,6 +46,7 @@ namespace ContinuousLoadAmmo.Patches
             }
         }
 
+        // there was a reasoning for needing a postfix, i just forgot
         [PatchPostfix]
         protected static void Postfix(bool __state)
         {

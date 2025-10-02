@@ -1,6 +1,9 @@
 ﻿using Comfort.Common;
+using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop;
+using HarmonyLib;
+using System.Reflection;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -15,8 +18,33 @@ namespace ContinuousLoadAmmo.Controllers
         private static Transform clonedAmmoValueTransform;
         private static Transform clonedMagImageTransform;
 
-        private static Transform _eftBattleUIScreenTransform;
-        private static Transform EFTBattleUIScreenTransform
+
+        private static FieldInfo _itemViewLoadAmmoComponentField;
+        private static FieldInfo itemViewLoadAmmoComponentField
+        {
+            get
+            {
+                if (_itemViewLoadAmmoComponentField == null)
+                {
+                    _itemViewLoadAmmoComponentField = AccessTools.Field(typeof(ItemViewAnimation), "itemViewLoadAmmoComponent_0");
+                }
+                return _itemViewLoadAmmoComponentField;
+            }
+        }
+        private static FieldInfo _itemViewAnimationField;
+        private static FieldInfo itemViewAnimationField
+        {
+            get
+            {
+                if (_itemViewAnimationField == null)
+                {
+                    _itemViewAnimationField = AccessTools.Field(typeof(ItemView), "Animator");
+                }
+                return _itemViewAnimationField;
+            }
+        }
+
+        public static Transform EFTBattleUIScreenTransform
         {
             get
             {
@@ -27,6 +55,27 @@ namespace ContinuousLoadAmmo.Controllers
                 return _eftBattleUIScreenTransform;
             }
 
+        }
+        private static Transform _eftBattleUIScreenTransform;
+
+        public static void CreateUI(InventoryController playerInventoryController, GEventArgs7 activeEvent)
+        {
+            MagazineItemClass magazine = activeEvent.TargetItem as MagazineItemClass;
+            GridItemView magItemView = GridItemView.Create(magazine, new GClass3243(magazine, EItemViewType.Inventory), ItemRotation.Horizontal, playerInventoryController, playerInventoryController, null, null, null, null, null);
+            Transform instanceTransform = magItemView.transform;
+            if (Plugin.LoadAmmoTextUI.Value)
+            {
+                _ammoValueTransform = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value") ?? instanceTransform.Find("Info Panel/RightLayout/BottomVerticalGroup/Value");
+            }
+            if (Plugin.LoadMagazineImageUI.Value)
+            {
+                _imageTransform = instanceTransform.Find("Image") ?? instanceTransform.Find("Item Image");
+            }
+
+            magItemView.SetLoadMagazineStatus(activeEvent);
+            var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField.GetValue(magItemView);
+            itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(itemViewAnimation);
+            magItemView.ReturnToPool();
         }
 
         public static void Show()
@@ -86,7 +135,7 @@ namespace ContinuousLoadAmmo.Controllers
             }
         }
 
-        private static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
+        public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
         {
             RectTransform rectTransform = (RectTransform)transform;
             rectTransform.anchoredPosition = offset != null ? (Vector2)offset : Vector2.zero;
