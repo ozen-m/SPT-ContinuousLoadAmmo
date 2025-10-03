@@ -27,7 +27,7 @@ namespace ContinuousLoadAmmo.Patches
             }
 
             Singleton<GameWorld>.Instance.MainPlayer.gameObject.AddComponent<LoadAmmoComponent>();
-            Plugin.LogSource.LogInfo("Added LoadAmmoComponent to player: " + Singleton<GameWorld>.Instance.MainPlayer.Profile.Nickname);
+            Plugin.LogSource.LogInfo($"Added LoadAmmoComponent to player: {Singleton<GameWorld>.Instance.MainPlayer.Profile.Nickname}");
         }
     }
 }

@@ -13,9 +13,9 @@ namespace ContinuousLoadAmmo.Patches
         }
 
         [PatchPrefix]
-        protected static bool Prefix()
+        protected static bool Prefix(ItemViewLoadAmmoComponent __instance)
         {
-            if (LoadAmmo.IsOutsideInventory)
+            if (LoadAmmo.IsLoadingAmmo && __instance.GetHashCode() == LoadAmmoUI.itemViewLoadAmmoComponent.GetHashCode())
             {
                 return false;
             }

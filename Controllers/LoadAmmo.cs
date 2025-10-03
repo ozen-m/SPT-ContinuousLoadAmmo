@@ -1,4 +1,4 @@
-﻿using Comfort.Common;
+﻿using ContinuousLoadAmmo.Components;
 using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
@@ -11,23 +11,11 @@ namespace ContinuousLoadAmmo.Controllers
 {
     internal static class LoadAmmo
     {
-        private static Player _mainPlayer = null;
         public static MagazineItemClass Magazine;
         public static bool IsLoadingAmmo = false;
         public static bool IsReachable = false;
-        public static bool IsOutsideInventory = false;
 
-        public static Player MainPlayer
-        {
-            get
-            {
-                if (_mainPlayer == null)
-                {
-                    _mainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
-                }
-                return _mainPlayer;
-            }
-        }
+        private static Player MainPlayer => LoadAmmoComponent.MainPlayer;
 
         public static async void SetPlayerState(bool startAnim)
         {
@@ -39,11 +27,8 @@ namespace ContinuousLoadAmmo.Controllers
             }
             else
             {
-                while (MainPlayer.InventoryController.HasAnyHandsAction())
-                {
-                    await Task.Yield();
-                }
-                if (MainPlayer.HandsIsEmpty)
+                await Task.Delay(800);
+                if (!MainPlayer.IsWeaponOrKnifeInHands)
                 {
                     MainPlayer.TrySetLastEquippedWeapon(true);
                 }
@@ -52,17 +37,17 @@ namespace ContinuousLoadAmmo.Controllers
             MainPlayer.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
         }
 
-        public static async void ListenForCancel(InventoryController inventoryController)
+        public static async void ListenForCancel()
         {
             while (IsLoadingAmmo)
             {
-                while (inventoryController.HasAnyHandsAction())
+                while (MainPlayer.InventoryController.HasAnyHandsAction())
                 {
                     await Task.Yield();
                 }
                 if (!MainPlayer.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey) || !MainPlayer.HandsIsEmpty))
                 {
-                    inventoryController.StopProcesses();
+                    MainPlayer.InventoryController.StopProcesses();
                     break;
                 }
                 await Task.Yield();
@@ -93,12 +78,18 @@ namespace ContinuousLoadAmmo.Controllers
         {
             IsLoadingAmmo = false;
             IsReachable = false;
-            IsOutsideInventory = false;
             Magazine = null;
         }
 
         public static EquipmentSlot[] GetReachableSlots() => Plugin.ReachableOnly.Value ? (Plugin.WeaponTopLoad.Value ? ReachableOnlyIncludeTopLoad : ReachableOnly) : InventoryEquipment.AllSlotNames;
         private static readonly EquipmentSlot[] ReachableOnlyIncludeTopLoad = Inventory.BindAvailableSlotsExtended.AddToArray(EquipmentSlot.SecuredContainer);
         private static readonly EquipmentSlot[] ReachableOnly = Inventory.FastAccessSlots.AddToArray(EquipmentSlot.SecuredContainer);
+
+        public enum LoadingEventType
+        {
+            None,
+            Load,
+            Unload
+        }
     }
 }

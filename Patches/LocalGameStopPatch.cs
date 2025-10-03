@@ -12,6 +12,9 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(BaseLocalGame<EftGamePlayerOwner>).GetMethod(nameof(BaseLocalGame<EftGamePlayerOwner>.Stop));
         }
 
+        /// <summary>
+        /// Stops loading ammo when raid stopped
+        /// </summary>
         [PatchPrefix]
         protected static void Prefix()
         {

@@ -14,7 +14,9 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(InventoryScreen).GetMethod(nameof(InventoryScreen.Close));
         }
 
-        // UI, Patch to NOT stop loading ammo on close
+        /// <summary>
+        /// UI, Patch to NOT stop loading ammo on close
+        /// </summary>
         [PatchPrefix]
         protected static void Prefix(ref InventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController, out bool __state)
         {
@@ -27,8 +29,6 @@ namespace ContinuousLoadAmmo.Patches
                 {
                     return;
                 }
-                LoadAmmo.IsOutsideInventory = true;
-                LoadAmmo.ListenForCancel(___inventoryController_0);
 
                 if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
                 {
@@ -43,15 +43,8 @@ namespace ContinuousLoadAmmo.Patches
                     // Skip stop process after prefix
                     ___inventoryController_0 = null;
                 }
-            }
-        }
 
-        // there was a reasoning for needing a postfix, i just forgot
-        [PatchPostfix]
-        protected static void Postfix(bool __state)
-        {
-            if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable && !__state)
-            {
+                LoadAmmo.ListenForCancel();
                 LoadAmmo.SetPlayerState(true);
                 LoadAmmoUI.Show();
             }

@@ -12,7 +12,9 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(Player.PlayerInventoryController).GetMethod(nameof(Player.PlayerInventoryController.InventoryCheckMagazine));
         }
 
-        // Fixes: Examining another magazine while loading ammo breaks UI
+        /// <summary>
+        /// Fixes: Examining another magazine while loading ammo breaks UI
+        /// </summary>
         [PatchPrefix]
         protected static void Prefix()
         {

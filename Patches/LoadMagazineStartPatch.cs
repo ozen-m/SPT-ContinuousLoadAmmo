@@ -1,6 +1,8 @@
 ﻿using Comfort.Common;
+using ContinuousLoadAmmo.Components;
 using ContinuousLoadAmmo.Controllers;
 using EFT;
+using EFT.InventoryLogic;
 using SPT.Reflection.Patching;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -17,9 +19,12 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPrefix]
         protected static void Prefix(Player.PlayerInventoryController.Class1085 __instance)
         {
+            InventoryController inventoryController = LoadAmmoComponent.MainPlayer.InventoryController;
             LoadAmmo.IsLoadingAmmo = true;
             LoadAmmo.Magazine = __instance.magazineItemClass;
-            LoadAmmo.IsReachable = LoadAmmo.IsAtReachablePlace(LoadAmmo.MainPlayer.InventoryController, LoadAmmo.Magazine) && LoadAmmo.IsAtReachablePlace(LoadAmmo.MainPlayer.InventoryController, __instance.ammoItemClass);
+            LoadAmmo.IsReachable = LoadAmmo.IsAtReachablePlace(inventoryController, LoadAmmo.Magazine) && LoadAmmo.IsAtReachablePlace(inventoryController, __instance.ammoItemClass);
+            var loadAmmoEvent = new GEventArgs7(__instance.ammoItemClass, __instance.magazineItemClass, __instance.int_0, __instance.float_0, CommandStatus.Begin, __instance.inventoryController_0);
+            LoadAmmoUI.CreateUI(inventoryController, LoadAmmo.LoadingEventType.Load, loadAmmoEvent, null);
         }
 
         [PatchPostfix]

@@ -1,49 +1,31 @@
 ﻿using Comfort.Common;
+using ContinuousLoadAmmo.Components;
+using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop;
-using HarmonyLib;
 using System.Reflection;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using static ContinuousLoadAmmo.Controllers.LoadAmmo;
 
 namespace ContinuousLoadAmmo.Controllers
 {
     internal static class LoadAmmoUI
     {
+        private static GridItemView magItemView;
         internal static ItemViewLoadAmmoComponent itemViewLoadAmmoComponent;
-        internal static Transform _ammoValueTransform;
-        internal static Transform _imageTransform;
         private static Transform clonedAmmoValueTransform;
         private static Transform clonedMagImageTransform;
+        private static Transform _ammoValueTransform;
+        private static Transform _imageTransform;
 
+        private static readonly FieldInfo itemViewLoadAmmoComponentField = typeof(ItemViewAnimation).GetField("itemViewLoadAmmoComponent_0", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo itemViewAnimationField = typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        private static FieldInfo _itemViewLoadAmmoComponentField;
-        private static FieldInfo itemViewLoadAmmoComponentField
-        {
-            get
-            {
-                if (_itemViewLoadAmmoComponentField == null)
-                {
-                    _itemViewLoadAmmoComponentField = AccessTools.Field(typeof(ItemViewAnimation), "itemViewLoadAmmoComponent_0");
-                }
-                return _itemViewLoadAmmoComponentField;
-            }
-        }
-        private static FieldInfo _itemViewAnimationField;
-        private static FieldInfo itemViewAnimationField
-        {
-            get
-            {
-                if (_itemViewAnimationField == null)
-                {
-                    _itemViewAnimationField = AccessTools.Field(typeof(ItemView), "Animator");
-                }
-                return _itemViewAnimationField;
-            }
-        }
-
+        private static Player MainPlayer => LoadAmmoComponent.MainPlayer;
         public static Transform EFTBattleUIScreenTransform
         {
             get
@@ -58,10 +40,22 @@ namespace ContinuousLoadAmmo.Controllers
         }
         private static Transform _eftBattleUIScreenTransform;
 
-        public static void CreateUI(InventoryController playerInventoryController, GEventArgs7 activeEvent)
+        public static void CreateUI(InventoryController playerInventoryController, LoadingEventType eventType, GEventArgs7 loadEvent = null, GEventArgs8 unloadEvent = null)
         {
-            MagazineItemClass magazine = activeEvent.TargetItem as MagazineItemClass;
-            GridItemView magItemView = GridItemView.Create(magazine, new GClass3243(magazine, EItemViewType.Inventory), ItemRotation.Horizontal, playerInventoryController, playerInventoryController, null, null, null, null, null);
+            magItemView = null;
+            if (eventType == LoadingEventType.Load)
+            {
+                MagazineItemClass magazine = loadEvent.TargetItem as MagazineItemClass;
+                magItemView = GridItemView.Create(magazine, new GClass3243(magazine, EItemViewType.Inventory), ItemRotation.Horizontal, playerInventoryController, playerInventoryController, null, null, null, null, null);
+                magItemView.SetLoadMagazineStatus(loadEvent);
+            }
+            else if (eventType == LoadingEventType.Unload)
+            {
+                MagazineItemClass magazine = unloadEvent.FromItem;
+                magItemView = GridItemView.Create(magazine, new GClass3243(magazine, EItemViewType.Inventory), ItemRotation.Horizontal, playerInventoryController, playerInventoryController, null, null, null, null, null);
+                magItemView.SetUnloadMagazineStatus(unloadEvent);
+            }
+
             Transform instanceTransform = magItemView.transform;
             if (Plugin.LoadAmmoTextUI.Value)
             {
@@ -72,10 +66,8 @@ namespace ContinuousLoadAmmo.Controllers
                 _imageTransform = instanceTransform.Find("Image") ?? instanceTransform.Find("Item Image");
             }
 
-            magItemView.SetLoadMagazineStatus(activeEvent);
             var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField.GetValue(magItemView);
             itemViewLoadAmmoComponent = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentField.GetValue(itemViewAnimation);
-            magItemView.ReturnToPool();
         }
 
         public static void Show()
@@ -122,6 +114,10 @@ namespace ContinuousLoadAmmo.Controllers
                     {
                         clonedMagImageTransform = Object.Instantiate(_imageTransform, EFTBattleUIScreenTransform);
                         SetUI(clonedMagImageTransform, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
+                        if (clonedMagImageTransform.TryGetComponent(out Image mainImage))
+                        {
+                            mainImage.ChangeImageAlpha(1f);
+                        }
                     }
                     else
                     {
@@ -153,11 +149,11 @@ namespace ContinuousLoadAmmo.Controllers
 
             int skill = Mathf.Max(
                 [
-                    LoadAmmo.MainPlayer.Profile.MagDrillsMastering,
-                    LoadAmmo.MainPlayer.Profile.CheckedMagazineSkillLevel(LoadAmmo.Magazine.Id),
-                    LoadAmmo.Magazine.CheckOverride
+                    MainPlayer.Profile.MagDrillsMastering,
+                    MainPlayer.Profile.CheckedMagazineSkillLevel(LoadAmmo.Magazine.Id),
+                    Magazine.CheckOverride
                         ]);
-            //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine)
+            //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag examined?
 
             while (LoadAmmo.IsLoadingAmmo)
             {
@@ -181,6 +177,11 @@ namespace ContinuousLoadAmmo.Controllers
             if (clonedMagImageTransform != null)
             {
                 Object.Destroy(clonedMagImageTransform.gameObject);
+            }
+            if (magItemView != null)
+            {
+                magItemView.ReturnToPool();
+                magItemView = null;
             }
         }
     }
