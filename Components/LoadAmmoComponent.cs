@@ -6,6 +6,7 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
 using static EFT.Player;
 using static EFT.Player.PlayerInventoryController;
@@ -58,8 +59,8 @@ namespace ContinuousLoadAmmo.Components
         {
             try
             {
-                var playerInventoryController = InventoryController as Player.PlayerInventoryController;
-                if (playerInventoryController.HasAnyHandsAction() || LoadAmmo.IsLoadingAmmo)
+                var playerInventoryController = InventoryController as PlayerInventoryController;
+                if (LoadAmmo.IsLoadingAmmo || playerInventoryController.HasAnyHandsAction())
                 {
                     return;
                 }
@@ -117,59 +118,100 @@ namespace ContinuousLoadAmmo.Components
 
         public bool FindMagAmmoFromEquipment(out AmmoItemClass ammo, out MagazineItemClass magazine)
         {
-            EquipmentSlot[] reachableSlots = GetReachableSlots();
-            AmmoItemClass chosenAmmo = null;
             ammo = null;
             magazine = null;
+            StringBuilder sb = new();
 
-            // TODO: fallbacks
             // Get Ammo
-            // Priority is: Ammo of current weapon magazine
-            Weapon lastWeapon = MainPlayer.LastEquippedWeaponOrKnifeItem as Weapon;
-            //var lastWeapon = MainPlayer.Inventory.;
-            if (lastWeapon != null)
+            MagazineItemClass currentMagazine = null;
+            List<AmmoItemClass> reachableAmmos = new();
+            AmmoItemClass chosenAmmo = null;
+            if (MainPlayer.LastEquippedWeaponOrKnifeItem is Weapon weapon)
             {
-                MagazineItemClass currMagazine = lastWeapon.GetCurrentMagazine();
-                //lastWeapon.CompatibleAmmo
-
-                List<AmmoItemClass> reachableAmmos = new();
-                InventoryController.GetAcceptableItemsNonAlloc(reachableSlots, reachableAmmos,
-                    item => currMagazine.CheckCompatibility(item)
-                    );
-                if (reachableAmmos.Count > 0)
+                sb.Append($"Weapon: {weapon}. ");
+                currentMagazine = weapon.GetCurrentMagazine();
+                if (currentMagazine != null)
+                {
+                    InventoryController.GetAcceptableItemsNonAlloc(
+                        ReachableSlots,
+                        reachableAmmos,
+                        item => item is AmmoItemClass ammo && currentMagazine.CheckCompatibility(ammo)
+                        );
+                }
+                else
+                {   // fallback if no magazine
+                    string ammoCaliber = weapon.AmmoCaliber;
+                    InventoryController.GetAcceptableItemsNonAlloc(
+                        ReachableSlots,
+                        reachableAmmos,
+                        item => item is AmmoItemClass ammo && ammo.Caliber == ammoCaliber
+                        );
+                }
+            }
+            if (reachableAmmos.Count > 0)
+            {
+                reachableAmmos.Sort((a, b) =>
+                {
+                    int result = b.PenetrationPower.CompareTo(a.PenetrationPower);
+                    if (result == 0)
+                    {
+                        result = b.StackObjectsCount.CompareTo(a.StackObjectsCount);
+                    }
+                    return result;
+                }); // sort penetration power highest to lowest
+                if (!Plugin.PrioritizeHighestPenetration.Value && currentMagazine != null)
                 {
                     foreach (var currAmmo in reachableAmmos)
                     {
-                        AmmoItemClass ammoInsideMag = (AmmoItemClass)currMagazine.FirstRealAmmo();
-                        if (ammoInsideMag != null && ammoInsideMag.Name == currAmmo.Name)
+                        if (currentMagazine.FirstRealAmmo() is AmmoItemClass ammoInsideMag && ammoInsideMag.Name == currAmmo.Name)
                         {
-                            ammo = currAmmo;
-                            chosenAmmo = currAmmo;
+                            sb.Append("Found same ammo. ");
+                            ammo = chosenAmmo = currAmmo;
                             break;
                         }
                     }
-                    ammo ??= reachableAmmos[0];
-                    chosenAmmo ??= reachableAmmos[0];
+                    if (ammo == null)
+                    {
+                        sb.Append("No same ammo from magazine found, fallback to ammo with highest penetration. ");
+                        ammo = chosenAmmo = reachableAmmos[0];
+                    }
                 }
-                else return false;
+                else
+                {
+                    sb.Append("Choosing ammo with highest penetration. ");
+                    ammo = chosenAmmo = reachableAmmos[0];
+                }
             }
+            else
+            {
+                sb.Append("No ammo found.");
+                Plugin.LogSource.LogDebug(sb.ToString());
+                return false;
+            }
+            sb.Append($"Ammo {ammo.LocalizedShortName()}. ");
 
             // Get Magazine
-            List<MagazineItemClass> reachableMagazines = new List<MagazineItemClass>();
-            InventoryController.GetAcceptableItemsNonAlloc(reachableSlots, reachableMagazines,
-                item => item.CheckCompatibility(chosenAmmo) && item.Count != item.MaxCount
+            List<MagazineItemClass> reachableMagazines = new();
+            InventoryController.GetAcceptableItemsNonAlloc(ReachableSlots, reachableMagazines,
+                item => item is MagazineItemClass mag && mag.Count != mag.MaxCount && mag.CheckCompatibility(chosenAmmo)
                 );
             if (reachableMagazines.Count > 0)
             {
-                // Do almost filled magazine
-                reachableMagazines.Sort((a, b) => a.Count.CompareTo(b.Count));
-                magazine = reachableMagazines[^1];
+                // Sort by almost full
+                reachableMagazines.Sort((a, b) =>
+                    (b.MaxCount - b.Count).CompareTo(a.MaxCount - a.Count)
+                    );
+                magazine = reachableMagazines[0];
+                sb.Append($"Magazine {magazine.LocalizedShortName()}");
+                Plugin.LogSource.LogDebug(sb.ToString());
                 return true;
             }
+            sb.Append("No magazine found.");
+            Plugin.LogSource.LogDebug(sb.ToString());
             return false;
         }
 
-        public static EquipmentSlot[] GetReachableSlots() => Plugin.ReachableOnly.Value ? ReachableOnly : ReachableAll;
+        public static EquipmentSlot[] ReachableSlots => Plugin.ReachableOnly.Value ? ReachableOnly : ReachableAll;
         private static readonly EquipmentSlot[] ReachableOnly = Inventory.FastAccessSlots.AddToArray(EquipmentSlot.SecuredContainer);
         private static readonly EquipmentSlot[] ReachableAll = Inventory.FastAccessSlots.AddRangeToArray([EquipmentSlot.ArmorVest, EquipmentSlot.Backpack, EquipmentSlot.SecuredContainer]);
     }

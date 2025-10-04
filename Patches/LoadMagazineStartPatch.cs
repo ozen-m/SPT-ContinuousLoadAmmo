@@ -23,7 +23,7 @@ namespace ContinuousLoadAmmo.Patches
             LoadAmmo.IsLoadingAmmo = true;
             LoadAmmo.Magazine = __instance.magazineItemClass;
             LoadAmmo.IsReachable = LoadAmmo.IsAtReachablePlace(inventoryController, LoadAmmo.Magazine) && LoadAmmo.IsAtReachablePlace(inventoryController, __instance.ammoItemClass);
-            var loadAmmoEvent = new GEventArgs7(__instance.ammoItemClass, __instance.magazineItemClass, __instance.int_0, __instance.float_0, CommandStatus.Begin, __instance.inventoryController_0);
+            GEventArgs7 loadAmmoEvent = new(__instance.ammoItemClass, __instance.magazineItemClass, __instance.int_0, __instance.float_0, CommandStatus.Begin, __instance.inventoryController_0);
             LoadAmmoUI.CreateUI(inventoryController, LoadAmmo.LoadingEventType.Load, loadAmmoEvent, null);
         }
 
