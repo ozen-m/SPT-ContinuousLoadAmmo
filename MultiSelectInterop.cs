@@ -2,6 +2,7 @@
 using BepInEx.Bootstrap;
 using HarmonyLib;
 using System;
+using System.Reflection;
 
 namespace UIFixesInterop
 {
@@ -27,7 +28,20 @@ namespace UIFixesInterop
             }
         }
 
-        private static bool Loaded()
+        private static MethodInfo _stopLoadingMethod;
+        public static MethodInfo StopLoadingMethod
+        {
+            get
+            {
+                if (!Loaded())
+                {
+                    return null;
+                }
+                return _stopLoadingMethod ?? null;
+            }
+        }
+
+        public static bool Loaded()
         {
             if (!UIFixesLoaded.HasValue)
             {
@@ -41,6 +55,7 @@ namespace UIFixesInterop
                     {
                         var LoadUnloadSerializerMethod = AccessTools.PropertyGetter(MultiSelectType, "LoadUnloadSerializer");
                         LoadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(LoadUnloadSerializerMethod);
+                        _stopLoadingMethod = AccessTools.Method(MultiSelectType, "StopLoading");
                     }
                 }
             }
