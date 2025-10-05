@@ -21,19 +21,17 @@ namespace ContinuousLoadAmmo.Patches
         protected static void Prefix(ref InventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
         {
             if (!Plugin.InRaid) return;
+
             if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
             {
                 playerInventoryController.SetNextProcessLocked(false);
-            }
-            if (!LoadAmmo.Inst.LoadingClosedInventory())
-            {
-                ___inventoryController_0.StopProcesses();
             }
             if (___inventoryController_0 != null)
             {
                 // Skip stop process and process locked after prefix
                 ___inventoryController_0 = null;
             }
+            LoadAmmo.Inst.LoadingOutsideInventory();
         }
     }
 }

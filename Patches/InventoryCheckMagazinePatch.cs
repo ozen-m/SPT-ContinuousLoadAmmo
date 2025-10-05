@@ -19,6 +19,7 @@ namespace ContinuousLoadAmmo.Patches
         protected static void Prefix()
         {
             if (!Plugin.InRaid) return;
+
             LoadAmmo.Inst.LoadingEnd();
         }
     }

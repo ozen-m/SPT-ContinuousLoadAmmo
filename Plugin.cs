@@ -10,6 +10,7 @@ using UnityEngine;
 namespace ContinuousLoadAmmo
 {
     [BepInPlugin("com.ozen.continuousloadammo", "ContinuousLoadAmmo", "1.0.8")]
+    [BepInDependency("Tyfon.UIFixes", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;

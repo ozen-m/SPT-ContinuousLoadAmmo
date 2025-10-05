@@ -35,7 +35,6 @@ namespace ContinuousLoadAmmo.Components
 
         protected void CreateUI(InventoryController playerInventoryController, LoadAmmo.LoadingEventType eventType, GEventArgs7 loadEvent, GEventArgs8 unloadEvent)
         {
-            magItemView = null;
             if (eventType == LoadAmmo.LoadingEventType.Load)
             {
                 MagazineItemClass magazine = loadEvent.TargetItem as MagazineItemClass;
@@ -128,7 +127,7 @@ namespace ContinuousLoadAmmo.Components
 
         public bool IsSameLoaderUI(ItemViewLoadAmmoComponent component)
         {
-            if (LoadAmmo.Inst.IsActive && component.GetHashCode() == itemViewLoadAmmoComponent.GetHashCode())
+            if (LoadAmmo.Inst.IsActive && itemViewLoadAmmoComponent == component)
             {
                 return true;
             }

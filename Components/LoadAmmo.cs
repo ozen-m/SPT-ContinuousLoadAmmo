@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using UIFixesInterop;
 using UnityEngine;
 using static EFT.Player;
 using static EFT.Player.PlayerInventoryController;
@@ -54,6 +55,8 @@ namespace ContinuousLoadAmmo.Components
 
             inventoryController = player.InventoryController;
             interfaceFieldInfo ??= typeof(PlayerInventoryController).GetField("interface17_0", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            ((PlayerInventoryController)inventoryController).SetNextProcessLocked(false);
         }
 
         protected void Update()
@@ -69,17 +72,14 @@ namespace ContinuousLoadAmmo.Components
 
         protected void TryLoadAmmo()
         {
-            var playerInventoryController = inventoryController as PlayerInventoryController;
-            if (IsActive || playerInventoryController.HasAnyHandsAction())
+            if (IsActive || inventoryController.HasAnyHandsAction())
             {
                 return;
             }
             if (FindMagAmmoFromEquipment(out AmmoItemClass ammo, out MagazineItemClass magazine))
             {
                 int loadCount = Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
-
-                playerInventoryController.LoadMagazine(ammo, magazine, loadCount);
-                LoadingClosedInventory();
+                ((PlayerInventoryController)inventoryController).LoadMagazine(ammo, magazine, loadCount, false);
             }
         }
 
@@ -187,27 +187,31 @@ namespace ContinuousLoadAmmo.Components
                 magazine = loadingClass.magazineItemClass;
                 isReachable = IsAtReachablePlace(magazine) && IsAtReachablePlace(loadingClass.ammoItemClass);
                 GEventArgs7 loadAmmoEvent = new(loadingClass.ammoItemClass, loadingClass.magazineItemClass, loadingClass.int_0, loadingClass.float_0, CommandStatus.Begin, loadingClass.inventoryController_0);
-                OnStartLoading.Invoke(inventoryController, eventType, loadAmmoEvent, null);
+                OnStartLoading?.Invoke(inventoryController, eventType, loadAmmoEvent, null);
             }
             else if (eventType == LoadingEventType.Unload)
             {
                 magazine = unloadingClass.magazineItemClass;
                 isReachable = IsAtReachablePlace(magazine);
                 GEventArgs8 unloadAmmoEvent = new(unloadingClass.item_0, unloadingClass.item_1, unloadingClass.magazineItemClass, unloadingClass.int_0 - unloadingClass.int_1, unloadingClass.int_1, unloadingClass.float_0, EFT.InventoryLogic.CommandStatus.Begin, unloadingClass.inventoryController_0);
-                OnStartLoading.Invoke(inventoryController, eventType, null, unloadAmmoEvent);
+                OnStartLoading?.Invoke(inventoryController, eventType, null, unloadAmmoEvent);
+            }
+            if (!player.IsInventoryOpened)
+            {
+                LoadingOutsideInventory();
             }
         }
 
-        public bool LoadingClosedInventory()
+        public void LoadingOutsideInventory()
         {
             if (IsActive && isReachable && !inventoryController.HasAnyHandsAction())
             {
                 SetPlayerState(true);
                 ListenForCancel();
-                OnCloseInventory.Invoke();
-                return true;
+                OnCloseInventory?.Invoke();
+                return;
             }
-            return false;
+            inventoryController.StopProcesses();
         }
 
         public void LoadingEnd()
@@ -216,7 +220,7 @@ namespace ContinuousLoadAmmo.Components
             {
                 SetPlayerState(false);
                 ResetLoading();
-                OnEndLoading.Invoke();
+                OnEndLoading?.Invoke();
             }
         }
 
@@ -231,6 +235,8 @@ namespace ContinuousLoadAmmo.Components
             else
             {
                 await Task.Delay(800);
+                if (MultiSelect.LoadUnloadSerializer != null) return;
+
                 if (!player.IsWeaponOrKnifeInHands)
                 {
                     player.TrySetLastEquippedWeapon(true);
@@ -285,7 +291,7 @@ namespace ContinuousLoadAmmo.Components
 
         public void OnDestroy()
         {
-            OnDestroyComponent.Invoke();
+            OnDestroyComponent?.Invoke();
             OnStartLoading = null;
             OnCloseInventory = null;
             OnEndLoading = null;

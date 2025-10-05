@@ -14,19 +14,13 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(Player.PlayerInventoryController.Class1088).GetMethod(nameof(Player.PlayerInventoryController.Class1088.Start));
         }
 
-        [PatchPrefix]
-        protected static void Prefix(Player.PlayerInventoryController.Class1088 __instance)
-        {
-            if (!Plugin.InRaid) return;
-            LoadAmmo.Inst.LoadingStart(LoadAmmo.LoadingEventType.Unload, null, __instance);
-        }
-
         [PatchPostfix]
-        protected static async void Postfix(Task<IResult> __result)
+        protected static async void Postfix(Player.PlayerInventoryController.Class1088 __instance, Task<IResult> __result)
         {
             if (!Plugin.InRaid) return;
-            await __result;
 
+            LoadAmmo.Inst.LoadingStart(LoadAmmo.LoadingEventType.Unload, null, __instance);
+            await __result;
             LoadAmmo.Inst.LoadingEnd();
         }
     }

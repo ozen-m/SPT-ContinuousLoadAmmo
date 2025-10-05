@@ -11,6 +11,9 @@ namespace ContinuousLoadAmmo.Patches
             return typeof(ItemViewLoadAmmoComponent).GetMethod(nameof(ItemViewLoadAmmoComponent.Destroy));
         }
 
+        /// <summary>
+        /// Keeps from destroying the loader UI outside the inventory
+        /// </summary>
         [PatchPrefix]
         protected static bool Prefix(ItemViewLoadAmmoComponent __instance)
         {
