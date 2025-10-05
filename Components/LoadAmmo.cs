@@ -17,6 +17,7 @@ namespace ContinuousLoadAmmo.Components
     public class LoadAmmo : MonoBehaviour
     {
         public static LoadAmmo Inst;
+        protected static FieldInfo interfaceFieldInfo;
 
         public event Action<InventoryController, LoadingEventType, GEventArgs7, GEventArgs8> OnStartLoading;
         public event Action OnCloseInventory;
@@ -26,9 +27,7 @@ namespace ContinuousLoadAmmo.Components
         protected Player player;
         protected InventoryController inventoryController;
         protected MagazineItemClass magazine;
-        protected static FieldInfo interfaceFieldInfo;
         protected bool isReachable;
-
         public bool IsActive { get; protected set; }
 
         protected void Awake()
@@ -68,7 +67,7 @@ namespace ContinuousLoadAmmo.Components
             }
         }
 
-        protected async void TryLoadAmmo()
+        protected void TryLoadAmmo()
         {
             var playerInventoryController = inventoryController as PlayerInventoryController;
             if (IsActive || playerInventoryController.HasAnyHandsAction())
@@ -79,49 +78,9 @@ namespace ContinuousLoadAmmo.Components
             {
                 int loadCount = Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
 
-                float loadSpeedModifier = 100f - player.Profile.Skills.MagDrillsLoadSpeed + magazine.LoadUnloadModifier;
-                float loadTime = Singleton<BackendConfigSettingsClass>.Instance.BaseLoadTime * loadSpeedModifier / 100f;
-                var loadAmmoTask = NewLoadAmmoProcess(ammo, magazine, loadCount, loadTime, false);
-                if (loadAmmoTask != null)
-                {
-                    interfaceFieldInfo.SetValue(playerInventoryController, loadAmmoTask);
-
-                    var startLoadAmmoTask = loadAmmoTask.Start();
-                    LoadingClosedInventory();
-
-                    await startLoadAmmoTask;
-                    interfaceFieldInfo.SetValue(playerInventoryController, null);
-                }
+                playerInventoryController.LoadMagazine(ammo, magazine, loadCount);
+                LoadingClosedInventory();
             }
-        }
-
-        /// <summary>
-        /// Using PlayerInventoryController.LoadMagazine() outside the inventory fails
-        /// </summary>
-        protected Class1085 NewLoadAmmoProcess(AmmoItemClass sourceAmmo, MagazineItemClass magazine, int loadCount, float loadTime, bool ignoreRestrictions)
-        {
-            if (loadCount <= 0)
-            {
-                Plugin.LogSource.LogError("Cannot load 0 bullets");
-                return null;
-            }
-            inventoryController.StopProcesses();
-
-            GStruct454 simulate = ignoreRestrictions ? magazine.ApplyWithoutRestrictions(inventoryController, sourceAmmo, 1, true) : magazine.Apply(inventoryController, sourceAmmo, 1, true);
-            if (simulate.Failed && !inventoryController.CanExecute(simulate.Value))
-            {
-                Plugin.LogSource.LogError("Simulation to load ammo failed");
-                return null;
-            }
-
-            // This is what fails in PlayerInventoryController.LoadMagazine(), next process is locked
-            //var readyResult = await inventoryController.method_30();
-            //if (readyResult.Failed)
-            //{
-            //    Plugin.LogSource.LogError($"Ready check: {readyResult.Error}");
-            //}
-
-            return new(inventoryController, magazine, sourceAmmo, loadCount, player.Profile.Skills.MagDrillsLoadProgression, loadTime);
         }
 
         protected bool FindMagAmmoFromEquipment(out AmmoItemClass ammo, out MagazineItemClass magazine)
