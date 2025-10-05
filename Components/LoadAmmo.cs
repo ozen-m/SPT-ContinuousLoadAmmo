@@ -25,9 +25,9 @@ namespace ContinuousLoadAmmo.Components
 
         protected Player player;
         protected InventoryController inventoryController;
-        protected MagazineItemClass Magazine;
+        protected MagazineItemClass magazine;
         protected static FieldInfo interfaceFieldInfo;
-        protected bool IsReachable;
+        protected bool isReachable;
 
         public bool IsActive { get; protected set; }
 
@@ -36,7 +36,7 @@ namespace ContinuousLoadAmmo.Components
             player = (Player)Singleton<GameWorld>.Instance.MainPlayer;
             if (player == null)
             {
-                Plugin.LogSource.LogError("Unable to find Player, destroying component");
+                Plugin.LogSource.LogError("Unable to find MainPlayer, destroying component");
                 Destroy(this);
             }
             if (!player.IsYourPlayer)
@@ -59,15 +59,8 @@ namespace ContinuousLoadAmmo.Components
 
         protected void Update()
         {
-            if (!Singleton<GameWorld>.Instantiated)
-            {
-                return;
-            }
-
-            if (player == null)
-            {
-                return;
-            }
+            if (!Singleton<GameWorld>.Instantiated) return;
+            if (player == null) return;
 
             if (!player.IsInventoryOpened && Input.GetKeyDown(Plugin.LoadAmmoHotkey.Value.MainKey))
             {
@@ -232,15 +225,15 @@ namespace ContinuousLoadAmmo.Components
             IsActive = true;
             if (eventType == LoadingEventType.Load)
             {
-                Magazine = loadingClass.magazineItemClass;
-                IsReachable = IsAtReachablePlace(Magazine) && IsAtReachablePlace(loadingClass.ammoItemClass);
+                magazine = loadingClass.magazineItemClass;
+                isReachable = IsAtReachablePlace(magazine) && IsAtReachablePlace(loadingClass.ammoItemClass);
                 GEventArgs7 loadAmmoEvent = new(loadingClass.ammoItemClass, loadingClass.magazineItemClass, loadingClass.int_0, loadingClass.float_0, CommandStatus.Begin, loadingClass.inventoryController_0);
                 OnStartLoading.Invoke(inventoryController, eventType, loadAmmoEvent, null);
             }
             else if (eventType == LoadingEventType.Unload)
             {
-                Magazine = unloadingClass.magazineItemClass;
-                IsReachable = IsAtReachablePlace(Magazine);
+                magazine = unloadingClass.magazineItemClass;
+                isReachable = IsAtReachablePlace(magazine);
                 GEventArgs8 unloadAmmoEvent = new(unloadingClass.item_0, unloadingClass.item_1, unloadingClass.magazineItemClass, unloadingClass.int_0 - unloadingClass.int_1, unloadingClass.int_1, unloadingClass.float_0, EFT.InventoryLogic.CommandStatus.Begin, unloadingClass.inventoryController_0);
                 OnStartLoading.Invoke(inventoryController, eventType, null, unloadAmmoEvent);
             }
@@ -248,7 +241,7 @@ namespace ContinuousLoadAmmo.Components
 
         public bool LoadingClosedInventory()
         {
-            if (IsActive && IsReachable && !inventoryController.HasAnyHandsAction())
+            if (IsActive && isReachable && !inventoryController.HasAnyHandsAction())
             {
                 SetPlayerState(true);
                 ListenForCancel();
@@ -327,8 +320,8 @@ namespace ContinuousLoadAmmo.Components
         protected void ResetLoading()
         {
             IsActive = false;
-            IsReachable = false;
-            Magazine = null;
+            isReachable = false;
+            magazine = null;
         }
 
         public void OnDestroy()
@@ -349,12 +342,12 @@ namespace ContinuousLoadAmmo.Components
             int skill = Mathf.Max(
             [
                 player.Profile.MagDrillsMastering,
-                player.Profile.CheckedMagazineSkillLevel(Magazine.Id),
-                Magazine.CheckOverride
+                player.Profile.CheckedMagazineSkillLevel(magazine.Id),
+                magazine.CheckOverride
             ]);
             //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag examined?
 
-            var value = Magazine.GetAmmoCountByLevel(Magazine.Count, Magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
+            var value = magazine.GetAmmoCountByLevel(magazine.Count, magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
             return value;
         }
 

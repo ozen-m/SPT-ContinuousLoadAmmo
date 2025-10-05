@@ -17,13 +17,13 @@ namespace ContinuousLoadAmmo.Components
         protected Transform clonedAmmoValueTransform;
         protected Transform clonedMagImageTransform;
 
-        protected static Transform EFTBattleUIScreenTransform;
+        protected static Transform eftBattleUIScreenTransform;
         protected static FieldInfo itemViewLoadAmmoComponentField;
         protected static FieldInfo itemViewAnimationField;
 
         public void Init()
         {
-            EFTBattleUIScreenTransform ??= Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
+            eftBattleUIScreenTransform ??= Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
             itemViewLoadAmmoComponentField ??= typeof(ItemViewAnimation).GetField("itemViewLoadAmmoComponent_0", BindingFlags.Instance | BindingFlags.NonPublic);
             itemViewAnimationField ??= typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -58,12 +58,12 @@ namespace ContinuousLoadAmmo.Components
             if (Plugin.LoadAmmoTextUI.Value)
             {
                 var ammoValueTransform = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value") ?? instanceTransform.Find("Info Panel/RightLayout/BottomVerticalGroup/Value");
-                clonedAmmoValueTransform = Object.Instantiate(ammoValueTransform, EFTBattleUIScreenTransform);
+                clonedAmmoValueTransform = Object.Instantiate(ammoValueTransform, eftBattleUIScreenTransform);
             }
             if (Plugin.LoadMagazineImageUI.Value)
             {
                 var imageTransform = instanceTransform.Find("Image") ?? instanceTransform.Find("Item Image");
-                clonedMagImageTransform = Object.Instantiate(imageTransform, EFTBattleUIScreenTransform);
+                clonedMagImageTransform = Object.Instantiate(imageTransform, eftBattleUIScreenTransform);
             }
         }
 
@@ -76,7 +76,7 @@ namespace ContinuousLoadAmmo.Components
                     itemViewLoadAmmoComponent.SetStopButtonStatus(false);
 
                     Transform transform = itemViewLoadAmmoComponent.transform;
-                    transform.SetParent(EFTBattleUIScreenTransform, false);
+                    transform.SetParent(eftBattleUIScreenTransform, false);
                     SetUI(transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
                 }
                 if (clonedAmmoValueTransform != null)
