@@ -1,11 +1,11 @@
-﻿using ContinuousLoadAmmo.Controllers;
+﻿using ContinuousLoadAmmo.Components;
 using EFT;
 using SPT.Reflection.Patching;
 using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    internal class LocalGameStopPatch : ModulePatch
+    public class LocalGameStopPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -18,12 +18,7 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPrefix]
         protected static void Prefix()
         {
-            if (LoadAmmo.IsLoadingAmmo)
-            {
-                LoadAmmo.Reset();
-                LoadAmmo.SetPlayerState(false);
-                LoadAmmoUI.DestroyUI();
-            }
+            LoadAmmo.Inst.LoadingEnd();
         }
     }
 }

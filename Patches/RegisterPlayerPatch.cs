@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    internal class RegisterPlayerPatch : ModulePatch
+    public class RegisterPlayerPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -26,8 +26,10 @@ namespace ContinuousLoadAmmo.Patches
                 return;
             }
 
-            Singleton<GameWorld>.Instance.MainPlayer.gameObject.AddComponent<LoadAmmoComponent>();
-            Plugin.LogSource.LogInfo($"Added LoadAmmoComponent to player: {Singleton<GameWorld>.Instance.MainPlayer.Profile.Nickname}");
+            var mainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
+            mainPlayer.gameObject.AddComponent<LoadAmmo>();
+            Plugin.LoadAmmoUI.Init();
+            Plugin.LogSource.LogInfo($"Added LoadAmmoComponent to player: {mainPlayer.Profile.Nickname}");
         }
     }
 }

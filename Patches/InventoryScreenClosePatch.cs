@@ -1,4 +1,4 @@
-﻿using ContinuousLoadAmmo.Controllers;
+﻿using ContinuousLoadAmmo.Components;
 using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    internal class InventoryScreenClosePatch : ModulePatch
+    public class InventoryScreenClosePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -18,18 +18,11 @@ namespace ContinuousLoadAmmo.Patches
         /// UI, Patch to NOT stop loading ammo on close
         /// </summary>
         [PatchPrefix]
-        protected static void Prefix(ref InventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController, out bool __state)
+        protected static void Prefix(ref InventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
         {
-            // bool IsBusy
-            __state = false;
-            if (LoadAmmo.IsLoadingAmmo && LoadAmmo.IsReachable)
+            if (!Plugin.InRaid) return;
+            if (LoadAmmo.Inst.LoadingClosedInventory())
             {
-                __state = ___inventoryController_0.HasAnyHandsAction();
-                if (__state)
-                {
-                    return;
-                }
-
                 if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
                 {
                     playerInventoryController.SetNextProcessLocked(true);
@@ -43,10 +36,6 @@ namespace ContinuousLoadAmmo.Patches
                     // Skip stop process after prefix
                     ___inventoryController_0 = null;
                 }
-
-                LoadAmmo.ListenForCancel();
-                LoadAmmo.SetPlayerState(true);
-                LoadAmmoUI.Show();
             }
         }
     }

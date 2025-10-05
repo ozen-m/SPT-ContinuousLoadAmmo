@@ -1,11 +1,10 @@
-﻿using ContinuousLoadAmmo.Controllers;
-using EFT.UI.DragAndDrop;
+﻿using EFT.UI.DragAndDrop;
 using SPT.Reflection.Patching;
 using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    internal class DestroyPatch : ModulePatch
+    public class DestroyPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -15,7 +14,7 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPrefix]
         protected static bool Prefix(ItemViewLoadAmmoComponent __instance)
         {
-            if (LoadAmmo.IsLoadingAmmo && __instance.GetHashCode() == LoadAmmoUI.itemViewLoadAmmoComponent.GetHashCode())
+            if (Plugin.LoadAmmoUI.IsSameLoaderUI(__instance))
             {
                 return false;
             }

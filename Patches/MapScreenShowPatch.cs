@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    internal class MapScreenShowPatch : ModulePatch
+    public class MapScreenShowPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {

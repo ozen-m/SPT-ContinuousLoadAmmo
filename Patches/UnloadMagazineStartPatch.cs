@@ -1,15 +1,13 @@
 ﻿using Comfort.Common;
 using ContinuousLoadAmmo.Components;
-using ContinuousLoadAmmo.Controllers;
 using EFT;
-using EFT.InventoryLogic;
 using SPT.Reflection.Patching;
 using System.Reflection;
 using System.Threading.Tasks;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    internal class UnloadMagazineStartPatch : ModulePatch
+    public class UnloadMagazineStartPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -19,22 +17,17 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPrefix]
         protected static void Prefix(Player.PlayerInventoryController.Class1088 __instance)
         {
-            InventoryController inventoryController = LoadAmmoComponent.MainPlayer.InventoryController;
-            LoadAmmo.IsLoadingAmmo = true;
-            LoadAmmo.Magazine = __instance.magazineItemClass;
-            LoadAmmo.IsReachable = LoadAmmo.IsAtReachablePlace(inventoryController, LoadAmmo.Magazine);
-            GEventArgs8 unloadAmmoEvent = new(__instance.item_0, __instance.item_1, __instance.magazineItemClass, __instance.int_0 - __instance.int_1, __instance.int_1, __instance.float_0, EFT.InventoryLogic.CommandStatus.Begin, __instance.inventoryController_0);
-            LoadAmmoUI.CreateUI(inventoryController, LoadAmmo.LoadingEventType.Unload, null, unloadAmmoEvent);
+            if (!Plugin.InRaid) return;
+            LoadAmmo.Inst.LoadingStart(LoadAmmo.LoadingEventType.Unload, null, __instance);
         }
 
         [PatchPostfix]
         protected static async void Postfix(Task<IResult> __result)
         {
+            if (!Plugin.InRaid) return;
             await __result;
 
-            LoadAmmo.Reset();
-            LoadAmmo.SetPlayerState(false);
-            LoadAmmoUI.DestroyUI();
+            LoadAmmo.Inst.LoadingEnd();
         }
     }
 }
