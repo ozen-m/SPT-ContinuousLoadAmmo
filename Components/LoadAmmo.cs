@@ -5,7 +5,6 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UIFixesInterop;
@@ -18,12 +17,6 @@ namespace ContinuousLoadAmmo.Components
     public class LoadAmmo : MonoBehaviour
     {
         public static LoadAmmo Inst;
-        protected static FieldInfo interfaceFieldInfo;
-
-        public event Action<InventoryController, LoadingEventType, GEventArgs7, GEventArgs8> OnStartLoading;
-        public event Action OnCloseInventory;
-        public event Action OnEndLoading;
-        public event Action OnDestroyComponent;
 
         protected Player player;
         protected InventoryController inventoryController;
@@ -31,9 +24,14 @@ namespace ContinuousLoadAmmo.Components
         protected bool isReachable;
         public bool IsActive { get; protected set; }
 
+        public event Action<InventoryController, LoadingEventType, GEventArgs7, GEventArgs8> OnStartLoading;
+        public event Action OnCloseInventory;
+        public event Action OnEndLoading;
+        public event Action OnDestroyComponent;
+
         protected void Awake()
         {
-            player = (Player)Singleton<GameWorld>.Instance.MainPlayer;
+            player = Singleton<GameWorld>.Instance.MainPlayer;
             if (player == null)
             {
                 Plugin.LogSource.LogError("Unable to find MainPlayer, destroying component");
@@ -54,8 +52,6 @@ namespace ContinuousLoadAmmo.Components
             }
 
             inventoryController = player.InventoryController;
-            interfaceFieldInfo ??= typeof(PlayerInventoryController).GetField("interface17_0", BindingFlags.Instance | BindingFlags.NonPublic);
-
             ((PlayerInventoryController)inventoryController).SetNextProcessLocked(false);
         }
 
