@@ -1,7 +1,7 @@
 # Continuous Load Ammo
 You are now able to continuously load and unload ammo while outside your inventory!
 
-Walk freely while waiting for your magazines to top up or unload. You may cancel by clicking the left/right mouse buttons (configurable), or by opening your inventory.
+Walk freely while waiting for your magazines to top up or unload. You may cancel by clicking the left/right mouse buttons (configurable).
 
 ### Configuration
 In the configuration manager (`F12`)
@@ -11,14 +11,18 @@ In the configuration manager (`F12`)
 - Do not interrupt un/loading ammo when switching inventory tabs (maps tab, tasks tab, etc.) Default is `true`.
 - Key used to cancel un/loading ammo outside the inventory. Default is `left and right mouse buttons`.
 - Key used to load ammo outside the inventory. Default is `K`.
+- When using Load Ammo Hotkey, choose ammo that has the highest penetration power, else prioritize the same ammo in the weapon's magazine. Default is `true`.
 - Show UI elements outside the inventory. Default is `true`.
 
 ### Installation
-Extract the contents of the .zip archive into your SPT directory.
+Extract the contents of the .7z archive into your SPT directory.
 
 ### Recommended Mods
 - Mods that alter loading speed, to balance at your own preference.
 - [UIFixes](https://forge.sp-tarkov.com/mod/1342/ui-fixes) by [Tyfon](https://forge.sp-tarkov.com/user/46005/tyfon). Load or unload multiple magazines!
+
+### Issues
+- Touching a barbed wire can conflict with the speed limits set by this mod.
 
 <br></br>
 _**Disclaimer:** I will not be held responsible for any injuries that may occur, including but not limited to - tripping over obstacles, bumping into walls, falling into a pit, dying from a scav, etc., whilst loading ammo. Please proceed with caution and watch your step._

@@ -24,11 +24,12 @@ namespace ContinuousLoadAmmo.Patches
 
             if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
             {
+                // It looks like only Load/UnloadMagazine checks for process locked, this should be fine
                 playerInventoryController.SetNextProcessLocked(false);
             }
             if (___inventoryController_0 != null)
             {
-                // Skip stop process and process locked after prefix
+                // Skip StopProcesses and SetNextProcessLocked(true) after prefix
                 ___inventoryController_0 = null;
             }
             LoadAmmo.Inst.LoadingOutsideInventory();

@@ -22,12 +22,13 @@ namespace ContinuousLoadAmmo.Components
         protected InventoryController inventoryController;
         protected MagazineItemClass magazine;
         protected bool isReachable;
-        public bool IsActive { get; protected set; }
 
         public event Action<InventoryController, LoadingEventType, GEventArgs7, GEventArgs8> OnStartLoading;
         public event Action OnCloseInventory;
         public event Action OnEndLoading;
         public event Action OnDestroyComponent;
+
+        public bool IsActive { get; protected set; }
 
         protected void Awake()
         {
@@ -182,14 +183,14 @@ namespace ContinuousLoadAmmo.Components
             {
                 magazine = loadingClass.magazineItemClass;
                 isReachable = IsAtReachablePlace(magazine) && IsAtReachablePlace(loadingClass.ammoItemClass);
-                GEventArgs7 loadAmmoEvent = new(loadingClass.ammoItemClass, loadingClass.magazineItemClass, loadingClass.int_0, loadingClass.float_0, CommandStatus.Begin, loadingClass.inventoryController_0);
+                GEventArgs7 loadAmmoEvent = new(loadingClass.ammoItemClass, magazine, loadingClass.int_0, loadingClass.float_0, CommandStatus.Begin, loadingClass.inventoryController_0);
                 OnStartLoading?.Invoke(inventoryController, eventType, loadAmmoEvent, null);
             }
             else if (eventType == LoadingEventType.Unload)
             {
                 magazine = unloadingClass.magazineItemClass;
                 isReachable = IsAtReachablePlace(magazine);
-                GEventArgs8 unloadAmmoEvent = new(unloadingClass.item_0, unloadingClass.item_1, unloadingClass.magazineItemClass, unloadingClass.int_0 - unloadingClass.int_1, unloadingClass.int_1, unloadingClass.float_0, EFT.InventoryLogic.CommandStatus.Begin, unloadingClass.inventoryController_0);
+                GEventArgs8 unloadAmmoEvent = new(unloadingClass.item_0, unloadingClass.item_1, magazine, unloadingClass.int_0 - unloadingClass.int_1, unloadingClass.int_1, unloadingClass.float_0, CommandStatus.Begin, unloadingClass.inventoryController_0);
                 OnStartLoading?.Invoke(inventoryController, eventType, null, unloadAmmoEvent);
             }
             if (!player.IsInventoryOpened)
@@ -308,8 +309,7 @@ namespace ContinuousLoadAmmo.Components
             ]);
             //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag examined?
 
-            var value = magazine.GetAmmoCountByLevel(magazine.Count, magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
-            return value;
+            return magazine.GetAmmoCountByLevel(magazine.Count, magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
         }
 
         public static EquipmentSlot[] ReachableSlots => Plugin.ReachableOnly.Value ? ReachableOnly : ReachableAll;

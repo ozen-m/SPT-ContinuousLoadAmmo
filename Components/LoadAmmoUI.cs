@@ -3,6 +3,7 @@ using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -16,6 +17,7 @@ namespace ContinuousLoadAmmo.Components
         protected ItemViewLoadAmmoComponent itemViewLoadAmmoComponent;
         protected Transform clonedAmmoValueTransform;
         protected Transform clonedMagImageTransform;
+        protected CancellationTokenSource cancellationTokenSource;
 
         protected static Transform eftBattleUIScreenTransform;
         protected static FieldInfo itemViewLoadAmmoComponentField;
@@ -35,6 +37,12 @@ namespace ContinuousLoadAmmo.Components
 
         protected void CreateUI(InventoryController playerInventoryController, LoadAmmo.LoadingEventType eventType, GEventArgs7 loadEvent, GEventArgs8 unloadEvent)
         {
+            // Safeguard?
+            if (magItemView != null)
+            {
+                DestroyUI();
+            }
+
             if (eventType == LoadAmmo.LoadingEventType.Load)
             {
                 MagazineItemClass magazine = loadEvent.TargetItem as MagazineItemClass;
@@ -70,6 +78,9 @@ namespace ContinuousLoadAmmo.Components
         {
             try
             {
+                cancellationTokenSource?.Cancel();
+                cancellationTokenSource = new CancellationTokenSource();
+
                 if (itemViewLoadAmmoComponent != null)
                 {
                     itemViewLoadAmmoComponent.SetStopButtonStatus(false);
@@ -83,7 +94,7 @@ namespace ContinuousLoadAmmo.Components
                     SetUI(clonedAmmoValueTransform, new Vector2(0f, -190f));
                     if (clonedAmmoValueTransform.TryGetComponent(out TextMeshProUGUI textMesh))
                     {
-                        UpdateTextValue(textMesh);
+                        _ = UpdateTextValue(textMesh, cancellationTokenSource.Token);
                     }
                 }
                 if (clonedMagImageTransform != null)
@@ -91,7 +102,7 @@ namespace ContinuousLoadAmmo.Components
                     SetUI(clonedMagImageTransform, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
                     if (clonedMagImageTransform.TryGetComponent(out Image mainImage))
                     {
-                        mainImage.ChangeImageAlpha(1f);
+                        mainImage.color.SetAlpha(1f);
                     }
                 }
             }
@@ -111,13 +122,13 @@ namespace ContinuousLoadAmmo.Components
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
         }
 
-        protected async void UpdateTextValue(TextMeshProUGUI textMesh)
+        protected async Task UpdateTextValue(TextMeshProUGUI textMesh, CancellationToken token)
         {
             textMesh.enableWordWrapping = false;
             textMesh.overflowMode = TextOverflowModes.Overflow;
             textMesh.alignment = TextAlignmentOptions.Center;
 
-            while (LoadAmmo.Inst.IsActive)
+            while (!token.IsCancellationRequested)
             {
                 textMesh.SetText(LoadAmmo.Inst.GetMagAmmoCountByLevel());
 
@@ -136,6 +147,10 @@ namespace ContinuousLoadAmmo.Components
 
         protected void DestroyUI()
         {
+            cancellationTokenSource?.Cancel();
+            cancellationTokenSource?.Dispose();
+            cancellationTokenSource = null;
+
             if (itemViewLoadAmmoComponent != null)
             {
                 itemViewLoadAmmoComponent.Destroy();

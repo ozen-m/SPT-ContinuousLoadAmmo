@@ -147,6 +147,10 @@ namespace ContinuousLoadAmmo.Patches
         }
     }
 
+    /// <summary>
+    /// Skip StopProcesses when called from Screens.
+    /// Other option: Get callstack and identify caller to skip StopProcesses
+    /// </summary>
     public class StopProcessesPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -165,6 +169,10 @@ namespace ContinuousLoadAmmo.Patches
         }
     }
 
+    /// <summary>
+    /// MultiSelect patches StopProcesses to run MultiSelect.StopLoading.
+    /// Even if StopProcesses is skipped, MultiSelect's patch still runs to call StopLoading
+    /// </summary>
     public class MultiSelectStopLoadingPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
