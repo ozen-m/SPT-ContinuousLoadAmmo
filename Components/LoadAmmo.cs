@@ -114,13 +114,13 @@ namespace ContinuousLoadAmmo.Components
             }
             if (reachableAmmos.Count > 0)
             {
-                // Sort penetration power highest to lowest
+                // Sort penetration power highest to lowest, then stack count ascending
                 reachableAmmos.Sort((a, b) =>
                 {
                     int result = b.PenetrationPower.CompareTo(a.PenetrationPower);
                     if (result == 0)
                     {
-                        result = b.StackObjectsCount.CompareTo(a.StackObjectsCount);
+                        result = a.StackObjectsCount.CompareTo(b.StackObjectsCount);
                     }
                     return result;
                 });
