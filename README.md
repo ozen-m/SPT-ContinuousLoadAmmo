@@ -1,7 +1,7 @@
 # Continuous Load Ammo
 You are now able to continuously load and unload ammo while outside your inventory!
 
-Walk freely while waiting for your magazines to top up or unload. You may cancel by clicking the left/right mouse buttons (configurable).
+Walk freely while waiting for your magazines to top up or unload. You may cancel by clicking the `left/right mouse buttons`. You can load ammo from outside the inventory by using a keybind `K`. By default, this loads the best penetrating ammo for your current weapon into a magazine in your inventory. While holding this keybind, `mouse scrollwheel up/down` to choose which ammo to load into a magazine.
 
 ### Configuration
 In the configuration manager (`F12`)

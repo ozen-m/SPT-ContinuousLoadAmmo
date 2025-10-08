@@ -19,13 +19,13 @@ namespace ContinuousLoadAmmo.Components
         protected Transform clonedMagImageTransform;
         protected CancellationTokenSource cancellationTokenSource;
 
-        protected static Transform eftBattleUIScreenTransform;
+        public static Transform EftBattleUIScreenTransform { get; protected set; }
         protected static FieldInfo itemViewLoadAmmoComponentField;
         protected static FieldInfo itemViewAnimationField;
 
         public void Init()
         {
-            eftBattleUIScreenTransform ??= Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
+            EftBattleUIScreenTransform ??= Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
             itemViewLoadAmmoComponentField ??= typeof(ItemViewAnimation).GetField("itemViewLoadAmmoComponent_0", BindingFlags.Instance | BindingFlags.NonPublic);
             itemViewAnimationField ??= typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -65,12 +65,12 @@ namespace ContinuousLoadAmmo.Components
             if (Plugin.LoadAmmoTextUI.Value)
             {
                 var ammoValueTransform = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value") ?? instanceTransform.Find("Info Panel/RightLayout/BottomVerticalGroup/Value");
-                clonedAmmoValueTransform = Object.Instantiate(ammoValueTransform, eftBattleUIScreenTransform);
+                clonedAmmoValueTransform = Object.Instantiate(ammoValueTransform, EftBattleUIScreenTransform);
             }
             if (Plugin.LoadMagazineImageUI.Value)
             {
                 var imageTransform = instanceTransform.Find("Image") ?? instanceTransform.Find("Item Image");
-                clonedMagImageTransform = Object.Instantiate(imageTransform, eftBattleUIScreenTransform);
+                clonedMagImageTransform = Object.Instantiate(imageTransform, EftBattleUIScreenTransform);
             }
         }
 
@@ -86,7 +86,7 @@ namespace ContinuousLoadAmmo.Components
                     itemViewLoadAmmoComponent.SetStopButtonStatus(false);
 
                     Transform transform = itemViewLoadAmmoComponent.transform;
-                    transform.SetParent(eftBattleUIScreenTransform, false);
+                    transform.SetParent(EftBattleUIScreenTransform, false);
                     SetUI(transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
                 }
                 if (clonedAmmoValueTransform != null)
@@ -110,16 +110,6 @@ namespace ContinuousLoadAmmo.Components
             {
                 Plugin.LogSource.LogError($"LoadAmmoUI::Show {ex}");
             }
-        }
-
-        protected void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
-        {
-            RectTransform rectTransform = (RectTransform)transform;
-            rectTransform.anchoredPosition = offset != null ? (Vector2)offset : Vector2.zero;
-            rectTransform.localScale = scale != null ? (Vector3)scale : Vector3.one;
-            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
         }
 
         protected async Task UpdateTextValue(TextMeshProUGUI textMesh, CancellationToken token)
@@ -168,7 +158,7 @@ namespace ContinuousLoadAmmo.Components
             }
             if (magItemView != null)
             {
-                magItemView.ReturnToPool();
+                magItemView.Kill();
                 magItemView = null;
             }
         }
@@ -179,6 +169,16 @@ namespace ContinuousLoadAmmo.Components
             LoadAmmo.Inst.OnCloseInventory -= Show;
             LoadAmmo.Inst.OnEndLoading -= DestroyUI;
             LoadAmmo.Inst.OnDestroyComponent -= Unsubscribe;
+        }
+
+        public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
+        {
+            RectTransform rectTransform = (RectTransform)transform;
+            rectTransform.anchoredPosition = offset != null ? (Vector2)offset : Vector2.zero;
+            rectTransform.localScale = scale != null ? (Vector3)scale : Vector3.one;
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
         }
     }
 }
