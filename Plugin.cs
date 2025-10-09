@@ -47,7 +47,6 @@ namespace ContinuousLoadAmmo
             new UnloadMagazineStartPatch().Enable();
             new InventoryScreenClosePatch().Enable();
             new DestroyPatch().Enable();
-            new InventoryCheckMagazinePatch().Enable();
             new LocalGameStopPatch().Enable();
             new RegisterPlayerPatch().Enable();
             new TranslateCommandPatch().Enable();

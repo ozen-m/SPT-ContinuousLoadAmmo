@@ -18,7 +18,7 @@ namespace ContinuousLoadAmmo.Patches
         [PatchPrefix]
         protected static void Prefix()
         {
-            LoadAmmo.Inst.LoadingEnd();
+            LoadAmmo.Inst.StopLoading();
         }
     }
 }

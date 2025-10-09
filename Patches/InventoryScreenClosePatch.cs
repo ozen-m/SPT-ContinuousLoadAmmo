@@ -18,7 +18,7 @@ namespace ContinuousLoadAmmo.Patches
         /// UI, Patch to NOT stop loading ammo on close
         /// </summary>
         [PatchPrefix]
-        protected static void Prefix(ref InventoryController ___inventoryController_0, InventoryScreen.GClass3581 ___ScreenController)
+        protected static void Prefix(ref InventoryController ___inventoryController_0)
         {
             if (!Plugin.InRaid) return;
 

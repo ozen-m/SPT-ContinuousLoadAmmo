@@ -18,19 +18,18 @@ namespace ContinuousLoadAmmo.Components
         public static LoadAmmo Inst;
 
         protected Player player;
-        protected InventoryController inventoryController;
         protected MagazineItemClass magazine;
+        protected LoadAmmoSelector ammoSelector;
         protected bool isReachable;
 
-        protected LoadAmmoSelector ammoSelector;
+        public bool IsActive { get; protected set; }
+        public bool AmmoSelectorActive => ammoSelector.IsShown;
+        protected InventoryController InventoryController => player.InventoryController;
 
         public event Action<InventoryController, LoadingEventType, GEventArgs7, GEventArgs8> OnStartLoading;
         public event Action OnCloseInventory;
         public event Action OnEndLoading;
         public event Action OnDestroyComponent;
-
-        public bool IsActive { get; protected set; }
-        public bool AmmoSelectorActive => ammoSelector.IsShown;
 
         protected void Awake()
         {
@@ -54,9 +53,7 @@ namespace ContinuousLoadAmmo.Components
                 Destroy(this);
             }
 
-            inventoryController = player.InventoryController;
-            ((PlayerInventoryController)inventoryController).SetNextProcessLocked(false);
-
+            ((PlayerInventoryController)InventoryController).SetNextProcessLocked(false);
             ammoSelector = new LoadAmmoSelector();
         }
 
@@ -65,7 +62,7 @@ namespace ContinuousLoadAmmo.Components
             if (!Singleton<GameWorld>.Instantiated ||
                 player == null ||
                 player.IsInventoryOpened ||
-                inventoryController.HasAnyHandsAction() ||
+                InventoryController.HasAnyHandsAction() ||
                 IsActive ||
                 ammoSelector.IsShown)
             {
@@ -74,7 +71,7 @@ namespace ContinuousLoadAmmo.Components
 
             if (Input.GetKey(Plugin.LoadAmmoHotkey.Value.MainKey) && Input.mouseScrollDelta.y != 0)
             {
-                _ = OpenAmmoSelector(inventoryController);
+                _ = OpenAmmoSelector();
                 return;
             }
             if (Input.GetKeyUp(Plugin.LoadAmmoHotkey.Value.MainKey))
@@ -83,13 +80,13 @@ namespace ContinuousLoadAmmo.Components
             }
         }
 
-        protected async Task OpenAmmoSelector(InventoryController inventoryController)
+        protected async Task OpenAmmoSelector()
         {
             if (GetAmmoItemsFromEquipment(out List<AmmoItemClass> ammos))
             {
                 if (GetMagazineForAmmo(ammos[0], out MagazineItemClass foundMagazine))
                 {
-                    AmmoItemClass chosenAmmo = await ammoSelector.ShowAcceptableAmmos(ammos, inventoryController);
+                    AmmoItemClass chosenAmmo = await ammoSelector.ShowAcceptableAmmos(ammos, InventoryController);
                     if (chosenAmmo != null)
                     {
                         LoadMagazine(chosenAmmo, foundMagazine);
@@ -130,7 +127,7 @@ namespace ContinuousLoadAmmo.Components
         {
             //Plugin.LogSource.LogDebug($"Mag {magazine.LocalizedShortName()} ({magazine.Count}); Ammo {ammo.LocalizedShortName()} ({ammo.StackObjectsCount})");
             int loadCount = Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
-            ((PlayerInventoryController)inventoryController).LoadMagazine(ammo, magazine, loadCount, false);
+            ((PlayerInventoryController)InventoryController).LoadMagazine(ammo, magazine, loadCount, false);
         }
 
         /// <summary>
@@ -142,7 +139,7 @@ namespace ContinuousLoadAmmo.Components
         {
             // Get Magazine
             var foundMagazines = new List<MagazineItemClass>();
-            inventoryController.GetAcceptableItemsNonAlloc(ReachableSlots, foundMagazines,
+            InventoryController.GetAcceptableItemsNonAlloc(ReachableSlots, foundMagazines,
                 item => item is MagazineItemClass mag && mag.Count != mag.MaxCount && mag.CheckCompatibility(ammo)
                 );
             if (foundMagazines.Count > 0)
@@ -170,7 +167,7 @@ namespace ContinuousLoadAmmo.Components
             if (player.LastEquippedWeaponOrKnifeItem is Weapon weapon)
             {
                 string ammoCaliber = weapon.AmmoCaliber;
-                inventoryController.GetAcceptableItemsNonAlloc(
+                InventoryController.GetAcceptableItemsNonAlloc(
                     ReachableSlots,
                     reachableAmmos,
                     item => item is AmmoItemClass ammo && ammo.Caliber == ammoCaliber
@@ -203,14 +200,14 @@ namespace ContinuousLoadAmmo.Components
                 magazine = loadingClass.magazineItemClass;
                 isReachable = IsAtReachablePlace(magazine) && IsAtReachablePlace(loadingClass.ammoItemClass);
                 GEventArgs7 loadAmmoEvent = new(loadingClass.ammoItemClass, magazine, loadingClass.int_0, loadingClass.float_0, CommandStatus.Begin, loadingClass.inventoryController_0);
-                OnStartLoading?.Invoke(inventoryController, eventType, loadAmmoEvent, null);
+                OnStartLoading?.Invoke(InventoryController, eventType, loadAmmoEvent, null);
             }
             else if (eventType == LoadingEventType.Unload)
             {
                 magazine = unloadingClass.magazineItemClass;
                 isReachable = IsAtReachablePlace(magazine);
                 GEventArgs8 unloadAmmoEvent = new(unloadingClass.item_0, unloadingClass.item_1, magazine, unloadingClass.int_0 - unloadingClass.int_1, unloadingClass.int_1, unloadingClass.float_0, CommandStatus.Begin, unloadingClass.inventoryController_0);
-                OnStartLoading?.Invoke(inventoryController, eventType, null, unloadAmmoEvent);
+                OnStartLoading?.Invoke(InventoryController, eventType, null, unloadAmmoEvent);
             }
             if (!player.IsInventoryOpened)
             {
@@ -220,14 +217,14 @@ namespace ContinuousLoadAmmo.Components
 
         public void LoadingOutsideInventory()
         {
-            if (IsActive && isReachable && !inventoryController.HasAnyHandsAction())
+            if (IsActive && isReachable && !InventoryController.HasAnyHandsAction())
             {
                 SetPlayerState(true);
                 ListenForCancel();
                 OnCloseInventory?.Invoke();
                 return;
             }
-            inventoryController.StopProcesses();
+            InventoryController.StopProcesses();
         }
 
         public void LoadingEnd()
@@ -268,13 +265,13 @@ namespace ContinuousLoadAmmo.Components
         {
             while (IsActive)
             {
-                while (inventoryController.HasAnyHandsAction())
+                while (InventoryController.HasAnyHandsAction())
                 {
                     await Task.Yield();
                 }
                 if (!player.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey) || !player.HandsIsEmpty))
                 {
-                    inventoryController.StopProcesses();
+                    InventoryController.StopProcesses();
                     break;
                 }
                 await Task.Yield();
@@ -309,10 +306,10 @@ namespace ContinuousLoadAmmo.Components
                 return false;
             }
             IContainer container = item.Parent.Container as IContainer;
-            if (inventoryController.Inventory.Stash == null || container != inventoryController.Inventory.Stash.Grid)
+            if (InventoryController.Inventory.Stash == null || container != InventoryController.Inventory.Stash.Grid)
             {
                 CompoundItem compoundItem = item as CompoundItem;
-                if ((compoundItem == null || !compoundItem.MissingVitalParts.Any()) && inventoryController.Inventory.GetItemsInSlots(ReachableSlots).Contains(item) && inventoryController.Examined(item)) // linq
+                if ((compoundItem == null || !compoundItem.MissingVitalParts.Any()) && InventoryController.Inventory.GetItemsInSlots(ReachableSlots).Contains(item) && InventoryController.Examined(item)) // linq
                 {
                     return true;
                 }
@@ -332,6 +329,8 @@ namespace ContinuousLoadAmmo.Components
 
             return magazine.GetAmmoCountByLevel(magazine.Count, magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
         }
+
+        public void StopLoading() => InventoryController.StopProcesses();
 
         public static EquipmentSlot[] ReachableSlots => Plugin.ReachableOnly.Value ? ReachableOnly : ReachableAll;
         public static readonly EquipmentSlot[] ReachableOnly = Inventory.FastAccessSlots.AddRangeToArray([EquipmentSlot.SecuredContainer, EquipmentSlot.ArmBand]);
