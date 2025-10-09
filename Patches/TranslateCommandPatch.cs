@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace ContinuousLoadAmmo.Patches
 {
-    public class TranslateInputPatch : ModulePatch
+    public class TranslateCommandPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {

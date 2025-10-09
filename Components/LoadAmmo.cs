@@ -62,16 +62,18 @@ namespace ContinuousLoadAmmo.Components
 
         protected void Update()
         {
-            if (!Singleton<GameWorld>.Instantiated) return;
-            if (player == null) return;
-
-            if (player.IsInventoryOpened) return;
-            if (ammoSelector.IsShown) return;
+            if (!Singleton<GameWorld>.Instantiated ||
+                player == null ||
+                player.IsInventoryOpened ||
+                inventoryController.HasAnyHandsAction() ||
+                IsActive ||
+                ammoSelector.IsShown)
+            {
+                return;
+            }
 
             if (Input.GetKey(Plugin.LoadAmmoHotkey.Value.MainKey) && Input.mouseScrollDelta.y != 0)
             {
-                if (IsActive || inventoryController.HasAnyHandsAction()) return;
-
                 _ = OpenAmmoSelector(inventoryController);
                 return;
             }
@@ -249,6 +251,8 @@ namespace ContinuousLoadAmmo.Components
             else
             {
                 await Task.Delay(800);
+
+                // Check for active MultiSelect load/unload
                 if (MultiSelect.LoadUnloadSerializer != null) return;
 
                 if (!player.IsWeaponOrKnifeInHands)
@@ -277,25 +281,6 @@ namespace ContinuousLoadAmmo.Components
             }
         }
 
-        // Base EFT code with modifications
-        public bool IsAtReachablePlace(Item item)
-        {
-            if (item.CurrentAddress == null)
-            {
-                return false;
-            }
-            IContainer container = item.Parent.Container as IContainer;
-            if (inventoryController.Inventory.Stash == null || container != inventoryController.Inventory.Stash.Grid)
-            {
-                CompoundItem compoundItem = item as CompoundItem;
-                if ((compoundItem == null || !compoundItem.MissingVitalParts.Any()) && inventoryController.Inventory.GetItemsInSlots(ReachableSlots).Contains(item) && inventoryController.Examined(item)) // linq
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         protected void ResetLoading()
         {
             IsActive = false;
@@ -314,6 +299,25 @@ namespace ContinuousLoadAmmo.Components
             {
                 Inst = null;
             }
+        }
+
+        // Base EFT code with modifications
+        public bool IsAtReachablePlace(Item item)
+        {
+            if (item.CurrentAddress == null)
+            {
+                return false;
+            }
+            IContainer container = item.Parent.Container as IContainer;
+            if (inventoryController.Inventory.Stash == null || container != inventoryController.Inventory.Stash.Grid)
+            {
+                CompoundItem compoundItem = item as CompoundItem;
+                if ((compoundItem == null || !compoundItem.MissingVitalParts.Any()) && inventoryController.Inventory.GetItemsInSlots(ReachableSlots).Contains(item) && inventoryController.Examined(item)) // linq
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public string GetMagAmmoCountByLevel()

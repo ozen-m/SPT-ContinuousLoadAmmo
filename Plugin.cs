@@ -50,7 +50,7 @@ namespace ContinuousLoadAmmo
             new InventoryCheckMagazinePatch().Enable();
             new LocalGameStopPatch().Enable();
             new RegisterPlayerPatch().Enable();
-            new TranslateInputPatch().Enable();
+            new TranslateCommandPatch().Enable();
             ScreensPatches.Enable();
         }
 
