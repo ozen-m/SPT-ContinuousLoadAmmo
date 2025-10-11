@@ -27,7 +27,7 @@ namespace ContinuousLoadAmmo.Components
         protected InventoryController InventoryController => player.InventoryController;
 
         public event Action<InventoryController, LoadingEventType, GEventArgs7, GEventArgs8> OnStartLoading;
-        public event Action OnCloseInventory;
+        public event Action<Item> OnCloseInventory;
         public event Action OnEndLoading;
         public event Action OnDestroyComponent;
 
@@ -221,7 +221,7 @@ namespace ContinuousLoadAmmo.Components
             {
                 SetPlayerState(true);
                 ListenForCancel();
-                OnCloseInventory?.Invoke();
+                OnCloseInventory?.Invoke(magazine);
                 return;
             }
             InventoryController.StopProcesses();
