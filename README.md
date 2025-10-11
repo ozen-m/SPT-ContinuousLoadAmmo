@@ -12,7 +12,6 @@ In the configuration manager (`F12`)
 - Key used to cancel un/loading ammo outside the inventory. Default is `left and right mouse buttons`.
 - Key used to load ammo outside the inventory. Default is `K`.
 - When using Load Ammo Hotkey, choose ammo that has the highest penetration power, else prioritize the same ammo in the weapon's magazine. Default is `true`.
-- Show UI elements outside the inventory. Default is `true`.
 
 ### Installation
 Extract the contents of the .7z archive into your SPT directory.

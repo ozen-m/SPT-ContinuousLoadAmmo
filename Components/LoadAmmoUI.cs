@@ -27,7 +27,6 @@ namespace ContinuousLoadAmmo.Components
         protected static FieldInfo itemViewAnimationField;
         protected static FieldInfo itemViewLoadAmmoComponentTemplateField;
         protected static FieldInfo itemViewLoadAmmoComponentCTSField;
-        protected static FieldInfo itemViewBottomPanelField;
 
         public void Init()
         {
@@ -38,7 +37,6 @@ namespace ContinuousLoadAmmo.Components
             itemViewAnimationField ??= typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
             itemViewLoadAmmoComponentTemplateField ??= typeof(ItemViewAnimation).GetField("_loadAmmoComponentTemplate", BindingFlags.Instance | BindingFlags.NonPublic);
             itemViewLoadAmmoComponentCTSField ??= typeof(ItemViewLoadAmmoComponent).GetField("cancellationTokenSource_0", BindingFlags.Instance | BindingFlags.NonPublic);
-            itemViewBottomPanelField ??= typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
 
             PrepareGameObjects();
             CloneTemplates();
@@ -85,12 +83,9 @@ namespace ContinuousLoadAmmo.Components
 
         protected void Start(float oneAmmoDuration, int ammoTotal, int ammoDone = 0)
         {
-            if (Plugin.LoadAmmoSpinnerUI.Value)
-            {
-                CancellationTokenSource cts = (CancellationTokenSource)itemViewLoadAmmoComponentCTSField.GetValue(itemViewLoadAmmoComponent);
-                cts?.Dispose();
-                itemViewLoadAmmoComponent.Show(oneAmmoDuration, ammoTotal, ammoDone);
-            }
+            CancellationTokenSource cts = (CancellationTokenSource)itemViewLoadAmmoComponentCTSField.GetValue(itemViewLoadAmmoComponent);
+            cts?.Dispose();
+            itemViewLoadAmmoComponent.Show(oneAmmoDuration, ammoTotal, ammoDone);
         }
 
         protected void Show(Item item)
@@ -98,15 +93,10 @@ namespace ContinuousLoadAmmo.Components
             cancellationTokenSource?.Cancel();
             cancellationTokenSource = new CancellationTokenSource();
 
-            if (Plugin.LoadAmmoTextUI.Value)
-            {
-                magValue.enabled = true;
-                _ = UpdateTextValue(magValue, cancellationTokenSource.Token);
-            }
-            if (Plugin.LoadMagazineImageUI.Value)
-            {
-                GetImage(item);
-            }
+            magValue.enabled = true;
+            _ = UpdateTextValue(magValue, cancellationTokenSource.Token);
+
+            GetImage(item);
         }
 
         protected void GetImage(Item item)
