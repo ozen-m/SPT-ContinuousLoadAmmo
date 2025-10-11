@@ -19,7 +19,7 @@ namespace ContinuousLoadAmmo.Components
         protected Transform magUI;
         protected ItemViewLoadAmmoComponent itemViewLoadAmmoComponent;
         protected Image magImage;
-        protected GClass907 imageLoader;
+        protected GClass929 imageLoader;
         protected Action unbindImageLoader;
         protected TextMeshProUGUI magValue;
         protected CancellationTokenSource cancellationTokenSource;
@@ -27,6 +27,7 @@ namespace ContinuousLoadAmmo.Components
         protected static FieldInfo itemViewAnimationField;
         protected static FieldInfo itemViewLoadAmmoComponentTemplateField;
         protected static FieldInfo itemViewLoadAmmoComponentCTSField;
+        protected static FieldInfo itemViewBottomPanelField;
 
         public void Init()
         {
@@ -37,6 +38,7 @@ namespace ContinuousLoadAmmo.Components
             itemViewAnimationField ??= typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
             itemViewLoadAmmoComponentTemplateField ??= typeof(ItemViewAnimation).GetField("_loadAmmoComponentTemplate", BindingFlags.Instance | BindingFlags.NonPublic);
             itemViewLoadAmmoComponentCTSField ??= typeof(ItemViewLoadAmmoComponent).GetField("cancellationTokenSource_0", BindingFlags.Instance | BindingFlags.NonPublic);
+            itemViewBottomPanelField ??= typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
 
             PrepareGameObjects();
             CloneTemplates();
@@ -69,9 +71,7 @@ namespace ContinuousLoadAmmo.Components
             itemViewLoadAmmoComponent = UnityEngine.Object.Instantiate((ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField.GetValue(itemViewAnimation), magUI, false);
             SetUI(itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
 
-            Transform instanceTransform = gridItemView.transform;
-            var textMesh = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value").GetComponent<TextMeshProUGUI>();
-            magValue = UnityEngine.Object.Instantiate(textMesh, magUI, false);
+            magValue = UnityEngine.Object.Instantiate(((ItemViewBottomPanel)itemViewBottomPanelField.GetValue(gridItemView)).ItemValue, magUI, false);
             SetUI(magValue.transform, new Vector2(0f, -190f));
             magValue.enableWordWrapping = false;
             magValue.overflowMode = TextOverflowModes.Overflow;

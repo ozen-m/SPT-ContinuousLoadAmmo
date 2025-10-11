@@ -11,11 +11,11 @@ namespace ContinuousLoadAmmo.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Player.PlayerInventoryController.Class1085).GetMethod(nameof(Player.PlayerInventoryController.Class1085.Start));
+            return typeof(Player.PlayerInventoryController.Class1204).GetMethod(nameof(Player.PlayerInventoryController.Class1204.Start));
         }
 
         [PatchPostfix]
-        protected static async void Postfix(Player.PlayerInventoryController.Class1085 __instance, Task<IResult> __result)
+        protected static async void Postfix(Player.PlayerInventoryController.Class1204 __instance, Task<IResult> __result)
         {
             if (!Plugin.InRaid) return;
 

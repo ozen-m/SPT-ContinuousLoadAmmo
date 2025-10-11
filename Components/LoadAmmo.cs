@@ -192,20 +192,20 @@ namespace ContinuousLoadAmmo.Components
             return false;
         }
 
-        public void LoadingStart(LoadingEventType eventType, Class1085 loadingClass, Class1088 unloadingClass)
+        public void LoadingStart(LoadingEventType eventType, Class1204 loadingClass, Class1207 unloadingClass)
         {
             IsActive = true;
             if (eventType == LoadingEventType.Load)
             {
-                magazine = loadingClass.magazineItemClass;
-                isReachable = IsAtReachablePlace(magazine) && IsAtReachablePlace(loadingClass.ammoItemClass);
-                OnStartLoading?.Invoke(loadingClass.float_0, loadingClass.int_0, 0);
+                magazine = loadingClass.MagazineItemClass;
+                isReachable = IsAtReachablePlace(magazine) && IsAtReachablePlace(loadingClass.AmmoItemClass);
+                OnStartLoading?.Invoke(loadingClass.Float_0, loadingClass.Int_0, 0);
             }
             else if (eventType == LoadingEventType.Unload)
             {
-                magazine = unloadingClass.magazineItemClass;
+                magazine = unloadingClass.MagazineItemClass;
                 isReachable = IsAtReachablePlace(magazine);
-                OnStartLoading?.Invoke(unloadingClass.float_0, unloadingClass.int_1, unloadingClass.int_0 - unloadingClass.int_1);
+                OnStartLoading?.Invoke(unloadingClass.Float_0, unloadingClass.Int_1, unloadingClass.Int_0 - unloadingClass.Int_1);
             }
             if (!player.IsInventoryOpened)
             {
