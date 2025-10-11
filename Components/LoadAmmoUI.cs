@@ -41,8 +41,9 @@ namespace ContinuousLoadAmmo.Components
             itemViewBottomPanelField ??= typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
 
             PrepareGameObjects();
+            CloneTemplates();
 
-            LoadAmmo.Inst.OnStartLoading += Create;
+            LoadAmmo.Inst.OnStartLoading += Start;
             LoadAmmo.Inst.OnCloseInventory += Show;
             LoadAmmo.Inst.OnEndLoading += Close;
             LoadAmmo.Inst.OnDestroyComponent += Destroy;
@@ -62,68 +63,49 @@ namespace ContinuousLoadAmmo.Components
             magImage.enabled = false;
         }
 
-        protected void Create(InventoryController playerInventoryController, LoadAmmo.LoadingEventType eventType, GEventArgs7 loadEvent, GEventArgs8 unloadEvent)
+        protected void CloneTemplates()
         {
-            if (itemViewLoadAmmoComponent == null || magValue == null)
-            {
-                var magItemView = GridItemView.Create(eventType == LoadAmmo.LoadingEventType.Load ? loadEvent.Item : unloadEvent.Item, new GClass3240(), ItemRotation.Horizontal, playerInventoryController, playerInventoryController, null, null, null, null, null);
-                if (itemViewLoadAmmoComponent == null)
-                {
-                    var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField.GetValue(magItemView);
-                    itemViewLoadAmmoComponent = UnityEngine.Object.Instantiate((ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField.GetValue(itemViewAnimation), magUI, false);
-                    SetUI(itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
-                }
-                if (magValue == null)
-                {
-                    Transform instanceTransform = magItemView.transform;
-                    var textMesh = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value").GetComponent<TextMeshProUGUI>();
-                    magValue = UnityEngine.Object.Instantiate(textMesh, magUI, false);
-                    SetUI(magValue.transform, new Vector2(0f, -190f));
-                    magValue.enableWordWrapping = false;
-                    magValue.overflowMode = TextOverflowModes.Overflow;
-                    magValue.alignment = TextAlignmentOptions.Center;
-                    magValue.enabled = false;
-                }
-                magItemView.Kill();
-            }
+            GridItemView gridItemView = ItemViewFactory.CreateFromPool<GridItemView>("grid_layout");
 
+            var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField.GetValue(gridItemView);
+            itemViewLoadAmmoComponent = UnityEngine.Object.Instantiate((ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField.GetValue(itemViewAnimation), magUI, false);
+            SetUI(itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
+
+            Transform instanceTransform = gridItemView.transform;
+            var textMesh = instanceTransform.Find("Info Panel/BottomLayoutGroup/Value").GetComponent<TextMeshProUGUI>();
+            magValue = UnityEngine.Object.Instantiate(textMesh, magUI, false);
+            SetUI(magValue.transform, new Vector2(0f, -190f));
+            magValue.enableWordWrapping = false;
+            magValue.overflowMode = TextOverflowModes.Overflow;
+            magValue.alignment = TextAlignmentOptions.Center;
+            magValue.enabled = false;
+
+            gridItemView.Kill();
+        }
+
+        protected void Start(float oneAmmoDuration, int ammoTotal, int ammoDone = 0)
+        {
             if (Plugin.LoadAmmoSpinnerUI.Value)
             {
-                if (eventType == LoadAmmo.LoadingEventType.Load)
-                {
-                    CancellationTokenSource cts = (CancellationTokenSource)itemViewLoadAmmoComponentCTSField.GetValue(itemViewLoadAmmoComponent);
-                    cts?.Dispose();
-                    itemViewLoadAmmoComponent.Show(loadEvent.LoadTime, loadEvent.LoadCount);
-                }
-                else if (eventType == LoadAmmo.LoadingEventType.Unload)
-                {
-                    CancellationTokenSource cts = (CancellationTokenSource)itemViewLoadAmmoComponentCTSField.GetValue(itemViewLoadAmmoComponent);
-                    cts?.Dispose();
-                    itemViewLoadAmmoComponent.Show(unloadEvent.UnloadTime, unloadEvent.UnloadCount, unloadEvent.StartCount);
-                }
+                CancellationTokenSource cts = (CancellationTokenSource)itemViewLoadAmmoComponentCTSField.GetValue(itemViewLoadAmmoComponent);
+                cts?.Dispose();
+                itemViewLoadAmmoComponent.Show(oneAmmoDuration, ammoTotal, ammoDone);
             }
         }
 
         protected void Show(Item item)
         {
-            try
-            {
-                cancellationTokenSource?.Cancel();
-                cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource?.Cancel();
+            cancellationTokenSource = new CancellationTokenSource();
 
-                if (Plugin.LoadAmmoTextUI.Value)
-                {
-                    magValue.enabled = true;
-                    _ = UpdateTextValue(magValue, cancellationTokenSource.Token);
-                }
-                if (Plugin.LoadMagazineImageUI.Value)
-                {
-                    GetImage(item);
-                }
-            }
-            catch (System.Exception ex)
+            if (Plugin.LoadAmmoTextUI.Value)
             {
-                Plugin.LogSource.LogError($"LoadAmmoUI::Show {ex}");
+                magValue.enabled = true;
+                _ = UpdateTextValue(magValue, cancellationTokenSource.Token);
+            }
+            if (Plugin.LoadMagazineImageUI.Value)
+            {
+                GetImage(item);
             }
         }
 
@@ -191,7 +173,7 @@ namespace ContinuousLoadAmmo.Components
             {
                 UnityEngine.Object.Destroy(magUI.gameObject);
             }
-            LoadAmmo.Inst.OnStartLoading -= Create;
+            LoadAmmo.Inst.OnStartLoading -= Start;
             LoadAmmo.Inst.OnCloseInventory -= Show;
             LoadAmmo.Inst.OnEndLoading -= Close;
             LoadAmmo.Inst.OnDestroyComponent -= Destroy;

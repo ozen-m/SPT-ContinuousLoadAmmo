@@ -26,7 +26,7 @@ namespace ContinuousLoadAmmo.Components
         public bool AmmoSelectorActive => ammoSelector.IsShown;
         protected InventoryController InventoryController => player.InventoryController;
 
-        public event Action<InventoryController, LoadingEventType, GEventArgs7, GEventArgs8> OnStartLoading;
+        public event Action<float, int, int> OnStartLoading;
         public event Action<Item> OnCloseInventory;
         public event Action OnEndLoading;
         public event Action OnDestroyComponent;
@@ -199,15 +199,13 @@ namespace ContinuousLoadAmmo.Components
             {
                 magazine = loadingClass.magazineItemClass;
                 isReachable = IsAtReachablePlace(magazine) && IsAtReachablePlace(loadingClass.ammoItemClass);
-                GEventArgs7 loadAmmoEvent = new(loadingClass.ammoItemClass, magazine, loadingClass.int_0, loadingClass.float_0, CommandStatus.Begin, loadingClass.inventoryController_0);
-                OnStartLoading?.Invoke(InventoryController, eventType, loadAmmoEvent, null);
+                OnStartLoading?.Invoke(loadingClass.float_0, loadingClass.int_0, 0);
             }
             else if (eventType == LoadingEventType.Unload)
             {
                 magazine = unloadingClass.magazineItemClass;
                 isReachable = IsAtReachablePlace(magazine);
-                GEventArgs8 unloadAmmoEvent = new(unloadingClass.item_0, unloadingClass.item_1, magazine, unloadingClass.int_0 - unloadingClass.int_1, unloadingClass.int_1, unloadingClass.float_0, CommandStatus.Begin, unloadingClass.inventoryController_0);
-                OnStartLoading?.Invoke(InventoryController, eventType, null, unloadAmmoEvent);
+                OnStartLoading?.Invoke(unloadingClass.float_0, unloadingClass.int_1, unloadingClass.int_0 - unloadingClass.int_1);
             }
             if (!player.IsInventoryOpened)
             {
