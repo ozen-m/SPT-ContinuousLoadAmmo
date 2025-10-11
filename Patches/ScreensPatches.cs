@@ -110,7 +110,7 @@ namespace ContinuousLoadAmmo.Patches
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(InventoryPlayerModelWithStatsWindow).GetMethod(nameof(InventoryPlayerModelWithStatsWindow.Show), [typeof(GInterface187), typeof(int), typeof(EMemberCategory), typeof(ProfileStats), typeof(GClass1952), typeof(InventoryController), typeof(bool)]);
+            return typeof(InventoryPlayerModelWithStatsWindow).GetMethod(nameof(InventoryPlayerModelWithStatsWindow.Show), [typeof(GInterface214), typeof(int), typeof(EMemberCategory), typeof(ProfileStats), typeof(LastPlayerStateClass), typeof(InventoryController), typeof(bool)]);
         }
 
         [PatchPrefix]

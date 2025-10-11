@@ -36,7 +36,7 @@ namespace ContinuousLoadAmmo.Components
         {
             foreach (AmmoItemClass foundAmmo in foundAmmos)
             {
-                GridItemView view = GridItemView.Create(foundAmmo, new GClass3240(), ItemRotation.Horizontal, inventoryController, inventoryController, null, null, null, null, null);
+                GridItemView view = GridItemView.Create(foundAmmo, new GClass3450(), ItemRotation.Horizontal, inventoryController, inventoryController, null, null, null, null, null);
                 gridItemViews.Add(view);
                 ammoItems.Add(foundAmmo);
             }
