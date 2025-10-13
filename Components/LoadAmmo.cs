@@ -131,16 +131,15 @@ namespace ContinuousLoadAmmo.Components
         }
 
         /// <summary>
-        /// Find magazine for ammo
+        /// Find reachable magazine for ammo
         /// </summary>
         /// <param name="ammo">Ammo that should be compatible with the magazine</param>
         /// <returns></returns>
         public bool GetMagazineForAmmo(AmmoItemClass ammo, out MagazineItemClass foundMagazine)
         {
-            // Get Magazine
             var foundMagazines = new List<MagazineItemClass>();
             InventoryController.GetAcceptableItemsNonAlloc(ReachableSlots, foundMagazines,
-                item => item is MagazineItemClass mag && mag.Count != mag.MaxCount && mag.CheckCompatibility(ammo)
+                item => item is MagazineItemClass mag && InventoryController.Examined(mag) && mag.Count != mag.MaxCount && mag.CheckCompatibility(ammo)
                 );
             if (foundMagazines.Count > 0)
             {
@@ -156,22 +155,24 @@ namespace ContinuousLoadAmmo.Components
         }
 
         /// <summary>
-        /// Find ammo for the current weapon.
+        /// Find reachable ammo for the current weapon.
         /// </summary>
         /// <param name="reachableAmmos">One of each ammo type found then sorted by Penetration Power descending</param>
         /// <returns></returns>
         public bool GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmos)
         {
-            // Get Ammo
             reachableAmmos = new List<AmmoItemClass>();
             if (player.LastEquippedWeaponOrKnifeItem is Weapon weapon)
             {
                 string ammoCaliber = weapon.AmmoCaliber;
-                InventoryController.GetAcceptableItemsNonAlloc(
-                    ReachableSlots,
-                    reachableAmmos,
-                    item => item is AmmoItemClass ammo && ammo.Caliber == ammoCaliber
-                    );
+                var items = InventoryController.Inventory.GetItemsInSlots(ReachableSlots); // linq
+                foreach (var item in items)
+                {
+                    if (item is AmmoItemClass ammo && ammo.Parent.Container.ParentItem is not MagazineItemClass && InventoryController.Examined(ammo) && ammo.Caliber == ammoCaliber)
+                    {
+                        reachableAmmos.Add(ammo);
+                    }
+                }
             }
             if (reachableAmmos.Count > 0)
             {
