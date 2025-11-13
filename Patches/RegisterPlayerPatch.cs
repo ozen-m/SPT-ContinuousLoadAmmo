@@ -4,32 +4,31 @@ using EFT;
 using SPT.Reflection.Patching;
 using System.Reflection;
 
-namespace ContinuousLoadAmmo.Patches
+namespace ContinuousLoadAmmo.Patches;
+
+public class RegisterPlayerPatch : ModulePatch
 {
-    public class RegisterPlayerPatch : ModulePatch
+    protected override MethodBase GetTargetMethod()
     {
-        protected override MethodBase GetTargetMethod()
+        return typeof(GameWorld).GetMethod(nameof(GameWorld.RegisterPlayer));
+    }
+
+    [PatchPostfix]
+    protected static void Postfix(IPlayer iPlayer)
+    {
+        if (iPlayer == null)
         {
-            return typeof(GameWorld).GetMethod(nameof(GameWorld.RegisterPlayer));
+            Plugin.LogSource.LogError("Could not add component, player was null!");
+            return;
+        }
+        if (!iPlayer.IsYourPlayer)
+        {
+            return;
         }
 
-        [PatchPostfix]
-        protected static void Postfix(IPlayer iPlayer)
-        {
-            if (iPlayer == null)
-            {
-                Plugin.LogSource.LogError("Could not add component, player was null!");
-                return;
-            }
-            if (!iPlayer.IsYourPlayer)
-            {
-                return;
-            }
-
-            var mainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
-            mainPlayer.gameObject.AddComponent<LoadAmmo>();
-            Plugin.LoadAmmoUI.Init();
-            Plugin.LogSource.LogInfo($"Added LoadAmmoComponent to player: {mainPlayer.Profile.Nickname}");
-        }
+        var mainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
+        mainPlayer.gameObject.AddComponent<LoadAmmo>();
+        Plugin.LoadAmmoUI.Init();
+        Plugin.LogSource.LogInfo($"Added LoadAmmoComponent to player: {mainPlayer.Profile.Nickname}");
     }
 }

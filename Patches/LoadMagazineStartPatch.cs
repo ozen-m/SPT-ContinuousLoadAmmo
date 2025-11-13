@@ -5,23 +5,22 @@ using SPT.Reflection.Patching;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace ContinuousLoadAmmo.Patches
+namespace ContinuousLoadAmmo.Patches;
+
+public class LoadMagazineStartPatch : ModulePatch
 {
-    public class LoadMagazineStartPatch : ModulePatch
+    protected override MethodBase GetTargetMethod()
     {
-        protected override MethodBase GetTargetMethod()
-        {
-            return typeof(Player.PlayerInventoryController.Class1204).GetMethod(nameof(Player.PlayerInventoryController.Class1204.Start));
-        }
+        return typeof(Player.PlayerInventoryController.Class1204).GetMethod(nameof(Player.PlayerInventoryController.Class1204.Start));
+    }
 
-        [PatchPostfix]
-        protected static async void Postfix(Player.PlayerInventoryController.Class1204 __instance, Task<IResult> __result)
-        {
-            if (!Plugin.InRaid) return;
+    [PatchPostfix]
+    protected static async void Postfix(Player.PlayerInventoryController.Class1204 __instance, Task<IResult> __result)
+    {
+        if (!Plugin.InRaid) return;
 
-            LoadAmmo.Inst.LoadingStart(LoadAmmo.LoadingEventType.Load, __instance, null);
-            await __result;
-            LoadAmmo.Inst.LoadingEnd();
-        }
+        LoadAmmo.Inst.LoadingStart(LoadAmmo.LoadingEventType.Load, __instance, null);
+        await __result;
+        LoadAmmo.Inst.LoadingEnd();
     }
 }
