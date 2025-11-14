@@ -1,10 +1,9 @@
-﻿using EFT;
+﻿using System.Reflection;
+using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.Map;
 using SPT.Reflection.Patching;
-using System.Reflection;
-using UIFixesInterop;
 
 namespace ContinuousLoadAmmo.Patches;
 
@@ -21,7 +20,7 @@ public static class ScreensPatches
         new SkillsAndMasteringPatch().Enable();
         new StopProcessesPatch().Enable();
 
-        if (MultiSelect.StopLoadingMethod != null)
+        if (MultiSelectInterop.StopLoadingMethod != null)
         {
             new MultiSelectStopLoadingPatch().Enable();
         }
@@ -46,7 +45,6 @@ public static class ScreensPatches
 
 public class TasksScreenShowPatch : ModulePatch
 {
-
     protected override MethodBase GetTargetMethod()
     {
         return typeof(TasksScreen).GetMethod(nameof(TasksScreen.Show));
@@ -107,7 +105,6 @@ public class MapScreenPatch : ModulePatch
 
 public class PlayerModelPatch : ModulePatch
 {
-
     protected override MethodBase GetTargetMethod()
     {
         return typeof(InventoryPlayerModelWithStatsWindow).GetMethod(nameof(InventoryPlayerModelWithStatsWindow.Show), [typeof(GInterface214), typeof(int), typeof(EMemberCategory), typeof(ProfileStats), typeof(LastPlayerStateClass), typeof(InventoryController), typeof(bool)]);
@@ -128,7 +125,6 @@ public class PlayerModelPatch : ModulePatch
 
 public class SkillsAndMasteringPatch : ModulePatch
 {
-
     protected override MethodBase GetTargetMethod()
     {
         return typeof(SkillsAndMasteringScreen).GetMethod(nameof(SkillsAndMasteringScreen.Show));
@@ -148,8 +144,7 @@ public class SkillsAndMasteringPatch : ModulePatch
 }
 
 /// <summary>
-/// Skip StopProcesses when called from Screens.
-/// Other option: Get callstack and identify caller to skip StopProcesses
+/// Skip StopProcesses when called from Screens
 /// </summary>
 public class StopProcessesPatch : ModulePatch
 {
@@ -177,7 +172,7 @@ public class MultiSelectStopLoadingPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return MultiSelect.StopLoadingMethod;
+        return MultiSelectInterop.StopLoadingMethod;
     }
 
     [PatchPrefix]

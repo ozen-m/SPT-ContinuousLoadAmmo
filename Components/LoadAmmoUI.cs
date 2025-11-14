@@ -1,33 +1,33 @@
-﻿using Comfort.Common;
-using EFT.InventoryLogic;
-using EFT.UI;
-using EFT.UI.DragAndDrop;
-using System;
+﻿using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Comfort.Common;
+using EFT.InventoryLogic;
+using EFT.UI;
+using EFT.UI.DragAndDrop;
+using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace ContinuousLoadAmmo.Components;
 
 public class LoadAmmoUI
 {
-    public static Transform EftBattleUIScreenTransform { get; protected set; }
+    public static Transform EftBattleUIScreenTransform { get; private set; }
 
-    protected Transform magUI;
-    protected ItemViewLoadAmmoComponent itemViewLoadAmmoComponent;
-    protected Image magImage;
-    protected GClass929 imageLoader;
-    protected Action unbindImageLoader;
-    protected TextMeshProUGUI magValue;
-    protected CancellationTokenSource cancellationTokenSource;
+    private static readonly AccessTools.FieldRef<ItemViewLoadAmmoComponent, CancellationTokenSource> _itemViewLoadAmmoCtsField =
+        AccessTools.FieldRefAccess<ItemViewLoadAmmoComponent, CancellationTokenSource>("cancellationTokenSource_0");
 
-    protected static FieldInfo itemViewAnimationField;
-    protected static FieldInfo itemViewLoadAmmoComponentTemplateField;
-    protected static FieldInfo itemViewLoadAmmoComponentCTSField;
-    protected static FieldInfo itemViewBottomPanelField;
+    private Transform _magUI;
+    private ItemViewLoadAmmoComponent _itemViewLoadAmmoComponent;
+    private Image _magImage;
+    private GClass929 _imageLoader;
+    private Action _unbindImageLoader;
+    private TextMeshProUGUI _magValue;
+    private CancellationTokenSource _cancellationTokenSource;
 
     public void Init()
     {
@@ -35,10 +35,6 @@ public class LoadAmmoUI
         {
             EftBattleUIScreenTransform = Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
         }
-        itemViewAnimationField ??= typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
-        itemViewLoadAmmoComponentTemplateField ??= typeof(ItemViewAnimation).GetField("_loadAmmoComponentTemplate", BindingFlags.Instance | BindingFlags.NonPublic);
-        itemViewLoadAmmoComponentCTSField ??= typeof(ItemViewLoadAmmoComponent).GetField("cancellationTokenSource_0", BindingFlags.Instance | BindingFlags.NonPublic);
-        itemViewBottomPanelField ??= typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
 
         PrepareGameObjects();
         CloneTemplates();
@@ -49,133 +45,130 @@ public class LoadAmmoUI
         LoadAmmo.Inst.OnDestroyComponent += Destroy;
     }
 
-    protected void PrepareGameObjects()
+    public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
     {
-        GameObject loadAmmoObj = new("LoadAmmoUI", typeof(RectTransform));
-        magUI = loadAmmoObj.transform;
-        magUI.SetParent(EftBattleUIScreenTransform);
-        SetUI(magUI);
-
-        GameObject imageObj = new("Image", typeof(RectTransform), typeof(Image));
-        imageObj.transform.SetParent(magUI);
-        SetUI(imageObj.transform, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
-        magImage = imageObj.GetComponent<Image>();
-        magImage.enabled = false;
+        RectTransform rectTransform = (RectTransform)transform;
+        rectTransform.anchoredPosition = offset ?? Vector2.zero;
+        rectTransform.localScale = scale ?? Vector3.one;
+        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
     }
 
-    protected void CloneTemplates()
+    public bool IsSameLoaderUI(ItemViewLoadAmmoComponent component) => LoadAmmo.Inst.IsActive && _itemViewLoadAmmoComponent == component;
+
+    private void PrepareGameObjects()
+    {
+        GameObject loadAmmoObj = new("LoadAmmoUI", typeof(RectTransform));
+        _magUI = loadAmmoObj.transform;
+        _magUI.SetParent(EftBattleUIScreenTransform);
+        SetUI(_magUI);
+
+        GameObject imageObj = new("Image", typeof(RectTransform), typeof(Image));
+        imageObj.transform.SetParent(_magUI);
+        SetUI(imageObj.transform, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
+        _magImage = imageObj.GetComponent<Image>();
+        _magImage.enabled = false;
+    }
+
+    private void CloneTemplates()
     {
         GridItemView gridItemView = ItemViewFactory.CreateFromPool<GridItemView>("grid_layout");
 
-        var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField.GetValue(gridItemView);
-        itemViewLoadAmmoComponent = UnityEngine.Object.Instantiate((ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField.GetValue(itemViewAnimation), magUI, false);
-        SetUI(itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
+        var itemViewAnimationField = typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
+        var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField!.GetValue(gridItemView);
 
-        magValue = UnityEngine.Object.Instantiate(((ItemViewBottomPanel)itemViewBottomPanelField.GetValue(gridItemView)).ItemValue, magUI, false);
-        SetUI(magValue.transform, new Vector2(0f, -190f));
-        magValue.enableWordWrapping = false;
-        magValue.overflowMode = TextOverflowModes.Overflow;
-        magValue.alignment = TextAlignmentOptions.Center;
-        magValue.enabled = false;
+        var itemViewLoadAmmoComponentTemplateField = typeof(ItemViewAnimation).GetField("_loadAmmoComponentTemplate", BindingFlags.Instance | BindingFlags.NonPublic);
+        _itemViewLoadAmmoComponent = Object.Instantiate((ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField!.GetValue(itemViewAnimation), _magUI, false);
+        SetUI(_itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
+
+        var itemViewBottomPanelField = typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
+        _magValue = Object.Instantiate(((ItemViewBottomPanel)itemViewBottomPanelField!.GetValue(gridItemView)).ItemValue, _magUI, false);
+        SetUI(_magValue.transform, new Vector2(0f, -190f));
+        _magValue.enableWordWrapping = false;
+        _magValue.overflowMode = TextOverflowModes.Overflow;
+        _magValue.alignment = TextAlignmentOptions.Center;
+        _magValue.enabled = false;
 
         gridItemView.Kill();
     }
 
-    protected void Start(float oneAmmoDuration, int ammoTotal, int ammoDone = 0)
+    private void Start(float oneAmmoDuration, int ammoTotal, int ammoDone = 0)
     {
-        CancellationTokenSource cts = (CancellationTokenSource)itemViewLoadAmmoComponentCTSField.GetValue(itemViewLoadAmmoComponent);
+        CancellationTokenSource cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
         cts?.Dispose();
-        itemViewLoadAmmoComponent.Show(oneAmmoDuration, ammoTotal, ammoDone);
+        _itemViewLoadAmmoComponent.Show(oneAmmoDuration, ammoTotal, ammoDone);
     }
 
-    protected void Show(Item item)
+    private void Show(Item item)
     {
-        cancellationTokenSource?.Cancel();
-        cancellationTokenSource = new CancellationTokenSource();
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource = new CancellationTokenSource();
 
-        magValue.enabled = true;
-        _ = UpdateTextValue(magValue, cancellationTokenSource.Token);
+        _magValue.enabled = true;
+        _ = UpdateTextValueAsync(_cancellationTokenSource.Token);
 
         GetImage(item);
     }
 
-    protected void GetImage(Item item)
+    private void GetImage(Item item)
     {
-        unbindImageLoader?.Invoke();
-        imageLoader = ItemViewFactory.LoadItemIcon(item);
-        unbindImageLoader = imageLoader?.Changed.Bind(UpdateImage);
+        _unbindImageLoader?.Invoke();
+        _imageLoader = ItemViewFactory.LoadItemIcon(item);
+        _unbindImageLoader = _imageLoader?.Changed.Bind(UpdateImage);
     }
 
-    protected void UpdateImage()
+    private void UpdateImage()
     {
-        if (imageLoader.Sprite == null) return;
+        if (_imageLoader.Sprite == null) return;
 
-        magImage.sprite = imageLoader.Sprite;
-        magImage.SetNativeSize();
-        magImage.enabled = true;
+        _magImage.sprite = _imageLoader.Sprite;
+        _magImage.SetNativeSize();
+        _magImage.enabled = true;
     }
 
-    protected async Task UpdateTextValue(TextMeshProUGUI textMesh, CancellationToken token)
+    private async Task UpdateTextValueAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
-            textMesh.SetText(LoadAmmo.Inst.GetMagAmmoCountByLevel());
+            _magValue.SetText(LoadAmmo.Inst.GetMagAmmoCountByLevel());
 
             await Task.Yield();
         }
     }
 
-    protected void Close()
+    private void Close()
     {
-        cancellationTokenSource?.Cancel();
-        cancellationTokenSource?.Dispose();
-        cancellationTokenSource = null;
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource?.Dispose();
+        _cancellationTokenSource = null;
 
-        if (itemViewLoadAmmoComponent != null)
+        if (_itemViewLoadAmmoComponent != null)
         {
-            CancellationTokenSource cts = (CancellationTokenSource)itemViewLoadAmmoComponentCTSField.GetValue(itemViewLoadAmmoComponent);
+            CancellationTokenSource cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
             cts?.Cancel();
-            itemViewLoadAmmoComponent.gameObject.SetActive(false);
+            _itemViewLoadAmmoComponent.gameObject.SetActive(false);
         }
-        if (magImage != null)
+        if (_magImage != null)
         {
-            magImage.enabled = false;
+            _magImage.enabled = false;
         }
-        unbindImageLoader?.Invoke();
-        if (magValue != null)
+        _unbindImageLoader?.Invoke();
+        if (_magValue != null)
         {
-            magValue.enabled = false;
+            _magValue.enabled = false;
         }
     }
 
-    public bool IsSameLoaderUI(ItemViewLoadAmmoComponent component)
+    private void Destroy()
     {
-        if (LoadAmmo.Inst.IsActive && itemViewLoadAmmoComponent == component)
+        if (_magUI != null)
         {
-            return true;
-        }
-        return false;
-    }
-
-    public void Destroy()
-    {
-        if (magUI != null)
-        {
-            UnityEngine.Object.Destroy(magUI.gameObject);
+            Object.Destroy(_magUI.gameObject);
         }
         LoadAmmo.Inst.OnStartLoading -= Start;
         LoadAmmo.Inst.OnCloseInventory -= Show;
         LoadAmmo.Inst.OnEndLoading -= Close;
         LoadAmmo.Inst.OnDestroyComponent -= Destroy;
-    }
-
-    public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
-    {
-        RectTransform rectTransform = (RectTransform)transform;
-        rectTransform.anchoredPosition = offset != null ? (Vector2)offset : Vector2.zero;
-        rectTransform.localScale = scale != null ? (Vector3)scale : Vector3.one;
-        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        rectTransform.pivot = new Vector2(0.5f, 0.5f);
     }
 }

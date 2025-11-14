@@ -1,65 +1,40 @@
-﻿using BepInEx;
+﻿using System;
+using System.Reflection;
+using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
-using System;
-using System.Reflection;
 
-namespace UIFixesInterop;
+namespace ContinuousLoadAmmo;
 
-internal static class MultiSelect
+internal static class MultiSelectInterop
 {
-    private static readonly Version RequiredVersion = new Version(4, 0);
+    private static readonly Version _requiredVersion = new(4, 0);
 
-    private static bool? UIFixesLoaded;
-
-    private static Type MultiSelectType;
-    private static Func<object> LoadUnloadSerializerGetter;
-
-    public static object LoadUnloadSerializer
-    {
-        get
-        {
-            if (!Loaded())
-            {
-                return null;
-            }
-
-            return LoadUnloadSerializerGetter?.Invoke();
-        }
-    }
-
+    private static bool? _uiFixesLoaded;
+    private static Type _multiSelectType;
+    private static Func<object> _loadUnloadSerializerGetter;
     private static MethodInfo _stopLoadingMethod;
-    public static MethodInfo StopLoadingMethod
+
+    public static object LoadUnloadSerializer => Loaded() ? _loadUnloadSerializerGetter?.Invoke() : null;
+
+    public static MethodInfo StopLoadingMethod => Loaded() ? _stopLoadingMethod : null;
+
+    private static bool Loaded()
     {
-        get
+        if (_uiFixesLoaded.HasValue) return _uiFixesLoaded.Value;
+
+        bool present = Chainloader.PluginInfos.TryGetValue("Tyfon.UIFixes", out PluginInfo pluginInfo);
+        _uiFixesLoaded = present && pluginInfo.Metadata.Version >= _requiredVersion;
+
+        if (!_uiFixesLoaded.Value) return _uiFixesLoaded.Value;
+
+        _multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
+        if (_multiSelectType != null)
         {
-            if (!Loaded())
-            {
-                return null;
-            }
-            return _stopLoadingMethod ?? null;
+            var loadUnloadSerializerMethod = AccessTools.PropertyGetter(_multiSelectType, "LoadUnloadSerializer");
+            _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
+            _stopLoadingMethod = AccessTools.Method(_multiSelectType, "StopLoading");
         }
-    }
-
-    public static bool Loaded()
-    {
-        if (!UIFixesLoaded.HasValue)
-        {
-            bool present = Chainloader.PluginInfos.TryGetValue("Tyfon.UIFixes", out PluginInfo pluginInfo);
-            UIFixesLoaded = present && pluginInfo.Metadata.Version >= RequiredVersion;
-
-            if (UIFixesLoaded.Value)
-            {
-                MultiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
-                if (MultiSelectType != null)
-                {
-                    var LoadUnloadSerializerMethod = AccessTools.PropertyGetter(MultiSelectType, "LoadUnloadSerializer");
-                    LoadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(LoadUnloadSerializerMethod);
-                    _stopLoadingMethod = AccessTools.Method(MultiSelectType, "StopLoading");
-                }
-            }
-        }
-
-        return UIFixesLoaded.Value;
+        return _uiFixesLoaded.Value;
     }
 }

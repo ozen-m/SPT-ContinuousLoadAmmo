@@ -1,8 +1,7 @@
-﻿using Comfort.Common;
+﻿using System.Reflection;
 using ContinuousLoadAmmo.Components;
 using EFT;
 using SPT.Reflection.Patching;
-using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches;
 
@@ -26,9 +25,13 @@ public class RegisterPlayerPatch : ModulePatch
             return;
         }
 
-        var mainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
-        mainPlayer.gameObject.AddComponent<LoadAmmo>();
-        Plugin.LoadAmmoUI.Init();
-        Plugin.LogSource.LogInfo($"Added LoadAmmoComponent to player: {mainPlayer.Profile.Nickname}");
+        if (iPlayer is Player player)
+        {
+            player.gameObject.AddComponent<LoadAmmo>();
+            Plugin.LoadAmmoUI.Init();
+            Plugin.LogSource.LogInfo($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
+            return;
+        }
+        Plugin.LogSource.LogError($"Unable to add LoadAmmoComponent to player: {iPlayer.Profile.Nickname}");
     }
 }

@@ -1,57 +1,53 @@
-﻿using EFT.InventoryLogic;
-using EFT.UI.DragAndDrop;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using EFT.InventoryLogic;
+using EFT.UI.DragAndDrop;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace ContinuousLoadAmmo.Components;
 
 public class LoadAmmoSelector // : AmmoSelector
 {
-    protected List<GridItemView> gridItemViews = new();
-    protected List<AmmoItemClass> ammoItems = new();
-    protected TaskCompletionSource<AmmoItemClass> tcsChosenAmmo;
+    private readonly List<GridItemView> _gridItemViews = [];
+    private readonly List<AmmoItemClass> _ammoItems = [];
+    private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
 
-    public bool IsShown => tcsChosenAmmo != null;
+    public bool IsShown => _chosenAmmoTcs != null;
 
-    protected int _index;
-    protected int Index
+    private int _index;
+
+    private int Index
     {
-        get
-        {
-            return _index;
-        }
+        get => _index;
         set
         {
-            if (value != _index)
-            {
-                HighlightIndex(_index, value);
-                _index = value;
-            }
+            if (value == _index) return;
+
+            HighlightIndex(_index, value);
+            _index = value;
         }
     }
 
-    public Task<AmmoItemClass> ShowAcceptableAmmos(IEnumerable<AmmoItemClass> foundAmmos, InventoryController inventoryController) // method_5
+    public Task<AmmoItemClass> ShowAcceptableAmmosAsync(IEnumerable<AmmoItemClass> foundAmmos, InventoryController inventoryController) // method_5
     {
         foreach (AmmoItemClass foundAmmo in foundAmmos)
         {
             GridItemView view = GridItemView.Create(foundAmmo, new GClass3450(), ItemRotation.Horizontal, inventoryController, inventoryController, null, null, null, null, null);
-            gridItemViews.Add(view);
-            ammoItems.Add(foundAmmo);
+            _gridItemViews.Add(view);
+            _ammoItems.Add(foundAmmo);
         }
         SetLayout();
         _index = 0;
         HighlightIndex(_index, 0);
 
         SetChosenAmmo(null);
-        tcsChosenAmmo = new();
-        _ = InputLoop();
+        _chosenAmmoTcs = new TaskCompletionSource<AmmoItemClass>();
+        _ = InputLoopAsync();
 
-        return tcsChosenAmmo.Task;
+        return _chosenAmmoTcs.Task;
     }
 
-    protected async Task InputLoop()
+    private async Task InputLoopAsync()
     {
         await Task.Yield(); // Frame timing
         while (IsShown)
@@ -76,77 +72,74 @@ public class LoadAmmoSelector // : AmmoSelector
         }
     }
 
-    protected void SetChosenAmmo(AmmoItemClass ammo)
+    private void SetChosenAmmo(AmmoItemClass ammo)
     {
-        tcsChosenAmmo?.SetResult(ammo);
-        tcsChosenAmmo = null;
+        _chosenAmmoTcs?.SetResult(ammo);
+        _chosenAmmoTcs = null;
     }
 
-    protected AmmoItemClass GetSelectedAmmo()
+    private AmmoItemClass GetSelectedAmmo()
     {
-        if (_index >= ammoItems.Count)
-        {
-            return null;
-        }
-
-        return ammoItems[_index];
+        return _index >= _ammoItems.Count
+            ? null // Cancel/no option is selected
+            : _ammoItems[_index];
     }
 
-    protected void Close()
+    private void Close()
     {
-        foreach (var gridItemView in gridItemViews)
+        foreach (var gridItemView in _gridItemViews)
         {
             gridItemView.Highlight(false);
-            Object.Destroy(gridItemView.gameObject.GetComponent<LayoutElement>());
             gridItemView.Kill();
         }
-        gridItemViews.Clear();
-        ammoItems.Clear();
+        _gridItemViews.Clear();
+        _ammoItems.Clear();
         SetChosenAmmo(null);
     }
 
-    protected void Previous() // method_3
+    private void Previous() // method_3
     {
-        int num = gridItemViews.Count + 1;
+        int num = _gridItemViews.Count + 1;
         Index = (Index + 1) % num;
     }
 
-    protected void Next() // method_4
+    private void Next() // method_4
     {
-        int num = gridItemViews.Count + 1;
+        int num = _gridItemViews.Count + 1;
         Index = (Index - 1 + num) % num;
     }
 
-    protected void SetLayout()
+    private void SetLayout()
     {
-        if (gridItemViews == null || gridItemViews.Count == 0) return;
+        // Use `LayoutElement layoutElement = view.gameObject.AddComponent<LayoutElement>();`?
+        if (_gridItemViews == null || _gridItemViews.Count == 0) return;
 
-        float spacing = 5f;
-        float gridWidth = ((RectTransform)gridItemViews[0].transform).rect.width;
+        const float spacing = 5f;
+        float gridWidth = ((RectTransform)_gridItemViews[0].transform).rect.width;
 
         float totalGridWidth = spacing + gridWidth;
-        float totalWidth = ((gridItemViews.Count - 1) * totalGridWidth) - spacing;
+        float totalWidth = ((_gridItemViews.Count - 1) * totalGridWidth) - spacing;
         float startX = -totalWidth / 2f;
 
-        for (int i = 0; i < gridItemViews.Count; i++)
+        for (int i = 0; i < _gridItemViews.Count; i++)
         {
-            var transform = gridItemViews[i].transform;
+            var transform = _gridItemViews[i].transform;
             transform.SetParent(LoadAmmoUI.EftBattleUIScreenTransform, worldPositionStays: false);
             LoadAmmoUI.SetUI(transform, new Vector2((startX + (i * totalGridWidth)), -150f));
         }
     }
 
-    protected void HighlightIndex(int prevSelectionIndex, int currentSelectionIndex) // method_1
+    private void HighlightIndex(int prevSelectionIndex, int currentSelectionIndex) // method_1
     {
         HighlightGridItemView(prevSelectionIndex, false);
         HighlightGridItemView(currentSelectionIndex, true);
     }
 
-    protected void HighlightGridItemView(int index, bool isSelected) // method_2
+    private void HighlightGridItemView(int index, bool isSelected) // method_2
     {
-        if (index < gridItemViews.Count)
+        if (index < _gridItemViews.Count)
         {
-            gridItemViews[index].Highlight(isSelected);
+            _gridItemViews[index].Highlight(isSelected);
         }
     }
 }

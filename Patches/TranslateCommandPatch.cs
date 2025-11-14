@@ -1,7 +1,7 @@
-﻿using ContinuousLoadAmmo.Components;
+﻿using System.Reflection;
+using ContinuousLoadAmmo.Components;
 using EFT.InputSystem;
 using SPT.Reflection.Patching;
-using System.Reflection;
 using UnityEngine;
 
 namespace ContinuousLoadAmmo.Patches;
@@ -20,6 +20,7 @@ public class TranslateCommandPatch : ModulePatch
     protected static void Postfix(ref InputNode.ETranslateResult __result)
     {
         if (!Plugin.InRaid) return;
+
         if (LoadAmmo.Inst.AmmoSelectorActive || (Input.GetKey(Plugin.LoadAmmoHotkey.Value.MainKey) && Input.mouseScrollDelta.y != 0))
         {
             __result = InputNode.ETranslateResult.Block;

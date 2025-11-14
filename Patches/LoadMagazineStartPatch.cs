@@ -1,9 +1,9 @@
-﻿using Comfort.Common;
+﻿using System.Reflection;
+using System.Threading.Tasks;
+using Comfort.Common;
 using ContinuousLoadAmmo.Components;
 using EFT;
 using SPT.Reflection.Patching;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace ContinuousLoadAmmo.Patches;
 
@@ -17,8 +17,6 @@ public class LoadMagazineStartPatch : ModulePatch
     [PatchPostfix]
     protected static async void Postfix(Player.PlayerInventoryController.Class1204 __instance, Task<IResult> __result)
     {
-        if (!Plugin.InRaid) return;
-
         LoadAmmo.Inst.LoadingStart(LoadAmmo.LoadingEventType.Load, __instance, null);
         await __result;
         LoadAmmo.Inst.LoadingEnd();

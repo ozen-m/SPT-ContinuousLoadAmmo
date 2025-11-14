@@ -1,6 +1,6 @@
-﻿using EFT.UI.DragAndDrop;
+﻿using System.Reflection;
+using EFT.UI.DragAndDrop;
 using SPT.Reflection.Patching;
-using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches;
 

@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿using System.Diagnostics.CodeAnalysis;
+using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using ContinuousLoadAmmo.Components;
@@ -9,23 +10,24 @@ namespace ContinuousLoadAmmo;
 
 [BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.1.1")]
 [BepInDependency("Tyfon.UIFixes", BepInDependency.DependencyFlags.SoftDependency)]
+[SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible")]
 public class Plugin : BaseUnityPlugin
 {
     public static ManualLogSource LogSource;
     public static ConfigEntry<float> SpeedLimit;
     public static ConfigEntry<bool> ReachableOnly;
     public static ConfigEntry<bool> InventoryTabs;
+    public static ConfigEntry<bool> PrioritizeHighestPenetration;
     public static ConfigEntry<KeyboardShortcut> CancelHotkey;
     public static ConfigEntry<KeyboardShortcut> CancelHotkeyAlt;
     public static ConfigEntry<KeyboardShortcut> LoadAmmoHotkey;
-    public static ConfigEntry<bool> PrioritizeHighestPenetration;
 
     public static LoadAmmoUI LoadAmmoUI;
 
     protected void Awake()
     {
         LogSource = Logger;
-            
+
         SpeedLimit = Config.Bind("General", "Speed Limit", 0.31f, new ConfigDescription("The speed limit, as a percentage of the walk speed, set to the player while loading ammo", new AcceptableValueRange<float>(0f, 1f), new ConfigurationManagerAttributes() { Order = 6, ShowRangeAsPercent = true }));
         ReachableOnly = Config.Bind("General", "Reachable Places Only", true, new ConfigDescription("Allow loading ammo outside the inventory only when Magazine and Ammo is in your Vest, Pockets, or Secure Container", null, new ConfigurationManagerAttributes() { Order = 5 }));
         InventoryTabs = Config.Bind("General", "Inventory Tabs", true, new ConfigDescription("Do not interrupt loading ammo when switching inventory tabs (maps tab, tasks tab, etc.)", null, new ConfigurationManagerAttributes() { Order = 4 }));
@@ -46,5 +48,7 @@ public class Plugin : BaseUnityPlugin
         ScreensPatches.Enable();
     }
 
+#pragma warning disable CS0618 // Type or member is obsolete
     public static bool InRaid => GClass2340.InRaid;
+#pragma warning restore CS0618 // Type or member is obsolete
 }

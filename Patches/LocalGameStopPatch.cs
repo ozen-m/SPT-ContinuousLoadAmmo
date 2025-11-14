@@ -1,7 +1,7 @@
-﻿using ContinuousLoadAmmo.Components;
+﻿using System.Reflection;
+using ContinuousLoadAmmo.Components;
 using EFT;
 using SPT.Reflection.Patching;
-using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches;
 
@@ -14,6 +14,7 @@ public class LocalGameStopPatch : ModulePatch
 
     /// <summary>
     /// Stops loading ammo when raid stopped
+    /// Fika incompat?
     /// </summary>
     [PatchPrefix]
     protected static void Prefix()

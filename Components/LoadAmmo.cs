@@ -1,12 +1,9 @@
-﻿using Comfort.Common;
-using EFT;
-using EFT.InventoryLogic;
-using HarmonyLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using UIFixesInterop;
+using EFT;
+using EFT.InventoryLogic;
 using UnityEngine;
 using static EFT.Player;
 using static EFT.Player.PlayerInventoryController;
@@ -15,16 +12,16 @@ namespace ContinuousLoadAmmo.Components;
 
 public class LoadAmmo : MonoBehaviour
 {
-    public static LoadAmmo Inst;
+    internal static LoadAmmo Inst;
 
-    protected Player player;
-    protected MagazineItemClass magazine;
-    protected LoadAmmoSelector ammoSelector;
-    protected bool isReachable;
+    private Player _player;
+    private PlayerInventoryController _playerInventoryController;
+    private MagazineItemClass _magazine;
+    private LoadAmmoSelector _ammoSelector;
+    private bool _isReachable;
 
-    public bool IsActive { get; protected set; }
-    public bool AmmoSelectorActive => ammoSelector.IsShown;
-    protected InventoryController InventoryController => player.InventoryController;
+    public bool IsActive => _playerInventoryController.Interface19_0 != null;
+    public bool AmmoSelectorActive => _ammoSelector.IsShown;
 
     public event Action<float, int, int> OnStartLoading;
     public event Action<Item> OnCloseInventory;
@@ -33,45 +30,39 @@ public class LoadAmmo : MonoBehaviour
 
     protected void Awake()
     {
-        player = Singleton<GameWorld>.Instance.MainPlayer;
-        if (player == null)
-        {
-            Plugin.LogSource.LogError("Unable to find MainPlayer, destroying component");
-            Destroy(this);
-        }
-        if (!player.IsYourPlayer)
-        {
-            Plugin.LogSource.LogError("MainPlayer is not your player, destroying component");
-            Destroy(this);
-        }
-        if (Inst == null)
-        {
-            Inst = this;
-        }
-        else
+        _player = gameObject.GetComponent<Player>();
+        if (Inst != null)
         {
             Destroy(this);
+            return;
+        }
+        if (_player.InventoryController is not PlayerInventoryController playerInvCont)
+        {
+            Plugin.LogSource.LogError("LoadAmmo::Awake Unable to properly initialize ContinuousLoadAmmo");
+            Destroy(this);
+            return;
         }
 
-        ((PlayerInventoryController)InventoryController).SetNextProcessLocked(false);
-        ammoSelector = new LoadAmmoSelector();
+        _playerInventoryController = playerInvCont;
+        _playerInventoryController.SetNextProcessLocked(false);
+        _ammoSelector = new LoadAmmoSelector();
+        Inst = this;
     }
 
     protected void Update()
     {
-        if (!Singleton<GameWorld>.Instantiated ||
-            player == null ||
-            player.IsInventoryOpened ||
-            InventoryController.HasAnyHandsAction() ||
+        if (_player.IsInventoryOpened ||
+            _playerInventoryController.HasAnyHandsAction() ||
             IsActive ||
-            ammoSelector.IsShown)
+            _ammoSelector.IsShown)
         {
             return;
         }
 
+
         if (Input.GetKey(Plugin.LoadAmmoHotkey.Value.MainKey) && Input.mouseScrollDelta.y != 0)
         {
-            _ = OpenAmmoSelector();
+            _ = OpenAmmoSelectorAsync();
             return;
         }
         if (Input.GetKeyUp(Plugin.LoadAmmoHotkey.Value.MainKey))
@@ -80,54 +71,52 @@ public class LoadAmmo : MonoBehaviour
         }
     }
 
-    protected async Task OpenAmmoSelector()
+    private async Task OpenAmmoSelectorAsync()
     {
-        if (GetAmmoItemsFromEquipment(out List<AmmoItemClass> ammos))
+        if (!GetAmmoItemsFromEquipment(out List<AmmoItemClass> ammos)) return;
+
+        if (!GetMagazineForAmmo(ammos[0], out MagazineItemClass foundMagazine)) return;
+
+        AmmoItemClass chosenAmmo = await _ammoSelector.ShowAcceptableAmmosAsync(ammos, _playerInventoryController);
+        if (chosenAmmo != null)
         {
-            if (GetMagazineForAmmo(ammos[0], out MagazineItemClass foundMagazine))
-            {
-                AmmoItemClass chosenAmmo = await ammoSelector.ShowAcceptableAmmos(ammos, InventoryController);
-                if (chosenAmmo != null)
-                {
-                    LoadMagazine(chosenAmmo, foundMagazine);
-                }
-            }
+            LoadMagazine(chosenAmmo, foundMagazine);
         }
     }
 
-    protected void TryLoadAmmo()
+    private void TryLoadAmmo()
     {
-        if (GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmos))
+        if (!GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmos)) return;
+
+        AmmoItemClass chosenAmmo = null;
+        if (!Plugin.PrioritizeHighestPenetration.Value)
         {
-            AmmoItemClass chosenAmmo = null;
-            if (!Plugin.PrioritizeHighestPenetration.Value)
+            MagazineItemClass currentMagazine = _player.LastEquippedWeaponOrKnifeItem.GetCurrentMagazine();
+            if (currentMagazine != null)
             {
-                MagazineItemClass currentMagazine = player.LastEquippedWeaponOrKnifeItem.GetCurrentMagazine();
-                if (currentMagazine != null)
+                foreach (var currAmmo in reachableAmmos)
                 {
-                    foreach (var currAmmo in reachableAmmos)
-                    {
-                        if (currentMagazine.FirstRealAmmo() is AmmoItemClass ammoInsideMag && ammoInsideMag.TemplateId == currAmmo.TemplateId)
-                        {
-                            chosenAmmo = currAmmo;
-                            break;
-                        }
-                    }
+                    if (currentMagazine.FirstRealAmmo() is not AmmoItemClass ammoInsideMag || ammoInsideMag.TemplateId != currAmmo.TemplateId) continue;
+
+                    // Magazine ammo matched with current reachable ammo
+                    chosenAmmo = currAmmo;
+                    break;
                 }
             }
-            chosenAmmo ??= reachableAmmos[0];
-            if (GetMagazineForAmmo(chosenAmmo, out MagazineItemClass foundMagazine))
-            {
-                LoadMagazine(chosenAmmo, foundMagazine);
-            }
+        }
+        // PrioritizeHighestPenetration is false or if no ammo matched from magazine's first ammo, choose first reachable ammo available
+        chosenAmmo ??= reachableAmmos[0];
+        if (GetMagazineForAmmo(chosenAmmo, out MagazineItemClass foundMagazine))
+        {
+            LoadMagazine(chosenAmmo, foundMagazine);
         }
     }
 
-    protected void LoadMagazine(AmmoItemClass ammo, MagazineItemClass magazine)
+    private void LoadMagazine(AmmoItemClass ammo, MagazineItemClass magazine)
     {
         //Plugin.LogSource.LogDebug($"Mag {magazine.LocalizedShortName()} ({magazine.Count}); Ammo {ammo.LocalizedShortName()} ({ammo.StackObjectsCount})");
         int loadCount = Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
-        ((PlayerInventoryController)InventoryController).LoadMagazine(ammo, magazine, loadCount, false);
+        _ = _playerInventoryController.LoadMagazine(ammo, magazine, loadCount, false);
     }
 
     /// <summary>
@@ -135,11 +124,13 @@ public class LoadAmmo : MonoBehaviour
     /// </summary>
     /// <param name="ammo">Ammo that should be compatible with the magazine</param>
     /// <returns></returns>
-    public bool GetMagazineForAmmo(AmmoItemClass ammo, out MagazineItemClass foundMagazine)
+    private bool GetMagazineForAmmo(AmmoItemClass ammo, out MagazineItemClass foundMagazine)
     {
-        var foundMagazines = new List<MagazineItemClass>();
-        InventoryController.GetAcceptableItemsNonAlloc(ReachableSlots, foundMagazines,
-            item => item is MagazineItemClass mag && InventoryController.Examined(mag) && mag.Count != mag.MaxCount && mag.CheckCompatibility(ammo)
+        List<MagazineItemClass> foundMagazines = [];
+        _playerInventoryController.GetAcceptableItemsNonAlloc(
+            ReachableSlots,
+            foundMagazines,
+            (mag) => _playerInventoryController.Examined(mag) && mag.Count != mag.MaxCount && mag.CheckCompatibility(ammo)
         );
         if (foundMagazines.Count > 0)
         {
@@ -159,56 +150,64 @@ public class LoadAmmo : MonoBehaviour
     /// </summary>
     /// <param name="reachableAmmos">One of each ammo type found then sorted by Penetration Power descending</param>
     /// <returns></returns>
-    public bool GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmos)
+    private bool GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmos)
     {
-        reachableAmmos = new List<AmmoItemClass>();
-        if (player.LastEquippedWeaponOrKnifeItem is Weapon weapon)
+        reachableAmmos = [];
+        if (_player.LastEquippedWeaponOrKnifeItem is Weapon weapon)
         {
-            string ammoCaliber = weapon.AmmoCaliber;
-            var items = InventoryController.Inventory.GetItemsInSlots(ReachableSlots); // linq
+            string weaponCaliber = weapon.AmmoCaliber;
+            var items = _playerInventoryController.Inventory.GetItemsInSlots(ReachableSlots); // linq
             foreach (var item in items)
             {
-                if (item is AmmoItemClass ammo && ammo.Parent.Container.ParentItem is not MagazineItemClass && InventoryController.Examined(ammo) && ammo.Caliber == ammoCaliber)
+                if (item is AmmoItemClass ammo &&
+                    _playerInventoryController.Examined(ammo) &&
+                    ammo.Parent.Container.ParentItem is not MagazineItemClass && // Do not pull from ammo inside mags
+                    ammo.Caliber == weaponCaliber)
                 {
                     reachableAmmos.Add(ammo);
                 }
             }
         }
-        if (reachableAmmos.Count > 0)
+        if (reachableAmmos.Count < 1) return false;
+
+        // Sort penetration power highest to lowest, then stack count ascending
+        reachableAmmos.Sort((a, b) =>
         {
-            // Sort penetration power highest to lowest, then stack count ascending
-            reachableAmmos.Sort((a, b) =>
+            int result = b.PenetrationPower.CompareTo(a.PenetrationPower);
+            if (result == 0)
             {
-                int result = b.PenetrationPower.CompareTo(a.PenetrationPower);
-                if (result == 0)
-                {
-                    result = a.StackObjectsCount.CompareTo(b.StackObjectsCount);
-                }
-                return result;
-            });
-            var seen = new HashSet<MongoID>();
-            reachableAmmos.RemoveAll(ammo => !seen.Add(ammo.TemplateId));
-            return true;
-        }
-        return false;
+                result = a.StackObjectsCount.CompareTo(b.StackObjectsCount);
+            }
+            return result;
+        });
+        // Only return one of each type
+        var seen = new HashSet<MongoID>();
+        reachableAmmos.RemoveAll(ammo => !seen.Add(ammo.TemplateId));
+        return true;
     }
 
     public void LoadingStart(LoadingEventType eventType, Class1204 loadingClass, Class1207 unloadingClass)
     {
-        IsActive = true;
-        if (eventType == LoadingEventType.Load)
+        switch (eventType)
         {
-            magazine = loadingClass.MagazineItemClass;
-            isReachable = IsAtReachablePlace(magazine) && IsAtReachablePlace(loadingClass.AmmoItemClass);
-            OnStartLoading?.Invoke(loadingClass.Float_0, loadingClass.Int_0, 0);
+            case LoadingEventType.Load:
+                _magazine = loadingClass.MagazineItemClass;
+                _isReachable = IsAtReachablePlace(_magazine) && IsAtReachablePlace(loadingClass.AmmoItemClass);
+                OnStartLoading?.Invoke(loadingClass.Float_0, loadingClass.Int_0, 0);
+                break;
+            case LoadingEventType.Unload:
+                _magazine = unloadingClass.MagazineItemClass;
+                _isReachable = IsAtReachablePlace(_magazine);
+                OnStartLoading?.Invoke(unloadingClass.Float_0, unloadingClass.Int_1, unloadingClass.Int_0 - unloadingClass.Int_1);
+                break;
+            case LoadingEventType.None:
+                return;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null);
         }
-        else if (eventType == LoadingEventType.Unload)
-        {
-            magazine = unloadingClass.MagazineItemClass;
-            isReachable = IsAtReachablePlace(magazine);
-            OnStartLoading?.Invoke(unloadingClass.Float_0, unloadingClass.Int_1, unloadingClass.Int_0 - unloadingClass.Int_1);
-        }
-        if (!player.IsInventoryOpened)
+
+        // Started loading from outside the inventory
+        if (!_player.IsInventoryOpened)
         {
             LoadingOutsideInventory();
         }
@@ -216,72 +215,79 @@ public class LoadAmmo : MonoBehaviour
 
     public void LoadingOutsideInventory()
     {
-        if (IsActive && isReachable && !InventoryController.HasAnyHandsAction())
+        if (IsActive && _isReachable && !_playerInventoryController.HasAnyHandsAction())
         {
-            SetPlayerState(true);
-            ListenForCancel();
-            OnCloseInventory?.Invoke(magazine);
+            _ = SetPlayerStateAsync(true);
+            _ = ListenForCancelAsync();
+            OnCloseInventory?.Invoke(_magazine);
             return;
         }
-        InventoryController.StopProcesses();
+
+        StopLoading();
     }
 
     public void LoadingEnd()
     {
-        if (IsActive)
-        {
-            SetPlayerState(false);
-            ResetLoading();
-            OnEndLoading?.Invoke();
-        }
+        _ = SetPlayerStateAsync(false);
+        ResetLoading();
+        OnEndLoading?.Invoke();
     }
 
-    protected async void SetPlayerState(bool startAnim)
+    private async Task SetPlayerStateAsync(bool startAnim)
     {
         if (startAnim)
         {
-            player.TrySaveLastItemInHands();
-            player.SetEmptyHands(null);
-            player.MovementContext.ChangeSpeedLimit(Plugin.SpeedLimit.Value, Player.ESpeedLimit.BarbedWire);
+            _player.TrySaveLastItemInHands();
+            _player.SetEmptyHands(null);
+            _player.MovementContext.ChangeSpeedLimit(Plugin.SpeedLimit.Value, ESpeedLimit.BarbedWire);
         }
         else
         {
+            // Timing delay
             await Task.Delay(800);
 
             // Check for active MultiSelect load/unload
-            if (MultiSelect.LoadUnloadSerializer != null) return;
+            if (MultiSelectInterop.LoadUnloadSerializer != null) return;
 
-            if (!player.IsWeaponOrKnifeInHands)
+            if (!_player.IsWeaponOrKnifeInHands)
             {
-                player.TrySetLastEquippedWeapon(true);
+                _player.TrySetLastEquippedWeapon();
             }
-            player.MovementContext.RemoveStateSpeedLimit(Player.ESpeedLimit.BarbedWire);
+            _player.MovementContext.RemoveStateSpeedLimit(ESpeedLimit.BarbedWire);
         }
-        player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
+        _player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
     }
 
-    protected async void ListenForCancel()
+    private async Task ListenForCancelAsync()
     {
         while (IsActive)
         {
-            while (InventoryController.HasAnyHandsAction())
+            while (_playerInventoryController.HasAnyHandsAction())
             {
+                // Wait for animation
                 await Task.Yield();
             }
-            if (!player.IsInventoryOpened && (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) || Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey) || !player.HandsIsEmpty))
+
+            if (!_player.IsInventoryOpened)
             {
-                InventoryController.StopProcesses();
-                break;
+                // Only listen for cancelling outside the inventory
+                if (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) ||
+                    Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey) ||
+                    !_player.HandsIsEmpty /* Pulled out weapon */)
+                {
+                    StopLoading();
+                    break;
+                }
             }
+
             await Task.Yield();
         }
     }
 
-    protected void ResetLoading()
+    private void ResetLoading()
     {
-        IsActive = false;
-        isReachable = false;
-        magazine = null;
+        _isReachable = false;
+        _magazine = null;
     }
 
     protected void OnDestroy()
@@ -297,43 +303,51 @@ public class LoadAmmo : MonoBehaviour
         }
     }
 
-    // Base EFT code with modifications
-    public bool IsAtReachablePlace(Item item)
+    /// <summary>
+    /// Base EFT code with modifications
+    /// Only used internally with ammo and magazine outside the stash, so fewer checks
+    /// </summary>
+    private bool IsAtReachablePlace(Item item)
     {
-        if (item.CurrentAddress == null)
-        {
-            return false;
-        }
-        IContainer container = item.Parent.Container as IContainer;
-        if (InventoryController.Inventory.Stash == null || container != InventoryController.Inventory.Stash.Grid)
-        {
-            CompoundItem compoundItem = item as CompoundItem;
-            if ((compoundItem == null || !compoundItem.MissingVitalParts.Any()) && InventoryController.Inventory.GetItemsInSlots(ReachableSlots).Contains(item) && InventoryController.Examined(item)) // linq
-            {
-                return true;
-            }
-        }
-        return false;
+        if (item.CurrentAddress == null) return false;
+
+        return _playerInventoryController.Inventory.GetItemsInSlots(ReachableSlots).Contains(item) && _playerInventoryController.Examined(item);
     }
 
     public string GetMagAmmoCountByLevel()
     {
         int skill = Mathf.Max(
         [
-            player.Profile.MagDrillsMastering,
-            player.Profile.CheckedMagazineSkillLevel(magazine.Id),
-            magazine.CheckOverride
+            _player.Profile.MagDrillsMastering,
+            _player.Profile.CheckedMagazineSkillLevel(_magazine.Id),
+            _magazine.CheckOverride
         ]);
         //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag examined?
 
-        return magazine.GetAmmoCountByLevel(magazine.Count, magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
+        return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
     }
 
-    public void StopLoading() => InventoryController.StopProcesses();
+    public void StopLoading() => _playerInventoryController.StopProcesses();
 
-    public static EquipmentSlot[] ReachableSlots => Plugin.ReachableOnly.Value ? ReachableOnly : ReachableAll;
-    public static readonly EquipmentSlot[] ReachableOnly = Inventory.FastAccessSlots.AddRangeToArray([EquipmentSlot.SecuredContainer, EquipmentSlot.ArmBand]);
-    public static readonly EquipmentSlot[] ReachableAll = Inventory.FastAccessSlots.AddRangeToArray([EquipmentSlot.ArmorVest, EquipmentSlot.Backpack, EquipmentSlot.SecuredContainer, EquipmentSlot.ArmBand]);
+    private static EquipmentSlot[] ReachableSlots => Plugin.ReachableOnly.Value ? _reachableOnly : _reachableAll;
+
+    private static readonly EquipmentSlot[] _reachableOnly =
+    [
+        EquipmentSlot.Pockets,
+        EquipmentSlot.TacticalVest,
+        EquipmentSlot.SecuredContainer,
+        EquipmentSlot.ArmBand
+    ];
+
+    private static readonly EquipmentSlot[] _reachableAll =
+    [
+        EquipmentSlot.Pockets,
+        EquipmentSlot.TacticalVest,
+        EquipmentSlot.ArmorVest,
+        EquipmentSlot.Backpack,
+        EquipmentSlot.SecuredContainer,
+        EquipmentSlot.ArmBand
+    ];
 
     public enum LoadingEventType
     {

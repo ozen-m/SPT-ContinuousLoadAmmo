@@ -1,9 +1,9 @@
-﻿using ContinuousLoadAmmo.Components;
+﻿using System.Reflection;
+using ContinuousLoadAmmo.Components;
 using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
 using SPT.Reflection.Patching;
-using System.Reflection;
 
 namespace ContinuousLoadAmmo.Patches;
 
@@ -27,11 +27,10 @@ public class InventoryScreenClosePatch : ModulePatch
             // It looks like only Load/UnloadMagazine checks for process locked, this should be fine
             playerInventoryController.SetNextProcessLocked(false);
         }
-        if (___inventoryController_0 != null)
-        {
-            // Skip StopProcesses and SetNextProcessLocked(true) after prefix
-            ___inventoryController_0 = null;
-        }
+
+        // Skip StopProcesses and SetNextProcessLocked(true) after prefix
+        ___inventoryController_0 = null;
+
         LoadAmmo.Inst.LoadingOutsideInventory();
     }
 }
