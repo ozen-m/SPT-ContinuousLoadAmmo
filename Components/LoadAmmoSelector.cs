@@ -2,12 +2,26 @@
 using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using EFT.UI.DragAndDrop;
+using HarmonyLib;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ContinuousLoadAmmo.Components;
 
 public class LoadAmmoSelector // : AmmoSelector
 {
+    private static readonly AccessTools.FieldRef<GridItemView, Image> _mainImageField =
+        AccessTools.FieldRefAccess<GridItemView, Image>("MainImage");
+
+    private static readonly AccessTools.FieldRef<GridItemView, float> _mainImageAlphaField =
+        AccessTools.FieldRefAccess<GridItemView, float>("_mainImageAlpha");
+
+    private static readonly AccessTools.FieldRef<GridItemView, Color> _backgroundColorField =
+        AccessTools.FieldRefAccess<GridItemView, Color>("BackgroundColor");
+
+    private static readonly AccessTools.FieldRef<GridItemView, RectTransform> _infoPanelField =
+        AccessTools.FieldRefAccess<GridItemView, RectTransform>("_infoPanel");
+
     private readonly List<GridItemView> _gridItemViews = [];
     private readonly List<AmmoItemClass> _ammoItems = [];
     private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
@@ -28,7 +42,7 @@ public class LoadAmmoSelector // : AmmoSelector
         }
     }
 
-    public Task<AmmoItemClass> ShowAcceptableAmmosAsync(IEnumerable<AmmoItemClass> foundAmmos, InventoryController inventoryController) // method_5
+    public Task<AmmoItemClass> ShowAcceptableAmmosAsync(List<AmmoItemClass> foundAmmos, InventoryController inventoryController) // method_5
     {
         foreach (AmmoItemClass foundAmmo in foundAmmos)
         {
@@ -36,6 +50,8 @@ public class LoadAmmoSelector // : AmmoSelector
             _gridItemViews.Add(view);
             _ammoItems.Add(foundAmmo);
         }
+        AddCancelView(foundAmmos[0], inventoryController);
+
         SetLayout();
         _index = 0;
         HighlightIndex(_index, 0);
@@ -80,7 +96,7 @@ public class LoadAmmoSelector // : AmmoSelector
 
     private AmmoItemClass GetSelectedAmmo()
     {
-        return _index >= _ammoItems.Count
+        return _index == _ammoItems.Count
             ? null // Cancel/no option is selected
             : _ammoItems[_index];
     }
@@ -99,19 +115,31 @@ public class LoadAmmoSelector // : AmmoSelector
 
     private void Previous() // method_3
     {
-        int num = _gridItemViews.Count + 1;
+        int num = _gridItemViews.Count;
         Index = (Index + 1) % num;
     }
 
     private void Next() // method_4
     {
-        int num = _gridItemViews.Count + 1;
+        int num = _gridItemViews.Count;
         Index = (Index - 1 + num) % num;
+    }
+
+    private void AddCancelView(AmmoItemClass templateItem, InventoryController inventoryController)
+    {
+        GridItemView cancelView = GridItemView.Create(templateItem, new GClass3450(), ItemRotation.Horizontal, inventoryController, inventoryController, null, null, null, null, null);
+        _infoPanelField(cancelView).gameObject.SetActive(false);
+        _backgroundColorField(cancelView) = Color.clear;
+        _mainImageAlphaField(cancelView) = 0f; // method_4 checks this for alpha
+        var mainImage = _mainImageField(cancelView);
+        mainImage.color = mainImage.color with { a = 0f };
+        cancelView.ChangeSelectedStatus(true); // Red stripes
+        cancelView.UpdateColor(); // Update color with alpha 0f
+        _gridItemViews.Add(cancelView);
     }
 
     private void SetLayout()
     {
-        // Use `LayoutElement layoutElement = view.gameObject.AddComponent<LayoutElement>();`?
         if (_gridItemViews == null || _gridItemViews.Count == 0) return;
 
         const float spacing = 5f;
