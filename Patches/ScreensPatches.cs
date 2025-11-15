@@ -20,10 +20,6 @@ public static class ScreensPatches
         new SkillsAndMasteringPatch().Enable();
         new StopProcessesPatch().Enable();
 
-        if (MultiSelectInterop.StopLoadingMethod != null)
-        {
-            new MultiSelectStopLoadingPatch().Enable();
-        }
     }
 
     private static void Pre()
@@ -167,6 +163,7 @@ public static class ScreensPatches
     /// MultiSelect patches StopProcesses to run MultiSelect.StopLoading.
     /// Even if StopProcesses is skipped, MultiSelect's patch still runs to call StopLoading
     /// </summary>
+    [IgnoreAutoPatch]
     public class MultiSelectStopLoadingPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
