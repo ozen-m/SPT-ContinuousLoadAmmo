@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using ContinuousLoadAmmo.Components;
+using ContinuousLoadAmmo.Utils;
 using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
@@ -20,7 +21,7 @@ public class InventoryScreenClosePatch : ModulePatch
     [PatchPrefix]
     protected static void Prefix(ref InventoryController ___inventoryController_0)
     {
-        if (!Plugin.InRaid) return;
+        if (!CommonUtils.InRaid) return;
 
         if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
         {

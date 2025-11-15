@@ -17,18 +17,17 @@ public class LoadAmmo : MonoBehaviour
     private Player _player;
     private PlayerInventoryController _playerInventoryController;
     private MagazineItemClass _magazine;
-    private LoadAmmoSelector _ammoSelector;
     private bool _isReachable;
 
     public bool IsActive => _playerInventoryController.Interface19_0 != null;
-    public bool AmmoSelectorActive => _ammoSelector.IsShown;
+    public PlayerInventoryController PlayerInventoryController => _playerInventoryController;
 
     public event Action<float, int, int> OnStartLoading;
     public event Action<Item> OnCloseInventory;
     public event Action OnEndLoading;
     public event Action OnDestroyComponent;
 
-    protected void Awake()
+    public void Awake()
     {
         _player = gameObject.GetComponent<Player>();
         if (Inst != null)
@@ -45,48 +44,27 @@ public class LoadAmmo : MonoBehaviour
 
         _playerInventoryController = playerInvCont;
         _playerInventoryController.SetNextProcessLocked(false);
-        _ammoSelector = new LoadAmmoSelector();
+        _player.OnHandsControllerChanged += StopLoadingOnHandsChange;
+        LoadAmmoSelector.Create(gameObject, this);
         Inst = this;
     }
 
-    protected void Update()
+    public bool CanLoadOutsideInventory()
     {
-        if (_player.IsInventoryOpened ||
-            _playerInventoryController.HasAnyHandsAction() ||
-            IsActive ||
-            _ammoSelector.IsShown)
-        {
-            return;
-        }
-
-
-        if (Input.GetKey(Plugin.LoadAmmoHotkey.Value.MainKey) && Input.mouseScrollDelta.y != 0)
-        {
-            _ = OpenAmmoSelectorAsync();
-            return;
-        }
-        if (Input.GetKeyUp(Plugin.LoadAmmoHotkey.Value.MainKey))
-        {
-            TryLoadAmmo();
-        }
+        return !_player.IsInventoryOpened &&
+               !_playerInventoryController.HasAnyHandsAction();
     }
 
-    private async Task OpenAmmoSelectorAsync()
+    public bool IsLoadAmmoAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)
     {
-        if (!GetAmmoItemsFromEquipment(out List<AmmoItemClass> ammos)) return;
-
-        if (!GetMagazineForAmmo(ammos[0], out MagazineItemClass foundMagazine)) return;
-
-        AmmoItemClass chosenAmmo = await _ammoSelector.ShowAcceptableAmmosAsync(ammos, _playerInventoryController);
-        if (chosenAmmo != null)
-        {
-            LoadMagazine(chosenAmmo, foundMagazine);
-        }
+        reachableAmmo = null;
+        foundMagazine = null;
+        return GetAmmoItemsFromEquipment(out reachableAmmo) && GetMagazineForAmmo(reachableAmmo[0], out foundMagazine);
     }
 
-    private void TryLoadAmmo()
+    public void TryQuickLoadAmmo()
     {
-        if (!GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmos)) return;
+        if (!IsLoadAmmoAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
 
         AmmoItemClass chosenAmmo = null;
         if (!Plugin.PrioritizeHighestPenetration.Value)
@@ -94,7 +72,7 @@ public class LoadAmmo : MonoBehaviour
             MagazineItemClass currentMagazine = _player.LastEquippedWeaponOrKnifeItem.GetCurrentMagazine();
             if (currentMagazine != null)
             {
-                foreach (var currAmmo in reachableAmmos)
+                foreach (var currAmmo in reachableAmmo)
                 {
                     if (currentMagazine.FirstRealAmmo() is not AmmoItemClass ammoInsideMag || ammoInsideMag.TemplateId != currAmmo.TemplateId) continue;
 
@@ -105,14 +83,11 @@ public class LoadAmmo : MonoBehaviour
             }
         }
         // PrioritizeHighestPenetration is false or if no ammo matched from magazine's first ammo, choose first reachable ammo available
-        chosenAmmo ??= reachableAmmos[0];
-        if (GetMagazineForAmmo(chosenAmmo, out MagazineItemClass foundMagazine))
-        {
-            LoadMagazine(chosenAmmo, foundMagazine);
-        }
+        chosenAmmo ??= reachableAmmo[0];
+        LoadMagazine(chosenAmmo, foundMagazine);
     }
 
-    private void LoadMagazine(AmmoItemClass ammo, MagazineItemClass magazine)
+    public void LoadMagazine(AmmoItemClass ammo, MagazineItemClass magazine)
     {
         //Plugin.LogSource.LogDebug($"Mag {magazine.LocalizedShortName()} ({magazine.Count}); Ammo {ammo.LocalizedShortName()} ({ammo.StackObjectsCount})");
         int loadCount = Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
@@ -124,7 +99,7 @@ public class LoadAmmo : MonoBehaviour
     /// </summary>
     /// <param name="ammo">Ammo that should be compatible with the magazine</param>
     /// <returns></returns>
-    private bool GetMagazineForAmmo(AmmoItemClass ammo, out MagazineItemClass foundMagazine)
+    public bool GetMagazineForAmmo(AmmoItemClass ammo, out MagazineItemClass foundMagazine)
     {
         List<MagazineItemClass> foundMagazines = [];
         _playerInventoryController.GetAcceptableItemsNonAlloc(
@@ -148,11 +123,11 @@ public class LoadAmmo : MonoBehaviour
     /// <summary>
     /// Find reachable ammo for the current weapon.
     /// </summary>
-    /// <param name="reachableAmmos">One of each ammo type found then sorted by Penetration Power descending</param>
+    /// <param name="reachableAmmo">One of each ammo type found then sorted by Penetration Power descending</param>
     /// <returns></returns>
-    private bool GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmos)
+    public bool GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmo)
     {
-        reachableAmmos = [];
+        reachableAmmo = [];
         if (_player.LastEquippedWeaponOrKnifeItem is Weapon weapon)
         {
             string weaponCaliber = weapon.AmmoCaliber;
@@ -164,14 +139,14 @@ public class LoadAmmo : MonoBehaviour
                     ammo.Parent.Container.ParentItem is not MagazineItemClass && // Do not pull from ammo inside mags
                     ammo.Caliber == weaponCaliber)
                 {
-                    reachableAmmos.Add(ammo);
+                    reachableAmmo.Add(ammo);
                 }
             }
         }
-        if (reachableAmmos.Count < 1) return false;
+        if (reachableAmmo.Count < 1) return false;
 
         // Sort penetration power highest to lowest, then stack count ascending
-        reachableAmmos.Sort((a, b) =>
+        reachableAmmo.Sort((a, b) =>
         {
             int result = b.PenetrationPower.CompareTo(a.PenetrationPower);
             if (result == 0)
@@ -182,7 +157,7 @@ public class LoadAmmo : MonoBehaviour
         });
         // Only return one of each type
         var seen = new HashSet<MongoID>();
-        reachableAmmos.RemoveAll(ammo => !seen.Add(ammo.TemplateId));
+        reachableAmmo.RemoveAll(ammo => !seen.Add(ammo.TemplateId));
         return true;
     }
 
@@ -218,7 +193,6 @@ public class LoadAmmo : MonoBehaviour
         if (IsActive && _isReachable && !_playerInventoryController.HasAnyHandsAction())
         {
             _ = SetPlayerStateAsync(true);
-            _ = ListenForCancelAsync();
             OnCloseInventory?.Invoke(_magazine);
             return;
         }
@@ -258,32 +232,6 @@ public class LoadAmmo : MonoBehaviour
         _player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
     }
 
-    private async Task ListenForCancelAsync()
-    {
-        while (IsActive)
-        {
-            while (_playerInventoryController.HasAnyHandsAction())
-            {
-                // Wait for animation
-                await Task.Yield();
-            }
-
-            if (!_player.IsInventoryOpened)
-            {
-                // Only listen for cancelling outside the inventory
-                if (Input.GetKeyDown(Plugin.CancelHotkey.Value.MainKey) ||
-                    Input.GetKeyDown(Plugin.CancelHotkeyAlt.Value.MainKey) ||
-                    !_player.HandsIsEmpty /* Pulled out weapon */)
-                {
-                    StopLoading();
-                    break;
-                }
-            }
-
-            await Task.Yield();
-        }
-    }
-
     private void ResetLoading()
     {
         _isReachable = false;
@@ -292,6 +240,7 @@ public class LoadAmmo : MonoBehaviour
 
     protected void OnDestroy()
     {
+        _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
         OnDestroyComponent?.Invoke();
         OnStartLoading = null;
         OnCloseInventory = null;
@@ -325,6 +274,16 @@ public class LoadAmmo : MonoBehaviour
         //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag examined?
 
         return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
+    }
+
+    private void StopLoadingOnHandsChange(AbstractHandsController oldHands, AbstractHandsController newHands)
+    {
+        if (!IsActive) return;
+
+        if (newHands is not (null or EmptyHandsController))
+        {
+            StopLoading();
+        }
     }
 
     public void StopLoading() => _playerInventoryController.StopProcesses();

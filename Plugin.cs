@@ -44,11 +44,6 @@ public class Plugin : BaseUnityPlugin
         new DestroyPatch().Enable();
         new LocalGameStopPatch().Enable();
         new RegisterPlayerPatch().Enable();
-        new TranslateCommandPatch().Enable();
         ScreensPatches.Enable();
     }
-
-#pragma warning disable CS0618 // Type or member is obsolete
-    public static bool InRaid => GClass2340.InRaid;
-#pragma warning restore CS0618 // Type or member is obsolete
 }
