@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ContinuousLoadAmmo.Components;
 using ContinuousLoadAmmo.Utils;
 using EFT;
 using EFT.InventoryLogic;
@@ -12,43 +11,44 @@ using static EFT.Player.PlayerInventoryController;
 
 namespace ContinuousLoadAmmo.Controllers;
 
-public class LoadAmmoController : MonoBehaviour
+public class LoadAmmoController
 {
     internal static LoadAmmoController Inst;
 
-    private Player _player;
-    private PlayerInventoryController _playerInventoryController;
+    private readonly Player _player;
+    private readonly PlayerInventoryController _playerInventoryController;
     private MagazineItemClass _magazine;
     private bool _isReachable;
 
     public event Action<float, int, int> OnStartLoading;
     public event Action<Item> OnCloseInventory;
     public event Action OnEndLoading;
-    public event Action OnDestroyComponent;
 
-    public bool IsActive => _playerInventoryController.Interface19_0 != null;
-    public PlayerInventoryController PlayerInventoryController => _playerInventoryController;
-
-    public void Awake()
+    public LoadAmmoController(Player player)
     {
-        _player = gameObject.GetComponent<Player>();
+        _player = player;
         if (Inst != null)
         {
-            Destroy(this);
-            return;
+            throw new InvalidOperationException($"{nameof(LoadAmmoController)} already instantiated");
         }
         if (_player.InventoryController is not PlayerInventoryController playerInvCont)
         {
-            ContinuousLoadAmmo.LogSource.LogError("LoadAmmo::Awake Unable to properly initialize ContinuousLoadAmmo");
-            Destroy(this);
-            return;
+            throw new InvalidOperationException($"Unable to properly instantiate {nameof(LoadAmmoController)}");
         }
 
         _playerInventoryController = playerInvCont;
         _playerInventoryController.SetNextProcessLocked(false);
         _player.OnHandsControllerChanged += StopLoadingOnHandsChange;
-        LoadAmmoComponent.Create(gameObject, this);
+        _player.OnIPlayerDeadOrUnspawn += Destroy;
         Inst = this;
+    }
+
+    public bool IsActive => _playerInventoryController.Interface19_0 != null;
+    public bool IsInventoryOpened => _player.IsInventoryOpened;
+    public PlayerInventoryController PlayerInventoryController => _playerInventoryController;
+
+    public void Awake()
+    {
     }
 
     public bool CanLoadOutsideInventory()
@@ -224,14 +224,16 @@ public class LoadAmmoController : MonoBehaviour
         return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
     }
 
-    public void OnDestroy()
+    public void Destroy(IPlayer player)
     {
-        _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
-        OnDestroyComponent?.Invoke();
+        if (_player != null)
+        {
+            _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
+            _player.OnIPlayerDeadOrUnspawn -= Destroy;
+        }
         OnStartLoading = null;
         OnCloseInventory = null;
         OnEndLoading = null;
-        OnDestroyComponent = null;
         if (Inst == this)
         {
             Inst = null;

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
-using Comfort.Common;
 using ContinuousLoadAmmo.Controllers;
+using ContinuousLoadAmmo.Utils;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop;
@@ -11,36 +10,36 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
 
 namespace ContinuousLoadAmmo.Components;
 
-public class LoadAmmoUI
+public class LoadAmmoUI : MonoBehaviour
 {
-    public static Transform EftBattleUIScreenTransform { get; private set; }
-
+    private LoadAmmoController _loadAmmoController;
     private Transform _magUI;
     private ItemViewLoadAmmoComponent _itemViewLoadAmmoComponent;
     private Image _magImage;
     private GClass929 _imageLoader;
     private Action _unbindImageLoader;
     private TextMeshProUGUI _magValue;
-    private CancellationTokenSource _cancellationTokenSource;
 
-    public void Init()
+    public static LoadAmmoUI Create(GameObject target, LoadAmmoController loadAmmoController)
     {
-        if (EftBattleUIScreenTransform == null)
-        {
-            EftBattleUIScreenTransform = Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
-        }
+        var loadAmmoUi = target.AddComponent<LoadAmmoUI>();
+        loadAmmoUi._loadAmmoController = loadAmmoController;
+        return loadAmmoUi;
+    }
 
+    public void Start()
+    {
         PrepareGameObjects();
         CloneTemplates();
 
-        LoadAmmoController.Inst.OnStartLoading += Start;
-        LoadAmmoController.Inst.OnCloseInventory += Show;
-        LoadAmmoController.Inst.OnEndLoading += Close;
-        LoadAmmoController.Inst.OnDestroyComponent += Destroy;
+        _loadAmmoController.OnStartLoading += HandleStart;
+        _loadAmmoController.OnCloseInventory += Show;
+        _loadAmmoController.OnEndLoading += Close;
+        _loadAmmoController.PlayerInventoryController.OnAmmoLoaded += UpdateTextValue;
+        _loadAmmoController.PlayerInventoryController.OnAmmoUnloaded += UpdateTextValue;
     }
 
     public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
@@ -53,13 +52,11 @@ public class LoadAmmoUI
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
     }
 
-    public bool IsSameLoaderUI(ItemViewLoadAmmoComponent component) => LoadAmmoController.Inst.IsActive && _itemViewLoadAmmoComponent == component;
-
     private void PrepareGameObjects()
     {
         GameObject loadAmmoObj = new("LoadAmmoUI", typeof(RectTransform));
         _magUI = loadAmmoObj.transform;
-        _magUI.SetParent(EftBattleUIScreenTransform);
+        _magUI.SetParent(CommonUtils.EftBattleUIScreenTransform);
         SetUI(_magUI);
 
         GameObject imageObj = new("Image", typeof(RectTransform), typeof(Image));
@@ -77,11 +74,11 @@ public class LoadAmmoUI
         var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField!.GetValue(gridItemView);
 
         var itemViewLoadAmmoComponentTemplateField = typeof(ItemViewAnimation).GetField("_loadAmmoComponentTemplate", BindingFlags.Instance | BindingFlags.NonPublic);
-        _itemViewLoadAmmoComponent = Object.Instantiate((ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField!.GetValue(itemViewAnimation), _magUI, false);
+        _itemViewLoadAmmoComponent = Instantiate((ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField!.GetValue(itemViewAnimation), _magUI, false);
         SetUI(_itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
 
         var itemViewBottomPanelField = typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
-        _magValue = Object.Instantiate(((ItemViewBottomPanel)itemViewBottomPanelField!.GetValue(gridItemView)).ItemValue, _magUI, false);
+        _magValue = Instantiate(((ItemViewBottomPanel)itemViewBottomPanelField!.GetValue(gridItemView)).ItemValue, _magUI, false);
         SetUI(_magValue.transform, new Vector2(0f, -190f));
         _magValue.enableWordWrapping = false;
         _magValue.overflowMode = TextOverflowModes.Overflow;
@@ -91,7 +88,7 @@ public class LoadAmmoUI
         gridItemView.Kill();
     }
 
-    private void Start(float oneAmmoDuration, int ammoTotal, int ammoDone = 0)
+    private void HandleStart(float oneAmmoDuration, int ammoTotal, int ammoDone = 0)
     {
         CancellationTokenSource cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
         cts?.Dispose();
@@ -100,12 +97,9 @@ public class LoadAmmoUI
 
     private void Show(Item item)
     {
-        _cancellationTokenSource?.Cancel();
-        _cancellationTokenSource = new CancellationTokenSource();
-
         _magValue.enabled = true;
-        _ = UpdateTextValueAsync(_cancellationTokenSource.Token);
 
+        UpdateTextValue(1);
         GetImage(item);
     }
 
@@ -125,22 +119,15 @@ public class LoadAmmoUI
         _magImage.enabled = true;
     }
 
-    private async Task UpdateTextValueAsync(CancellationToken token)
+    private void UpdateTextValue(int count)
     {
-        while (!token.IsCancellationRequested)
-        {
-            _magValue.SetText(LoadAmmoController.Inst.GetMagAmmoCountByLevel());
+        if (_loadAmmoController.IsInventoryOpened) return;
 
-            await Task.Yield();
-        }
+        _magValue.SetText(_loadAmmoController.GetMagAmmoCountByLevel());
     }
 
     private void Close()
     {
-        _cancellationTokenSource?.Cancel();
-        _cancellationTokenSource?.Dispose();
-        _cancellationTokenSource = null;
-
         if (_itemViewLoadAmmoComponent != null)
         {
             CancellationTokenSource cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
@@ -158,16 +145,19 @@ public class LoadAmmoUI
         }
     }
 
-    private void Destroy()
+    private void OnDestroy()
     {
         if (_magUI != null)
         {
-            Object.Destroy(_magUI.gameObject);
+            Destroy(_magUI.gameObject);
         }
-        LoadAmmoController.Inst.OnStartLoading -= Start;
-        LoadAmmoController.Inst.OnCloseInventory -= Show;
-        LoadAmmoController.Inst.OnEndLoading -= Close;
-        LoadAmmoController.Inst.OnDestroyComponent -= Destroy;
+        if (_loadAmmoController == null) return;
+
+        _loadAmmoController.OnStartLoading -= HandleStart;
+        _loadAmmoController.OnCloseInventory -= Show;
+        _loadAmmoController.OnEndLoading -= Close;
+        _loadAmmoController.PlayerInventoryController.OnAmmoLoaded -= UpdateTextValue;
+        _loadAmmoController.PlayerInventoryController.OnAmmoUnloaded -= UpdateTextValue;
     }
 
     private static readonly AccessTools.FieldRef<ItemViewLoadAmmoComponent, CancellationTokenSource> _itemViewLoadAmmoCtsField =

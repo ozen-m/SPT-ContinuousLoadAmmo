@@ -2,7 +2,6 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using ContinuousLoadAmmo.Components;
 using ContinuousLoadAmmo.Patches;
 using ContinuousLoadAmmo.Utils;
 using SPT.Reflection.Patching;
@@ -22,8 +21,6 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
     public static ConfigEntry<bool> PrioritizeHighestPenetration;
     public static ConfigEntry<KeyboardShortcut> LoadAmmoHotkey;
 
-    public static LoadAmmoUI LoadAmmoUI;
-
     public void Awake()
     {
         LogSource = Logger;
@@ -41,7 +38,5 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
         {
             new ScreensPatches.MultiSelectStopLoadingPatch().Enable();
         }
-
-        LoadAmmoUI = new LoadAmmoUI();
     }
 }

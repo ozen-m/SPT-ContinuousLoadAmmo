@@ -6,6 +6,7 @@ using EFT;
 using SPT.Reflection.Patching;
 
 #pragma warning disable VSTHRD100
+#pragma warning disable VSTHRD003
 // ReSharper disable AsyncVoidMethod
 
 namespace ContinuousLoadAmmo.Patches;

@@ -28,8 +28,10 @@ public class RegisterPlayerPatch : ModulePatch
 
         if (iPlayer is Player player)
         {
-            player.gameObject.AddComponent<LoadAmmoController>();
-            ContinuousLoadAmmo.LoadAmmoUI.Init();
+            var loadAmmoController = new LoadAmmoController(player);
+            LoadAmmoComponent.Create(player.gameObject, loadAmmoController);
+            LoadAmmoUI.Create(player.gameObject, loadAmmoController);
+            
             ContinuousLoadAmmo.LogSource.LogInfo($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
             return;
         }

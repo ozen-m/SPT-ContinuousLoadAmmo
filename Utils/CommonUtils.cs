@@ -1,5 +1,7 @@
 ﻿using System;
+using Comfort.Common;
 using EFT.InputSystem;
+using EFT.UI;
 using UnityEngine;
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -8,6 +10,19 @@ namespace ContinuousLoadAmmo.Utils;
 
 public static class CommonUtils
 {
+    private static Transform _eftBattleUIScreenTransform;
+
+    public static Transform EftBattleUIScreenTransform
+    {
+        get
+        {
+            if (_eftBattleUIScreenTransform != null) return _eftBattleUIScreenTransform;
+
+            _eftBattleUIScreenTransform = Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
+            return _eftBattleUIScreenTransform;
+        }
+    }
+
     private static InputTree _inputTree;
 
     public static InputTree InputTree

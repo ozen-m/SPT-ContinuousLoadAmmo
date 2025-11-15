@@ -101,7 +101,12 @@ public class LoadAmmoComponent : InputNode
 
     public override ECursorResult ShouldLockCursor() => ECursorResult.Ignore;
 
-    public void OnDestroy() => CommonUtils.InputTree.Remove(this);
+    public void OnDestroy()
+    {
+        _chosenAmmoTcs?.TrySetResult(null);
+        _chosenAmmoTcs = null;
+        CommonUtils.InputTree.Remove(this);
+    }
 
     private async Task OpenAmmoSelectorAsync()
     {
@@ -187,7 +192,7 @@ public class LoadAmmoComponent : InputNode
 
     private void SetLayout()
     {
-        if (_gridItemViews == null || _gridItemViews.Count == 0) return;
+        if (_gridItemViews.Count < 1) return;
 
         const float spacing = 5f;
         float gridWidth = ((RectTransform)_gridItemViews[0].transform).rect.width;
@@ -199,7 +204,7 @@ public class LoadAmmoComponent : InputNode
         for (int i = 0; i < _gridItemViews.Count; i++)
         {
             var viewTransform = _gridItemViews[i].transform;
-            viewTransform.SetParent(LoadAmmoUI.EftBattleUIScreenTransform, worldPositionStays: false);
+            viewTransform.SetParent(CommonUtils.EftBattleUIScreenTransform, worldPositionStays: false);
             LoadAmmoUI.SetUI(viewTransform, new Vector2((startX + (i * totalGridWidth)), -150f));
         }
     }
