@@ -14,8 +14,8 @@ public class LoadAmmoSelector : InputNode
 {
     private readonly List<GridItemView> _gridItemViews = [];
     private readonly List<AmmoItemClass> _ammoItems = [];
-    private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
     private LoadAmmo _loadAmmoController;
+    private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
 
     public bool IsShown => _chosenAmmoTcs != null;
 

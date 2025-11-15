@@ -19,13 +19,13 @@ public class LoadAmmo : MonoBehaviour
     private MagazineItemClass _magazine;
     private bool _isReachable;
 
-    public bool IsActive => _playerInventoryController.Interface19_0 != null;
-    public PlayerInventoryController PlayerInventoryController => _playerInventoryController;
-
     public event Action<float, int, int> OnStartLoading;
     public event Action<Item> OnCloseInventory;
     public event Action OnEndLoading;
     public event Action OnDestroyComponent;
+
+    public bool IsActive => _playerInventoryController.Interface19_0 != null;
+    public PlayerInventoryController PlayerInventoryController => _playerInventoryController;
 
     public void Awake()
     {
@@ -207,6 +207,35 @@ public class LoadAmmo : MonoBehaviour
         OnEndLoading?.Invoke();
     }
 
+    public void StopLoading() => _playerInventoryController.StopProcesses();
+
+    public string GetMagAmmoCountByLevel()
+    {
+        int skill = Mathf.Max(
+        [
+            _player.Profile.MagDrillsMastering,
+            _player.Profile.CheckedMagazineSkillLevel(_magazine.Id),
+            _magazine.CheckOverride
+        ]);
+        //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag examined?
+
+        return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
+    }
+
+    public void OnDestroy()
+    {
+        _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
+        OnDestroyComponent?.Invoke();
+        OnStartLoading = null;
+        OnCloseInventory = null;
+        OnEndLoading = null;
+        OnDestroyComponent = null;
+        if (Inst == this)
+        {
+            Inst = null;
+        }
+    }
+
     private async Task SetPlayerStateAsync(bool startAnim)
     {
         if (startAnim)
@@ -238,20 +267,6 @@ public class LoadAmmo : MonoBehaviour
         _magazine = null;
     }
 
-    protected void OnDestroy()
-    {
-        _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
-        OnDestroyComponent?.Invoke();
-        OnStartLoading = null;
-        OnCloseInventory = null;
-        OnEndLoading = null;
-        OnDestroyComponent = null;
-        if (Inst == this)
-        {
-            Inst = null;
-        }
-    }
-
     /// <summary>
     /// Base EFT code with modifications
     /// Only used internally with ammo and magazine outside the stash, so fewer checks
@@ -263,19 +278,6 @@ public class LoadAmmo : MonoBehaviour
         return _playerInventoryController.Inventory.GetItemsInSlots(ReachableSlots).Contains(item) && _playerInventoryController.Examined(item);
     }
 
-    public string GetMagAmmoCountByLevel()
-    {
-        int skill = Mathf.Max(
-        [
-            _player.Profile.MagDrillsMastering,
-            _player.Profile.CheckedMagazineSkillLevel(_magazine.Id),
-            _magazine.CheckOverride
-        ]);
-        //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag examined?
-
-        return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
-    }
-
     private void StopLoadingOnHandsChange(AbstractHandsController oldHands, AbstractHandsController newHands)
     {
         if (!IsActive) return;
@@ -285,8 +287,6 @@ public class LoadAmmo : MonoBehaviour
             StopLoading();
         }
     }
-
-    public void StopLoading() => _playerInventoryController.StopProcesses();
 
     private static EquipmentSlot[] ReachableSlots => Plugin.ReachableOnly.Value ? _reachableOnly : _reachableAll;
 

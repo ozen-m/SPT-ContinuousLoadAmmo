@@ -18,9 +18,6 @@ public class LoadAmmoUI
 {
     public static Transform EftBattleUIScreenTransform { get; private set; }
 
-    private static readonly AccessTools.FieldRef<ItemViewLoadAmmoComponent, CancellationTokenSource> _itemViewLoadAmmoCtsField =
-        AccessTools.FieldRefAccess<ItemViewLoadAmmoComponent, CancellationTokenSource>("cancellationTokenSource_0");
-
     private Transform _magUI;
     private ItemViewLoadAmmoComponent _itemViewLoadAmmoComponent;
     private Image _magImage;
@@ -171,4 +168,7 @@ public class LoadAmmoUI
         LoadAmmo.Inst.OnEndLoading -= Close;
         LoadAmmo.Inst.OnDestroyComponent -= Destroy;
     }
+
+    private static readonly AccessTools.FieldRef<ItemViewLoadAmmoComponent, CancellationTokenSource> _itemViewLoadAmmoCtsField =
+        AccessTools.FieldRefAccess<ItemViewLoadAmmoComponent, CancellationTokenSource>("cancellationTokenSource_0");
 }

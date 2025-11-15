@@ -2,6 +2,8 @@
 using EFT.InputSystem;
 using UnityEngine;
 
+#pragma warning disable CS0618 // Type or member is obsolete
+
 namespace ContinuousLoadAmmo.Utils;
 
 public static class CommonUtils
@@ -26,7 +28,5 @@ public static class CommonUtils
         }
     }
 
-#pragma warning disable CS0618 // Type or member is obsolete
     public static bool InRaid => GClass2340.InRaid;
-#pragma warning restore CS0618 // Type or member is obsolete
 }
