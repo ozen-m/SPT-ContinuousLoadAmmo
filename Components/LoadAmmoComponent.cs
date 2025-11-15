@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using ContinuousLoadAmmo.Controllers;
 using ContinuousLoadAmmo.Utils;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
@@ -10,11 +12,11 @@ using UnityEngine.UI;
 
 namespace ContinuousLoadAmmo.Components;
 
-public class LoadAmmoSelector : InputNode
+public class LoadAmmoComponent : InputNode
 {
     private readonly List<GridItemView> _gridItemViews = [];
     private readonly List<AmmoItemClass> _ammoItems = [];
-    private LoadAmmo _loadAmmoController;
+    private LoadAmmoController _loadAmmoControllerController;
     private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
 
     public bool IsShown => _chosenAmmoTcs != null;
@@ -33,10 +35,10 @@ public class LoadAmmoSelector : InputNode
         }
     }
 
-    public static LoadAmmoSelector Create(GameObject target, LoadAmmo loadAmmoController)
+    public static LoadAmmoComponent Create(GameObject target, LoadAmmoController loadAmmoControllerController)
     {
-        var loadAmmoSelector = target.AddComponent<LoadAmmoSelector>();
-        loadAmmoSelector._loadAmmoController = loadAmmoController;
+        var loadAmmoSelector = target.AddComponent<LoadAmmoComponent>();
+        loadAmmoSelector._loadAmmoControllerController = loadAmmoControllerController;
         return loadAmmoSelector;
     }
 
@@ -47,14 +49,14 @@ public class LoadAmmoSelector : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (!_loadAmmoController.CanLoadOutsideInventory()) return ETranslateResult.Ignore;
+        if (!_loadAmmoControllerController.CanLoadOutsideInventory()) return ETranslateResult.Ignore;
 
-        if (_loadAmmoController.IsActive)
+        if (_loadAmmoControllerController.IsActive)
         {
             if (command.IsCommand(ECommand.ToggleShooting) ||
                 command.IsCommand(ECommand.ToggleAlternativeShooting))
             {
-                _loadAmmoController.StopLoading();
+                _loadAmmoControllerController.StopLoading();
                 return ETranslateResult.Block;
             }
             return ETranslateResult.Ignore;
@@ -72,7 +74,7 @@ public class LoadAmmoSelector : InputNode
                 Previous();
                 return ETranslateResult.Block;
             }
-            if (Input.GetKeyUp(Plugin.LoadAmmoHotkey.Value.MainKey))
+            if (Input.GetKeyUp(ContinuousLoadAmmo.LoadAmmoHotkey.Value.MainKey))
             {
                 SetChosenAmmo(GetSelectedAmmo());
                 Close();
@@ -80,15 +82,15 @@ public class LoadAmmoSelector : InputNode
             return ETranslateResult.Ignore;
         }
 
-        if (Input.GetKey(Plugin.LoadAmmoHotkey.Value.MainKey) &&
+        if (Input.GetKey(ContinuousLoadAmmo.LoadAmmoHotkey.Value.MainKey) &&
             (command.IsCommand(ECommand.ScrollNext) || command.IsCommand(ECommand.ScrollPrevious)))
         {
             _ = OpenAmmoSelectorAsync();
             return ETranslateResult.Block;
         }
-        if (Input.GetKeyUp(Plugin.LoadAmmoHotkey.Value.MainKey))
+        if (Input.GetKeyUp(ContinuousLoadAmmo.LoadAmmoHotkey.Value.MainKey))
         {
-            _loadAmmoController.TryQuickLoadAmmo();
+            _loadAmmoControllerController.TryQuickLoadAmmo();
         }
         return ETranslateResult.Ignore;
     }
@@ -103,15 +105,16 @@ public class LoadAmmoSelector : InputNode
 
     private async Task OpenAmmoSelectorAsync()
     {
-        if (!_loadAmmoController.IsLoadAmmoAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
+        if (!_loadAmmoControllerController.IsLoadAmmoAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
 
-        AmmoItemClass chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoController.PlayerInventoryController);
+        AmmoItemClass chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoControllerController.PlayerInventoryController);
         if (chosenAmmo != null)
         {
-            _loadAmmoController.LoadMagazine(chosenAmmo, foundMagazine);
+            _loadAmmoControllerController.LoadMagazine(chosenAmmo, foundMagazine);
         }
     }
 
+    [SuppressMessage("Usage", "VSTHRD003:Avoid awaiting foreign Tasks")]
     private Task<AmmoItemClass> ShowAcceptableAmmoAsync(List<AmmoItemClass> foundAmmos, InventoryController inventoryController) // method_5
     {
         foreach (AmmoItemClass foundAmmo in foundAmmos)

@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Comfort.Common;
+using ContinuousLoadAmmo.Controllers;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.DragAndDrop;
@@ -36,10 +37,10 @@ public class LoadAmmoUI
         PrepareGameObjects();
         CloneTemplates();
 
-        LoadAmmo.Inst.OnStartLoading += Start;
-        LoadAmmo.Inst.OnCloseInventory += Show;
-        LoadAmmo.Inst.OnEndLoading += Close;
-        LoadAmmo.Inst.OnDestroyComponent += Destroy;
+        LoadAmmoController.Inst.OnStartLoading += Start;
+        LoadAmmoController.Inst.OnCloseInventory += Show;
+        LoadAmmoController.Inst.OnEndLoading += Close;
+        LoadAmmoController.Inst.OnDestroyComponent += Destroy;
     }
 
     public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
@@ -52,7 +53,7 @@ public class LoadAmmoUI
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
     }
 
-    public bool IsSameLoaderUI(ItemViewLoadAmmoComponent component) => LoadAmmo.Inst.IsActive && _itemViewLoadAmmoComponent == component;
+    public bool IsSameLoaderUI(ItemViewLoadAmmoComponent component) => LoadAmmoController.Inst.IsActive && _itemViewLoadAmmoComponent == component;
 
     private void PrepareGameObjects()
     {
@@ -128,7 +129,7 @@ public class LoadAmmoUI
     {
         while (!token.IsCancellationRequested)
         {
-            _magValue.SetText(LoadAmmo.Inst.GetMagAmmoCountByLevel());
+            _magValue.SetText(LoadAmmoController.Inst.GetMagAmmoCountByLevel());
 
             await Task.Yield();
         }
@@ -163,10 +164,10 @@ public class LoadAmmoUI
         {
             Object.Destroy(_magUI.gameObject);
         }
-        LoadAmmo.Inst.OnStartLoading -= Start;
-        LoadAmmo.Inst.OnCloseInventory -= Show;
-        LoadAmmo.Inst.OnEndLoading -= Close;
-        LoadAmmo.Inst.OnDestroyComponent -= Destroy;
+        LoadAmmoController.Inst.OnStartLoading -= Start;
+        LoadAmmoController.Inst.OnCloseInventory -= Show;
+        LoadAmmoController.Inst.OnEndLoading -= Close;
+        LoadAmmoController.Inst.OnDestroyComponent -= Destroy;
     }
 
     private static readonly AccessTools.FieldRef<ItemViewLoadAmmoComponent, CancellationTokenSource> _itemViewLoadAmmoCtsField =

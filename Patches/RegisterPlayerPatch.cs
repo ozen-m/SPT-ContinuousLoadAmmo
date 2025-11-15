@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using ContinuousLoadAmmo.Components;
+using ContinuousLoadAmmo.Controllers;
 using EFT;
 using SPT.Reflection.Patching;
 
@@ -17,7 +18,7 @@ public class RegisterPlayerPatch : ModulePatch
     {
         if (iPlayer == null)
         {
-            Plugin.LogSource.LogError("Could not add component, player was null!");
+            ContinuousLoadAmmo.LogSource.LogError("Could not add component, player was null!");
             return;
         }
         if (!iPlayer.IsYourPlayer)
@@ -27,11 +28,11 @@ public class RegisterPlayerPatch : ModulePatch
 
         if (iPlayer is Player player)
         {
-            player.gameObject.AddComponent<LoadAmmo>();
-            Plugin.LoadAmmoUI.Init();
-            Plugin.LogSource.LogInfo($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
+            player.gameObject.AddComponent<LoadAmmoController>();
+            ContinuousLoadAmmo.LoadAmmoUI.Init();
+            ContinuousLoadAmmo.LogSource.LogInfo($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
             return;
         }
-        Plugin.LogSource.LogError($"Unable to add LoadAmmoComponent to player: {iPlayer.Profile.Nickname}");
+        ContinuousLoadAmmo.LogSource.LogError($"Unable to add LoadAmmoComponent to player: {iPlayer.Profile.Nickname}");
     }
 }

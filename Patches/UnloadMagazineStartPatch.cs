@@ -1,9 +1,12 @@
 ﻿using System.Reflection;
 using System.Threading.Tasks;
 using Comfort.Common;
-using ContinuousLoadAmmo.Components;
+using ContinuousLoadAmmo.Controllers;
 using EFT;
 using SPT.Reflection.Patching;
+
+#pragma warning disable VSTHRD100
+// ReSharper disable AsyncVoidMethod
 
 namespace ContinuousLoadAmmo.Patches;
 
@@ -17,8 +20,8 @@ public class UnloadMagazineStartPatch : ModulePatch
     [PatchPostfix]
     protected static async void Postfix(Player.PlayerInventoryController.Class1207 __instance, Task<IResult> __result)
     {
-        LoadAmmo.Inst.LoadingStart(LoadAmmo.LoadingEventType.Unload, null, __instance);
+        LoadAmmoController.Inst.LoadingStart(LoadAmmoController.LoadingEventType.Unload, null, __instance);
         await __result;
-        LoadAmmo.Inst.LoadingEnd();
+        LoadAmmoController.Inst.LoadingEnd();
     }
 }

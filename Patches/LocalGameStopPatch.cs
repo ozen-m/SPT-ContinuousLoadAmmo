@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using ContinuousLoadAmmo.Components;
+using ContinuousLoadAmmo.Controllers;
 using EFT;
 using SPT.Reflection.Patching;
 
@@ -19,6 +20,6 @@ public class LocalGameStopPatch : ModulePatch
     [PatchPrefix]
     protected static void Prefix()
     {
-        LoadAmmo.Inst.StopLoading();
+        LoadAmmoController.Inst.StopLoading();
     }
 }

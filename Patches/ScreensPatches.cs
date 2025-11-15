@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using ContinuousLoadAmmo.Utils;
 using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
@@ -24,7 +25,7 @@ public static class ScreensPatches
 
     private static void Pre()
     {
-        if (Plugin.InventoryTabs.Value)
+        if (ContinuousLoadAmmo.InventoryTabs.Value)
         {
             _toSkip = true;
         }
@@ -32,7 +33,7 @@ public static class ScreensPatches
 
     private static void Post()
     {
-        if (Plugin.InventoryTabs.Value)
+        if (ContinuousLoadAmmo.InventoryTabs.Value)
         {
             _toSkip = false;
         }

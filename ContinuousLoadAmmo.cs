@@ -4,6 +4,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using ContinuousLoadAmmo.Components;
 using ContinuousLoadAmmo.Patches;
+using ContinuousLoadAmmo.Utils;
 using SPT.Reflection.Patching;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ namespace ContinuousLoadAmmo;
 [BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.1.1")]
 [BepInDependency("Tyfon.UIFixes", BepInDependency.DependencyFlags.SoftDependency)]
 [SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible")]
-public class Plugin : BaseUnityPlugin
+public class ContinuousLoadAmmo : BaseUnityPlugin
 {
     public static ManualLogSource LogSource;
     public static ConfigEntry<float> SpeedLimit;

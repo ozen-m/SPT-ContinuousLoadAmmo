@@ -17,7 +17,7 @@ public class DestroyPatch : ModulePatch
     [PatchPrefix]
     protected static bool Prefix(ItemViewLoadAmmoComponent __instance)
     {
-        if (Plugin.LoadAmmoUI.IsSameLoaderUI(__instance))
+        if (ContinuousLoadAmmo.LoadAmmoUI.IsSameLoaderUI(__instance))
         {
             return false;
         }

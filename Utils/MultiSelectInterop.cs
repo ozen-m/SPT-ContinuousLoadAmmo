@@ -4,7 +4,7 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
 
-namespace ContinuousLoadAmmo;
+namespace ContinuousLoadAmmo.Utils;
 
 internal static class MultiSelectInterop
 {

@@ -2,17 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ContinuousLoadAmmo.Components;
+using ContinuousLoadAmmo.Utils;
 using EFT;
 using EFT.InventoryLogic;
 using UnityEngine;
 using static EFT.Player;
 using static EFT.Player.PlayerInventoryController;
 
-namespace ContinuousLoadAmmo.Components;
+namespace ContinuousLoadAmmo.Controllers;
 
-public class LoadAmmo : MonoBehaviour
+public class LoadAmmoController : MonoBehaviour
 {
-    internal static LoadAmmo Inst;
+    internal static LoadAmmoController Inst;
 
     private Player _player;
     private PlayerInventoryController _playerInventoryController;
@@ -37,7 +39,7 @@ public class LoadAmmo : MonoBehaviour
         }
         if (_player.InventoryController is not PlayerInventoryController playerInvCont)
         {
-            Plugin.LogSource.LogError("LoadAmmo::Awake Unable to properly initialize ContinuousLoadAmmo");
+            ContinuousLoadAmmo.LogSource.LogError("LoadAmmo::Awake Unable to properly initialize ContinuousLoadAmmo");
             Destroy(this);
             return;
         }
@@ -45,7 +47,7 @@ public class LoadAmmo : MonoBehaviour
         _playerInventoryController = playerInvCont;
         _playerInventoryController.SetNextProcessLocked(false);
         _player.OnHandsControllerChanged += StopLoadingOnHandsChange;
-        LoadAmmoSelector.Create(gameObject, this);
+        LoadAmmoComponent.Create(gameObject, this);
         Inst = this;
     }
 
@@ -67,7 +69,7 @@ public class LoadAmmo : MonoBehaviour
         if (!IsLoadAmmoAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
 
         AmmoItemClass chosenAmmo = null;
-        if (!Plugin.PrioritizeHighestPenetration.Value)
+        if (!ContinuousLoadAmmo.PrioritizeHighestPenetration.Value)
         {
             MagazineItemClass currentMagazine = _player.LastEquippedWeaponOrKnifeItem.GetCurrentMagazine();
             if (currentMagazine != null)
@@ -242,7 +244,7 @@ public class LoadAmmo : MonoBehaviour
         {
             _player.TrySaveLastItemInHands();
             _player.SetEmptyHands(null);
-            _player.MovementContext.ChangeSpeedLimit(Plugin.SpeedLimit.Value, ESpeedLimit.BarbedWire);
+            _player.MovementContext.ChangeSpeedLimit(ContinuousLoadAmmo.SpeedLimit.Value, ESpeedLimit.BarbedWire);
         }
         else
         {
@@ -288,7 +290,7 @@ public class LoadAmmo : MonoBehaviour
         }
     }
 
-    private static EquipmentSlot[] ReachableSlots => Plugin.ReachableOnly.Value ? _reachableOnly : _reachableAll;
+    private static EquipmentSlot[] ReachableSlots => ContinuousLoadAmmo.ReachableOnly.Value ? _reachableOnly : _reachableAll;
 
     private static readonly EquipmentSlot[] _reachableOnly =
     [
