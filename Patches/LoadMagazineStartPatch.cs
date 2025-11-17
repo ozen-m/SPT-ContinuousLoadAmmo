@@ -1,7 +1,7 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using Comfort.Common;
-using ContinuousLoadAmmo.Controllers;
 using EFT;
 using SPT.Reflection.Patching;
 
@@ -13,6 +13,8 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class LoadMagazineStartPatch : ModulePatch
 {
+    public static Action OnLoadingEnd { get; set; }
+
     protected override MethodBase GetTargetMethod()
     {
         return typeof(Player.PlayerInventoryController.Class1204).GetMethod(nameof(Player.PlayerInventoryController.Class1204.Start));
@@ -21,8 +23,7 @@ public class LoadMagazineStartPatch : ModulePatch
     [PatchPostfix]
     protected static async void Postfix(Player.PlayerInventoryController.Class1204 __instance, Task<IResult> __result)
     {
-        LoadAmmoController.Inst.LoadingStart(LoadAmmoController.LoadingEventType.Load, __instance, null);
         await __result;
-        LoadAmmoController.Inst.LoadingEnd();
+        OnLoadingEnd?.Invoke();
     }
 }

@@ -39,17 +39,13 @@ public class LoadAmmoComponent : InputNode
     {
         var loadAmmoSelector = target.AddComponent<LoadAmmoComponent>();
         loadAmmoSelector._loadAmmoControllerController = loadAmmoControllerController;
+        CommonUtils.InputTree.Add(loadAmmoSelector);
         return loadAmmoSelector;
-    }
-
-    public void Start()
-    {
-        CommonUtils.InputTree.Add(this);
     }
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (!_loadAmmoControllerController.CanLoadOutsideInventory()) return ETranslateResult.Ignore;
+        if (!_loadAmmoControllerController.CanLoadOutsideInventory() || _loadAmmoControllerController.IsInventoryOpened) return ETranslateResult.Ignore;
 
         if (_loadAmmoControllerController.IsActive)
         {
@@ -120,15 +116,15 @@ public class LoadAmmoComponent : InputNode
     }
 
     [SuppressMessage("Usage", "VSTHRD003:Avoid awaiting foreign Tasks")]
-    private Task<AmmoItemClass> ShowAcceptableAmmoAsync(List<AmmoItemClass> foundAmmos, InventoryController inventoryController) // method_5
+    private Task<AmmoItemClass> ShowAcceptableAmmoAsync(List<AmmoItemClass> foundAmmo, InventoryController inventoryController) // method_5
     {
-        foreach (AmmoItemClass foundAmmo in foundAmmos)
+        foreach (var ammo in foundAmmo)
         {
-            GridItemView view = GridItemView.Create(foundAmmo, new GClass3450(), ItemRotation.Horizontal, inventoryController, inventoryController, null, null, null, null, null);
+            GridItemView view = GridItemView.Create(ammo, new GClass3450(), ItemRotation.Horizontal, inventoryController, inventoryController, null, null, null, null, null);
             _gridItemViews.Add(view);
-            _ammoItems.Add(foundAmmo);
+            _ammoItems.Add(ammo);
         }
-        AddCancelView(foundAmmos[0], inventoryController);
+        AddCancelView(foundAmmo[0], inventoryController);
 
         SetLayout();
         _index = 0;

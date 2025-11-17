@@ -36,7 +36,7 @@ public class LoadAmmoUI : MonoBehaviour
         CloneTemplates();
 
         _loadAmmoController.OnStartLoading += HandleStart;
-        _loadAmmoController.OnCloseInventory += Show;
+        _loadAmmoController.OnCloseInventoryLoading += Show;
         _loadAmmoController.OnEndLoading += Close;
         _loadAmmoController.PlayerInventoryController.OnAmmoLoaded += UpdateTextValue;
         _loadAmmoController.PlayerInventoryController.OnAmmoUnloaded += UpdateTextValue;
@@ -98,8 +98,8 @@ public class LoadAmmoUI : MonoBehaviour
     private void Show(Item item)
     {
         _magValue.enabled = true;
+        _magValue.text = _loadAmmoController.GetMagAmmoCountByLevel();
 
-        UpdateTextValue(1);
         GetImage(item);
     }
 
@@ -147,6 +147,7 @@ public class LoadAmmoUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        Close();
         if (_magUI != null)
         {
             Destroy(_magUI.gameObject);
@@ -154,7 +155,7 @@ public class LoadAmmoUI : MonoBehaviour
         if (_loadAmmoController == null) return;
 
         _loadAmmoController.OnStartLoading -= HandleStart;
-        _loadAmmoController.OnCloseInventory -= Show;
+        _loadAmmoController.OnCloseInventoryLoading -= Show;
         _loadAmmoController.OnEndLoading -= Close;
         _loadAmmoController.PlayerInventoryController.OnAmmoLoaded -= UpdateTextValue;
         _loadAmmoController.PlayerInventoryController.OnAmmoUnloaded -= UpdateTextValue;

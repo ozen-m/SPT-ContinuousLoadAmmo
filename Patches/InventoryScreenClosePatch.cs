@@ -1,6 +1,5 @@
-﻿using System.Reflection;
-using ContinuousLoadAmmo.Components;
-using ContinuousLoadAmmo.Controllers;
+﻿using System;
+using System.Reflection;
 using ContinuousLoadAmmo.Utils;
 using EFT;
 using EFT.InventoryLogic;
@@ -11,6 +10,8 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class InventoryScreenClosePatch : ModulePatch
 {
+    public static Action OnInventoryClose { get; set; }
+
     protected override MethodBase GetTargetMethod()
     {
         return typeof(InventoryScreen).GetMethod(nameof(InventoryScreen.Close));
@@ -33,6 +34,6 @@ public class InventoryScreenClosePatch : ModulePatch
         // Skip StopProcesses and SetNextProcessLocked(true) after prefix
         ___inventoryController_0 = null;
 
-        LoadAmmoController.Inst.LoadingOutsideInventory();
+        OnInventoryClose?.Invoke();
     }
 }
