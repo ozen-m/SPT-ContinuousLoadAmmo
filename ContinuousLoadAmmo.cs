@@ -19,17 +19,19 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
     public static ConfigEntry<bool> ReachableOnly;
     public static ConfigEntry<bool> InventoryTabs;
     public static ConfigEntry<bool> PrioritizeHighestPenetration;
-    public static ConfigEntry<KeyboardShortcut> LoadAmmoHotkey;
+    public static ConfigEntry<bool> QuickLoadNotify;
+    public static ConfigEntry<KeyboardShortcut> QuickLoadHotkey;
 
     public void Awake()
     {
         LogSource = Logger;
 
-        SpeedLimit = Config.Bind("General", "Speed Limit", 0.31f, new ConfigDescription("The speed limit, as a percentage of the walk speed, set to the player while loading ammo", new AcceptableValueRange<float>(0f, 1f), new ConfigurationManagerAttributes() { Order = 4, ShowRangeAsPercent = true }));
-        ReachableOnly = Config.Bind("General", "Reachable Places Only", true, new ConfigDescription("Allow loading ammo outside the inventory only when Magazine and Ammo is in your Vest, Pockets, or Secure Container", null, new ConfigurationManagerAttributes() { Order = 3 }));
-        InventoryTabs = Config.Bind("General", "Inventory Tabs", true, new ConfigDescription("Do not interrupt loading ammo when switching inventory tabs (maps tab, tasks tab, etc.)", null, new ConfigurationManagerAttributes() { Order = 2 }));
-        LoadAmmoHotkey = Config.Bind("General", "Load Ammo Hotkey", new KeyboardShortcut(KeyCode.K), new ConfigDescription("Key used to load ammo outside the inventory", null, new ConfigurationManagerAttributes() { Order = 1 }));
-        PrioritizeHighestPenetration = Config.Bind("General", "Prioritize Highest Penetration", true, new ConfigDescription("When using Load Ammo Hotkey, choose ammo that has the highest penetration power if Enabled. If Disabled, prioritize the same ammo in the weapon's magazine", null, new ConfigurationManagerAttributes() { Order = 0 }));
+        SpeedLimit = Config.Bind("General", "Speed Limit", 0.31f, new ConfigDescription("The speed limit, as a percentage of the walk speed, set to the player while loading ammo", new AcceptableValueRange<float>(0f, 1f), new ConfigurationManagerAttributes() { Order = 5, ShowRangeAsPercent = true }));
+        ReachableOnly = Config.Bind("General", "Reachable Places Only", true, new ConfigDescription("Allow loading ammo outside the inventory only when Magazine and Ammo is in your Vest, Pockets, or Secure Container", null, new ConfigurationManagerAttributes() { Order = 4 }));
+        InventoryTabs = Config.Bind("General", "Inventory Tabs", true, new ConfigDescription("Do not interrupt loading ammo when switching inventory tabs (maps tab, tasks tab, etc.)", null, new ConfigurationManagerAttributes() { Order = 3 }));
+        QuickLoadHotkey = Config.Bind("Quick Load", "Hotkey", new KeyboardShortcut(KeyCode.K), new ConfigDescription("Key used to load ammo outside the inventory", null, new ConfigurationManagerAttributes() { Order = 2 }));
+        PrioritizeHighestPenetration = Config.Bind("Quick Load", "Prioritize Highest Penetration", true, new ConfigDescription("When using Quick Load, choose ammo that has the highest penetration power. If Disabled, prioritize the same ammo in the weapon's magazine", null, new ConfigurationManagerAttributes() { Order = 1 }));
+        QuickLoadNotify = Config.Bind("Quick Load", "Notify", true, new ConfigDescription("When using Quick Load, notify the player of the ammo being loaded", null, new ConfigurationManagerAttributes() { Order = 0 }));
 
         var patchManager = new PatchManager(this, true);
         patchManager.EnablePatches();

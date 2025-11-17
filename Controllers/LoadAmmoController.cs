@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ContinuousLoadAmmo.Patches;
 using ContinuousLoadAmmo.Utils;
 using EFT;
+using EFT.Communications;
 using EFT.InventoryLogic;
 using UnityEngine;
 using static EFT.Player;
@@ -82,6 +83,11 @@ public class LoadAmmoController
         // PrioritizeHighestPenetration is false or if no ammo matched from magazine's first ammo, choose first reachable ammo available
         chosenAmmo ??= reachableAmmo[0];
         LoadMagazine(chosenAmmo, foundMagazine);
+
+        if (ContinuousLoadAmmo.QuickLoadNotify.Value)
+        {
+            NotificationManagerClass.DisplayMessageNotification($"Loading {chosenAmmo.LocalizedShortName()}", iconType: ENotificationIconType.Note);
+        }
     }
 
     public void LoadMagazine(AmmoItemClass ammo, MagazineItemClass magazine)

@@ -70,7 +70,7 @@ public class LoadAmmoComponent : InputNode
                 Previous();
                 return ETranslateResult.Block;
             }
-            if (Input.GetKeyUp(ContinuousLoadAmmo.LoadAmmoHotkey.Value.MainKey))
+            if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
             {
                 SetChosenAmmo(GetSelectedAmmo());
                 Close();
@@ -78,13 +78,13 @@ public class LoadAmmoComponent : InputNode
             return ETranslateResult.Ignore;
         }
 
-        if (Input.GetKey(ContinuousLoadAmmo.LoadAmmoHotkey.Value.MainKey) &&
+        if (Input.GetKey(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
             (command.IsCommand(ECommand.ScrollNext) || command.IsCommand(ECommand.ScrollPrevious)))
         {
             _ = OpenAmmoSelectorAsync();
             return ETranslateResult.Block;
         }
-        if (Input.GetKeyUp(ContinuousLoadAmmo.LoadAmmoHotkey.Value.MainKey))
+        if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
         {
             _loadAmmoControllerController.TryQuickLoadAmmo();
         }
