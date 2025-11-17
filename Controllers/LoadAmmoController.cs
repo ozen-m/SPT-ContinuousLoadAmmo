@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using ContinuousLoadAmmo.Patches;
 using ContinuousLoadAmmo.Utils;
@@ -104,23 +103,43 @@ public class LoadAmmoController
     /// <returns></returns>
     public bool GetMagazineForAmmo(AmmoItemClass ammo, out MagazineItemClass foundMagazine)
     {
-        List<MagazineItemClass> foundMagazines = [];
-        PlayerInventoryController.GetAcceptableItemsNonAlloc(
-            ReachableSlots,
-            foundMagazines,
-            (mag) => PlayerInventoryController.Examined(mag) && mag.Count != mag.MaxCount && mag.CheckCompatibility(ammo)
-        );
-        if (foundMagazines.Count > 0)
-        {
-            // Sort by almost full
-            foundMagazines.Sort((a, b) =>
-                (a.MaxCount - a.Count).CompareTo(b.MaxCount - b.Count)
-            );
-            foundMagazine = foundMagazines[0];
-            return true;
-        }
         foundMagazine = null;
-        return false;
+        var foundMagazines = new List<MagazineItemClass>();
+        if (ContinuousLoadAmmo.ReachableOnly.Value)
+        {
+            // Only get top level container's items for quick load
+            PlayerInventoryController.GetAcceptableItemsNonAlloc(
+                ReachableSlots,
+                foundMagazines,
+                (mag) =>
+                    PlayerInventoryController.Examined(mag) &&
+                    mag.Count != mag.MaxCount &&
+                    mag.CheckCompatibility(ammo),
+                (container) =>
+                    container is not SearchableItemItemClass searchableContainer ||
+                    PlayerInventoryController.SearchController.IsSearched(searchableContainer) /* Only searched containers */
+            );
+        }
+        else
+        {
+            // Can be recursive
+            GetReachableItems(
+                foundMagazines,
+                (mag) =>
+                    PlayerInventoryController.Examined(mag) &&
+                    mag.Count != mag.MaxCount &&
+                    mag.CheckCompatibility(ammo)
+            );
+        }
+        if (foundMagazines.Count <= 0) return false;
+
+        // Sort by almost full
+        foundMagazines.Sort((a, b) =>
+            (a.MaxCount - a.Count).CompareTo(b.MaxCount - b.Count)
+        );
+        // Mag with most amount
+        foundMagazine = foundMagazines[0];
+        return true;
     }
 
     /// <summary>
@@ -131,22 +150,36 @@ public class LoadAmmoController
     public bool GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmo)
     {
         reachableAmmo = [];
-        if (_player.LastEquippedWeaponOrKnifeItem is Weapon weapon)
+        if (_player.LastEquippedWeaponOrKnifeItem is not Weapon weapon) return false;
+
+        string weaponCaliber = weapon.AmmoCaliber;
+        if (ContinuousLoadAmmo.ReachableOnly.Value)
         {
-            string weaponCaliber = weapon.AmmoCaliber;
-            var items = PlayerInventoryController.Inventory.GetItemsInSlots(ReachableSlots); // linq
-            foreach (var item in items)
-            {
-                if (item is AmmoItemClass ammo &&
+            // Only get top level container's items for quick load
+            PlayerInventoryController.GetAcceptableItemsNonAlloc(
+                ReachableSlots,
+                reachableAmmo,
+                (ammo) =>
                     PlayerInventoryController.Examined(ammo) &&
-                    ammo.Parent.Container.ParentItem is not MagazineItemClass && // Do not pull from ammo inside mags
-                    ammo.Caliber == weaponCaliber)
-                {
-                    reachableAmmo.Add(ammo);
-                }
-            }
+                    ammo.Caliber == weaponCaliber &&
+                    ammo.Parent.Container.ParentItem is not MagazineItemClass /* Do not pull from ammo inside mags */,
+                (container) =>
+                    container is not SearchableItemItemClass searchableContainer ||
+                    PlayerInventoryController.SearchController.IsSearched(searchableContainer) /* Only searched containers */
+            );
         }
-        if (reachableAmmo.Count < 1) return false;
+        else
+        {
+            // Can be recursive
+            GetReachableItems(
+                reachableAmmo,
+                (ammo) =>
+                    PlayerInventoryController.Examined(ammo) &&
+                    ammo.Caliber == weaponCaliber &&
+                    ammo.Parent.Container.ParentItem is not MagazineItemClass /* Do not pull from ammo inside mags */
+            );
+        }
+        if (reachableAmmo.Count <= 0) return false;
 
         // Sort penetration power highest to lowest, then stack count ascending
         reachableAmmo.Sort((a, b) =>
@@ -256,14 +289,97 @@ public class LoadAmmoController
     }
 
     /// <summary>
-    /// Base EFT code with modifications
-    /// Only used internally with ammo and magazine outside the stash, so fewer checks
+    /// Check if item is reachable, recursively
     /// </summary>
     private bool IsAtReachablePlace(Item item)
     {
         if (item.CurrentAddress == null) return false;
 
-        return PlayerInventoryController.Inventory.GetItemsInSlots(ReachableSlots).Contains(item) && PlayerInventoryController.Examined(item); // linq
+        var reachableItems = new List<Item>();
+        GetReachableItems(reachableItems);
+        return reachableItems.Contains(item) && PlayerInventoryController.Examined(item);
+    }
+
+    private bool IsAtReachablePlace(Item item, Item item2)
+    {
+        if (item.CurrentAddress == null || item2.CurrentAddress == null) return false;
+
+        var reachableItems = new List<Item>();
+        GetReachableItems(reachableItems);
+        return reachableItems.Contains(item) &&
+               PlayerInventoryController.Examined(item) &&
+               reachableItems.Contains(item2) &&
+               PlayerInventoryController.Examined(item2);
+    }
+
+    private void GetReachableItems<TItem>(
+        List<TItem> preAllocatedList,
+        Predicate<TItem> predicate = null)
+        where TItem : Item
+    {
+        GetAcceptableItemsNonAlloc(
+            ReachableSlots,
+            preAllocatedList,
+            predicate,
+            (item) =>
+                item is not SearchableItemItemClass searchable ||
+                PlayerInventoryController.SearchController.IsSearched(searchable) /* Only searched containers */
+        );
+    }
+
+    /// <summary>
+    /// Get acceptable items recursively
+    /// </summary>
+    private void GetAcceptableItemsNonAlloc<TItem>(
+        EquipmentSlot[] equipmentSlots,
+        List<TItem> preAllocatedList,
+        Predicate<TItem> predicate = null,
+        Predicate<GClass3248> goDeeperPredicate = null)
+        where TItem : Item
+    {
+        InventoryEquipment equipment = PlayerInventoryController.Inventory.Equipment;
+        foreach (EquipmentSlot equipmentSlot in equipmentSlots)
+        {
+            if (equipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 containedItem || (goDeeperPredicate != null && !goDeeperPredicate(containedItem))) continue;
+
+            foreach (var container in containedItem.Containers)
+            {
+                foreach (Item obj1 in container.Items)
+                {
+                    if (obj1 is GClass3248 obj3 && (goDeeperPredicate == null || goDeeperPredicate(obj3)))
+                    {
+                        GetAllItemsOfContainer(obj3, preAllocatedList, predicate, goDeeperPredicate);
+                    }
+                    if (obj1 is TItem obj2 && (predicate == null || predicate(obj2)))
+                    {
+                        preAllocatedList.Add(obj2);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void GetAllItemsOfContainer<TItem>(
+        GClass3248 containedItem,
+        List<TItem> preAllocatedList,
+        Predicate<TItem> predicate = null,
+        Predicate<GClass3248> goDeeperPredicate = null)
+        where TItem : Item
+    {
+        foreach (var container in containedItem.Containers)
+        {
+            foreach (Item obj1 in container.Items)
+            {
+                if (obj1 is GClass3248 obj3 && (goDeeperPredicate == null || goDeeperPredicate(obj3)))
+                {
+                    GetAllItemsOfContainer(obj3, preAllocatedList, predicate, goDeeperPredicate);
+                }
+                if (obj1 is TItem obj2 && (predicate == null || predicate(obj2)))
+                {
+                    preAllocatedList.Add(obj2);
+                }
+            }
+        }
     }
 
     private void StopLoadingOnHandsChange(AbstractHandsController oldHands, AbstractHandsController newHands)
