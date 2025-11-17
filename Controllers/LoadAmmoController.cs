@@ -276,7 +276,7 @@ public class LoadAmmoController
             await Task.Delay(800);
 
             // Check for active MultiSelect load/unload
-            if (MultiSelectInterop.LoadUnloadSerializer != null) return;
+            if (MultiSelectInterop.IsMultiSelectLoadSerializerActive) return;
 
             if (_player.HandsIsEmpty)
             {

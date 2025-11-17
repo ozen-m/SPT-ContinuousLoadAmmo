@@ -8,14 +8,25 @@ namespace ContinuousLoadAmmo.Utils;
 
 internal static class MultiSelectInterop
 {
-    private static readonly Version _requiredVersion = new(4, 0);
+    private static readonly Version _requiredVersion = new(5, 0);
 
     private static bool? _uiFixesLoaded;
-    private static Type _multiSelectType;
     private static Func<object> _loadUnloadSerializerGetter;
+    private static AccessTools.FieldRef<object, TaskCompletionSource> _totalTaskField;
     private static MethodInfo _stopLoadingMethod;
 
-    public static object LoadUnloadSerializer => Loaded() ? _loadUnloadSerializerGetter?.Invoke() : null;
+    public static bool IsMultiSelectLoadSerializerActive
+    {
+        get
+        {
+            if (!Loaded()) return false;
+
+            var serializer = _loadUnloadSerializerGetter?.Invoke();
+            if (serializer == null) return false;
+
+            return !_totalTaskField(serializer).Task.IsCompleted;
+        }
+    }
 
     public static MethodInfo StopLoadingMethod => Loaded() ? _stopLoadingMethod : null;
 
@@ -28,13 +39,20 @@ internal static class MultiSelectInterop
 
         if (!_uiFixesLoaded.Value) return _uiFixesLoaded.Value;
 
-        _multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
-        if (_multiSelectType != null)
+        var multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
+        if (multiSelectType != null)
         {
-            var loadUnloadSerializerMethod = AccessTools.PropertyGetter(_multiSelectType, "LoadUnloadSerializer");
+            var loadUnloadSerializerMethod = AccessTools.PropertyGetter(multiSelectType, "LoadUnloadSerializer");
             _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
-            _stopLoadingMethod = AccessTools.Method(_multiSelectType, "StopLoading");
+            _stopLoadingMethod = AccessTools.Method(multiSelectType, "StopLoading");
         }
+
+        var taskSerializerType = Type.GetType("UIFixes.MultiSelectItemContextTaskSerializer, Tyfon.UIFixes");
+        if (taskSerializerType != null)
+        {
+            _totalTaskField = AccessTools.FieldRefAccess<TaskCompletionSource>(taskSerializerType, "totalTask");
+        }
+
         return _uiFixesLoaded.Value;
     }
 }

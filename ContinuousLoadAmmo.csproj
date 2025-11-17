@@ -20,6 +20,9 @@
       <HintPath>$(SPTPath)BepInEx\core\0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="CommonExtensions">
+      <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\CommonExtensions.dll</HintPath>
+    </Reference>
     <Reference Include="ItemComponent.Types">
       <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll</HintPath>
       <Private>false</Private>
