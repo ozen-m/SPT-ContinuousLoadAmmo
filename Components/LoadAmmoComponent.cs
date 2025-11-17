@@ -188,7 +188,7 @@ public class LoadAmmoComponent : InputNode
 
     private void SetLayout()
     {
-        if (_gridItemViews.Count < 1) return;
+        if (_gridItemViews.Count <= 0) return;
 
         const float spacing = 5f;
         float gridWidth = ((RectTransform)_gridItemViews[0].transform).rect.width;
