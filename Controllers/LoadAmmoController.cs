@@ -204,12 +204,17 @@ public class LoadAmmoController
         switch (eventArgs)
         {
             case GEventArgs7 loadEvent:
-                _magazine = (MagazineItemClass)loadEvent.TargetItem;
-                _isReachable = IsAtReachablePlace(_magazine) && IsAtReachablePlace((AmmoItemClass)loadEvent.Item);
+                if (loadEvent.TargetItem is not MagazineItemClass loadMagazine || loadEvent.Item is not AmmoItemClass ammo) return;
+
+                _magazine = loadMagazine;
+                _isReachable = IsAtReachablePlace(_magazine, ammo);
                 OnStartLoading?.Invoke(loadEvent.LoadTime, loadEvent.LoadCount, 0);
                 break;
             case GEventArgs8 unloadEvent:
-                _magazine = unloadEvent.FromItem;
+                // ReSharper disable once ConvertTypeCheckPatternToNullCheck
+                if (unloadEvent.FromItem is not MagazineItemClass unloadMagazine) return;
+
+                _magazine = unloadMagazine;
                 _isReachable = IsAtReachablePlace(_magazine);
                 OnStartLoading?.Invoke(unloadEvent.UnloadTime, unloadEvent.UnloadCount, unloadEvent.StartCount);
                 break;
