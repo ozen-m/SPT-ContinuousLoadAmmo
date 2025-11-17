@@ -240,7 +240,7 @@ public class LoadAmmoController
             // Check for active MultiSelect load/unload
             if (MultiSelectInterop.LoadUnloadSerializer != null) return;
 
-            if (!_player.IsWeaponOrKnifeInHands)
+            if (_player.HandsIsEmpty)
             {
                 _player.TrySetLastEquippedWeapon();
             }
