@@ -133,6 +133,9 @@ public class LoadAmmoController
         }
         if (foundMagazines.Count <= 0) return false;
 
+        // Some magazines can have multiple calibers
+        foundMagazines.RemoveAll(mag => mag.CheckIfAnyDifferentCaliber(ammo));
+
         // Sort by almost full
         foundMagazines.Sort((a, b) =>
             (a.MaxCount - a.Count).CompareTo(b.MaxCount - b.Count)

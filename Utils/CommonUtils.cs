@@ -43,5 +43,15 @@ public static class CommonUtils
         }
     }
 
+    public static bool CheckIfAnyDifferentCaliber(this MagazineItemClass magazine, AmmoItemClass ammo)
+    {
+        foreach (var cartridge in magazine.Cartridges.Items_1)
+        {
+            if (cartridge is not AmmoItemClass cartridgeAmmo) continue;
+            if (cartridgeAmmo.Caliber != ammo.Caliber) return true;
+        }
+        return false;
+    }
+
     public static bool InRaid => GClass2340.InRaid;
 }
