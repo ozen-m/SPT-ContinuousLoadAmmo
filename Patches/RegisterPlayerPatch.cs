@@ -8,8 +8,11 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class RegisterPlayerPatch : ModulePatch
 {
+    private static LoadAmmoUI _loadAmmoUI;
+
     protected override MethodBase GetTargetMethod()
     {
+        _loadAmmoUI = new LoadAmmoUI();
         return typeof(GameWorld).GetMethod(nameof(GameWorld.RegisterPlayer));
     }
 
@@ -30,8 +33,8 @@ public class RegisterPlayerPatch : ModulePatch
         {
             var loadAmmoController = new LoadAmmoController(player);
             LoadAmmoComponent.Create(player.gameObject, loadAmmoController);
-            LoadAmmoUI.Create(player.gameObject, loadAmmoController);
-            
+            _loadAmmoUI.Initialize(loadAmmoController);
+
             ContinuousLoadAmmo.LogSource.LogInfo($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
             return;
         }

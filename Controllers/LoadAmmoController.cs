@@ -11,7 +11,7 @@ using static EFT.Player;
 
 namespace ContinuousLoadAmmo.Controllers;
 
-public class LoadAmmoController
+public class LoadAmmoController : IDisposable
 {
     private readonly Player _player;
     private MagazineItemClass _magazine;
@@ -20,6 +20,7 @@ public class LoadAmmoController
     public event Action<float, int, int> OnStartLoading;
     public event Action<Item> OnCloseInventoryLoading;
     public event Action OnEndLoading;
+    public event Action OnPlayerDestroy;
 
     public bool IsActive => PlayerInventoryController.Interface19_0 != null;
     public bool IsInventoryOpened => _player.IsInventoryOpened;
@@ -45,7 +46,7 @@ public class LoadAmmoController
         _player.InventoryController.ActiveEventsChanged += LoadingEnd; // Can't use since always CommandStatus.Begin, but why
         */
         _player.OnHandsControllerChanged += StopLoadingOnHandsChange;
-        _player.OnIPlayerDeadOrUnspawn += Destroy;
+        _player.OnIPlayerDeadOrUnspawn += OnDestroy;
     }
 
     public bool CanLoadOutsideInventory()
@@ -114,7 +115,6 @@ public class LoadAmmoController
     /// Find reachable magazine for ammo
     /// </summary>
     /// <param name="ammo">Ammo that should be compatible with the magazine</param>
-    /// <returns></returns>
     public bool GetMagazineForAmmo(AmmoItemClass ammo, out MagazineItemClass foundMagazine)
     {
         foundMagazine = null;
@@ -161,7 +161,6 @@ public class LoadAmmoController
     /// Find reachable ammo for the current weapon.
     /// </summary>
     /// <param name="reachableAmmo">One of each ammo type found then sorted by Penetration Power descending</param>
-    /// <returns></returns>
     public bool GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmo)
     {
         reachableAmmo = [];
@@ -170,7 +169,7 @@ public class LoadAmmoController
         string weaponCaliber = weapon.AmmoCaliber;
         if (ContinuousLoadAmmo.ReachableOnly.Value)
         {
-            // Only get top level container's items for quick load
+            // Only get top level container's items for quick load, non-recursive
             PlayerInventoryController.GetAcceptableItemsNonAlloc(
                 ReachableSlots,
                 reachableAmmo,
@@ -222,6 +221,28 @@ public class LoadAmmoController
         //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag checked?
 
         return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
+    }
+
+    public void Dispose()
+    {
+        PlayerInventoryController.StopProcesses();
+        if (PlayerInventoryController != null)
+        {
+            PlayerInventoryController.ActiveEventAdded -= LoadingStart;
+        }
+        if (_player != null)
+        {
+            InventoryScreenClosePatch.OnInventoryClose -= LoadingOutsideInventory;
+            UnloadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
+            LoadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
+            _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
+            _player.OnIPlayerDeadOrUnspawn -= OnDestroy;
+        }
+        OnPlayerDestroy?.Invoke();
+        OnStartLoading = null;
+        OnCloseInventoryLoading = null;
+        OnEndLoading = null;
+        OnPlayerDestroy = null;
     }
 
     private void LoadingStart(GEventArgs1 eventArgs)
@@ -355,24 +376,9 @@ public class LoadAmmoController
         }
     }
 
-    private void Destroy(IPlayer player)
+    private void OnDestroy(IPlayer player)
     {
-        PlayerInventoryController.StopProcesses();
-        if (PlayerInventoryController != null)
-        {
-            PlayerInventoryController.ActiveEventAdded -= LoadingStart;
-        }
-        if (_player != null)
-        {
-            InventoryScreenClosePatch.OnInventoryClose -= LoadingOutsideInventory;
-            UnloadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
-            LoadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
-            _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
-            _player.OnIPlayerDeadOrUnspawn -= Destroy;
-        }
-        OnStartLoading = null;
-        OnCloseInventoryLoading = null;
-        OnEndLoading = null;
+        Dispose();
     }
 
     private static EquipmentSlot[] ReachableSlots => ContinuousLoadAmmo.ReachableOnly.Value ? _reachableOnly : _reachableAll;
