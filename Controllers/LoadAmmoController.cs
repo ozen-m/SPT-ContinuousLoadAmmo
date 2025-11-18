@@ -40,8 +40,10 @@ public class LoadAmmoController
         InventoryScreenClosePatch.OnInventoryClose += LoadingOutsideInventory; // Sucks to have to use this workaround
         UnloadMagazineStartPatch.OnLoadingEnd += LoadingEnd;
         LoadMagazineStartPatch.OnLoadingEnd += LoadingEnd;
-        // _player.OnInventoryOpened += LoadingOutsideInventory; // Why does BSG CALLS THIS _TWICE_
-        // _player.InventoryController.ActiveEventsChanged += LoadingEnd; // Can't use since always CommandStatus.Begin, but why
+        /*
+         _player.OnInventoryOpened += LoadingOutsideInventory; // Why does BSG CALL THIS _TWICE_
+        _player.InventoryController.ActiveEventsChanged += LoadingEnd; // Can't use since always CommandStatus.Begin, but why
+        */
         _player.OnHandsControllerChanged += StopLoadingOnHandsChange;
         _player.OnIPlayerDeadOrUnspawn += Destroy;
     }
@@ -52,7 +54,7 @@ public class LoadAmmoController
                _isReachable;
     }
 
-    public bool IsLoadAmmoAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)
+    public bool IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)
     {
         reachableAmmo = null;
         foundMagazine = null;
@@ -61,7 +63,14 @@ public class LoadAmmoController
 
     public void TryQuickLoadAmmo()
     {
-        if (!IsLoadAmmoAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
+        if (!IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine))
+        {
+            if (ContinuousLoadAmmo.QuickLoadNotify.Value)
+            {
+                NotificationManagerClass.DisplayWarningNotification("No ammo or magazines found for the current weapon");
+            }
+            return;
+        }
 
         AmmoItemClass chosenAmmo = null;
         if (!ContinuousLoadAmmo.PrioritizeHighestPenetration.Value)
@@ -71,7 +80,9 @@ public class LoadAmmoController
             {
                 foreach (var currAmmo in reachableAmmo)
                 {
-                    if (currentMagazine.FirstRealAmmo() is not AmmoItemClass ammoInsideMag || ammoInsideMag.TemplateId != currAmmo.TemplateId) continue;
+                    if (currentMagazine.FirstRealAmmo() is not AmmoItemClass ammoInsideMag ||
+                        ammoInsideMag.TemplateId != currAmmo.TemplateId)
+                        continue;
 
                     // Magazine ammo matched with current reachable ammo
                     chosenAmmo = currAmmo;
@@ -85,7 +96,10 @@ public class LoadAmmoController
 
         if (ContinuousLoadAmmo.QuickLoadNotify.Value)
         {
-            NotificationManagerClass.DisplayMessageNotification($"Loading {chosenAmmo.LocalizedShortName()}", iconType: ENotificationIconType.Note);
+            NotificationManagerClass.DisplayMessageNotification(
+                $"Loading {chosenAmmo.LocalizedShortName()}",
+                iconType: ENotificationIconType.Note
+            );
         }
     }
 
@@ -107,7 +121,7 @@ public class LoadAmmoController
         var foundMagazines = new List<MagazineItemClass>();
         if (ContinuousLoadAmmo.ReachableOnly.Value)
         {
-            // Only get top level container's items for quick load
+            // Only get top level container's items for quick load, non-recursive
             PlayerInventoryController.GetAcceptableItemsNonAlloc(
                 ReachableSlots,
                 foundMagazines,
@@ -115,9 +129,7 @@ public class LoadAmmoController
                     PlayerInventoryController.Examined(mag) &&
                     mag.Count != mag.MaxCount &&
                     mag.CheckCompatibility(ammo),
-                (container) =>
-                    container is not SearchableItemItemClass searchableContainer ||
-                    PlayerInventoryController.SearchController.IsSearched(searchableContainer) /* Only searched containers */
+                ContainerIsSearched
             );
         }
         else
@@ -166,9 +178,7 @@ public class LoadAmmoController
                     PlayerInventoryController.Examined(ammo) &&
                     ammo.Caliber == weaponCaliber &&
                     ammo.Parent.Container.ParentItem is not MagazineItemClass /* Do not pull from ammo inside mags */,
-                (container) =>
-                    container is not SearchableItemItemClass searchableContainer ||
-                    PlayerInventoryController.SearchController.IsSearched(searchableContainer) /* Only searched containers */
+                ContainerIsSearched
             );
         }
         else
@@ -200,24 +210,35 @@ public class LoadAmmoController
         return true;
     }
 
+    public void StopLoading() => PlayerInventoryController.StopProcesses();
+
+    public string GetMagAmmoCountByLevel()
+    {
+        int skill = Mathf.Max(
+            _player.Profile.MagDrillsMastering,
+            _player.Profile.CheckedMagazineSkillLevel(_magazine.Id),
+            _magazine.CheckOverride
+        );
+        //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag checked?
+
+        return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
+    }
+
     private void LoadingStart(GEventArgs1 eventArgs)
     {
-        // if (eventArgs.Status != CommandStatus.Begin) return;
-
         switch (eventArgs)
         {
             case GEventArgs7 loadEvent:
-                if (loadEvent.TargetItem is not MagazineItemClass loadMagazine || loadEvent.Item is not AmmoItemClass ammo) return;
+                if (loadEvent.TargetItem is not MagazineItemClass loadMagazine ||
+                    loadEvent.Item is not AmmoItemClass ammo)
+                    return;
 
                 _magazine = loadMagazine;
                 _isReachable = IsAtReachablePlace(_magazine, ammo);
                 OnStartLoading?.Invoke(loadEvent.LoadTime, loadEvent.LoadCount, 0);
                 break;
             case GEventArgs8 unloadEvent:
-                // ReSharper disable once ConvertTypeCheckPatternToNullCheck
-                if (unloadEvent.FromItem is not MagazineItemClass unloadMagazine) return;
-
-                _magazine = unloadMagazine;
+                _magazine = unloadEvent.FromItem;
                 _isReachable = IsAtReachablePlace(_magazine);
                 OnStartLoading?.Invoke(unloadEvent.UnloadTime, unloadEvent.UnloadCount, unloadEvent.StartCount);
                 break;
@@ -248,21 +269,6 @@ public class LoadAmmoController
         _ = SetPlayerStateAsync(false);
         ResetLoading();
         OnEndLoading?.Invoke();
-    }
-
-    public void StopLoading() => PlayerInventoryController.StopProcesses();
-
-    public string GetMagAmmoCountByLevel()
-    {
-        int skill = Mathf.Max(
-        [
-            _player.Profile.MagDrillsMastering,
-            _player.Profile.CheckedMagazineSkillLevel(_magazine.Id),
-            _magazine.CheckOverride
-        ]);
-        //bool @checked = player.InventoryController.CheckedMagazine(StartPatch.Magazine) // Is mag examined?
-
-        return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
     }
 
     private async Task SetPlayerStateAsync(bool startAnim)
@@ -325,69 +331,18 @@ public class LoadAmmoController
         Predicate<TItem> predicate = null)
         where TItem : Item
     {
-        GetAcceptableItemsNonAlloc(
+        PlayerInventoryController.Inventory.Equipment.GetAcceptableItemsNonAlloc(
             ReachableSlots,
             preAllocatedList,
             predicate,
-            (item) =>
-                item is not SearchableItemItemClass searchable ||
-                PlayerInventoryController.SearchController.IsSearched(searchable) /* Only searched containers */
+            ContainerIsSearched
         );
     }
 
-    /// <summary>
-    /// Get acceptable items recursively
-    /// </summary>
-    private void GetAcceptableItemsNonAlloc<TItem>(
-        EquipmentSlot[] equipmentSlots,
-        List<TItem> preAllocatedList,
-        Predicate<TItem> predicate = null,
-        Predicate<GClass3248> goDeeperPredicate = null)
-        where TItem : Item
+    private bool ContainerIsSearched(GClass3248 container)
     {
-        InventoryEquipment equipment = PlayerInventoryController.Inventory.Equipment;
-        foreach (EquipmentSlot equipmentSlot in equipmentSlots)
-        {
-            if (equipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 containedItem || (goDeeperPredicate != null && !goDeeperPredicate(containedItem))) continue;
-
-            foreach (var container in containedItem.Containers)
-            {
-                foreach (Item obj1 in container.Items)
-                {
-                    if (obj1 is GClass3248 obj3 && (goDeeperPredicate == null || goDeeperPredicate(obj3)))
-                    {
-                        GetAllItemsOfContainer(obj3, preAllocatedList, predicate, goDeeperPredicate);
-                    }
-                    if (obj1 is TItem obj2 && (predicate == null || predicate(obj2)))
-                    {
-                        preAllocatedList.Add(obj2);
-                    }
-                }
-            }
-        }
-    }
-
-    private static void GetAllItemsOfContainer<TItem>(
-        GClass3248 containedItem,
-        List<TItem> preAllocatedList,
-        Predicate<TItem> predicate = null,
-        Predicate<GClass3248> goDeeperPredicate = null)
-        where TItem : Item
-    {
-        foreach (var container in containedItem.Containers)
-        {
-            foreach (Item obj1 in container.Items)
-            {
-                if (obj1 is GClass3248 obj3 && (goDeeperPredicate == null || goDeeperPredicate(obj3)))
-                {
-                    GetAllItemsOfContainer(obj3, preAllocatedList, predicate, goDeeperPredicate);
-                }
-                if (obj1 is TItem obj2 && (predicate == null || predicate(obj2)))
-                {
-                    preAllocatedList.Add(obj2);
-                }
-            }
-        }
+        return container is not SearchableItemItemClass searchable ||
+               PlayerInventoryController.SearchController.IsSearched(searchable); /* Only searched containers */
     }
 
     private void StopLoadingOnHandsChange(AbstractHandsController oldHands, AbstractHandsController newHands)

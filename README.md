@@ -3,14 +3,14 @@ You are now able to continuously load and unload ammo while outside your invento
 
 ### Features
 - Freedom: Walk freely while waiting for your magazines to top up or unload
-- Intuitive controls: You can cancel loading by clicking the `left/right mouse buttons`
 - Realism and balancing: The ammo and magazine should only be in reachable places, this includes your vest, pockets, and secure container. Your walking speed will be limited while loading ammo outside the inventory and pulling your weapon out will cancel loading
+- Intuitive controls: You can cancel loading by clicking the `left/right mouse buttons` and quick loading
 - Quick loading: You can quickly load ammo from outside the inventory by using the keybind `K`. By default, this loads the best penetrating ammo for your current weapon into a magazine in your inventory. While holding this keybind, `mouse scrollwheel up/down` to choose which ammo to load into a magazine.
 - Configurable: Configuration is available in the BepInEx configuration manager
 
 ### Reachable Places
 - When loading through the inventory (drag and drop), reachable places include magazines and ammo in vests, pockets, and secure containers, and also in any _**nested containers**_ found inside them
-- When using quick load, reachables places include _**only**_ magazines and ammo inside vests, pockets, and secure containers
+- When using quick load, reachable places include _**only**_ magazines and ammo inside vests, pockets, and secure containers
 
 ### Installation
 Extract the contents of the .zip archive into your SPT directory.

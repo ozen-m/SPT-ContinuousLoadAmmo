@@ -18,6 +18,7 @@ public class LoadAmmoComponent : InputNode
     private readonly List<AmmoItemClass> _ammoItems = [];
     private LoadAmmoController _loadAmmoControllerController;
     private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
+    private GClass3450 _emptySourceContext = new();
 
     public bool IsShown => _chosenAmmoTcs != null;
 
@@ -45,7 +46,9 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (!_loadAmmoControllerController.CanLoadOutsideInventory() || _loadAmmoControllerController.IsInventoryOpened) return ETranslateResult.Ignore;
+        if (!_loadAmmoControllerController.CanLoadOutsideInventory() ||
+            _loadAmmoControllerController.IsInventoryOpened)
+            return ETranslateResult.Ignore;
 
         if (_loadAmmoControllerController.IsActive)
         {
@@ -87,6 +90,7 @@ public class LoadAmmoComponent : InputNode
         if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
         {
             _loadAmmoControllerController.TryQuickLoadAmmo();
+            return ETranslateResult.Block;
         }
         return ETranslateResult.Ignore;
     }
@@ -106,7 +110,7 @@ public class LoadAmmoComponent : InputNode
 
     private async Task OpenAmmoSelectorAsync()
     {
-        if (!_loadAmmoControllerController.IsLoadAmmoAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
+        if (!_loadAmmoControllerController.IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
 
         AmmoItemClass chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoControllerController.PlayerInventoryController);
         if (chosenAmmo != null)
@@ -120,7 +124,18 @@ public class LoadAmmoComponent : InputNode
     {
         foreach (var ammo in foundAmmo)
         {
-            GridItemView view = GridItemView.Create(ammo, new GClass3450(), ItemRotation.Horizontal, inventoryController, inventoryController, null, null, null, null, null);
+            GridItemView view = GridItemView.Create(
+                ammo,
+                _emptySourceContext,
+                ItemRotation.Horizontal,
+                inventoryController,
+                inventoryController,
+                null,
+                null,
+                null,
+                null,
+                null);
+
             _gridItemViews.Add(view);
             _ammoItems.Add(ammo);
         }
@@ -175,7 +190,18 @@ public class LoadAmmoComponent : InputNode
 
     private void AddCancelView(AmmoItemClass templateItem, InventoryController inventoryController)
     {
-        GridItemView cancelView = GridItemView.Create(templateItem, new GClass3450(), ItemRotation.Horizontal, inventoryController, inventoryController, null, null, null, null, null);
+        GridItemView cancelView = GridItemView.Create(
+            templateItem,
+            _emptySourceContext,
+            ItemRotation.Horizontal,
+            inventoryController,
+            inventoryController,
+            null,
+            null,
+            null,
+            null,
+            null);
+
         _infoPanelField(cancelView).gameObject.SetActive(false);
         _backgroundColorField(cancelView) = Color.clear;
         _mainImageAlphaField(cancelView) = 0f; // method_4 checks this for alpha

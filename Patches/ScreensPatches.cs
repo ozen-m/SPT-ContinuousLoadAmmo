@@ -12,17 +12,6 @@ public static class ScreensPatches
 {
     private static bool _toSkip;
 
-    public static void Enable()
-    {
-        new TasksScreenShowPatch().Enable();
-        new ItemsPanelShowPatch().Enable();
-        new MapScreenPatch().Enable();
-        new PlayerModelPatch().Enable();
-        new SkillsAndMasteringPatch().Enable();
-        new StopProcessesPatch().Enable();
-
-    }
-
     private static void Pre()
     {
         if (ContinuousLoadAmmo.InventoryTabs.Value)

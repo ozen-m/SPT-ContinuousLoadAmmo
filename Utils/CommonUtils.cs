@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using Comfort.Common;
 using EFT.InputSystem;
+using EFT.InventoryLogic;
 using EFT.UI;
 using UnityEngine;
 
@@ -10,6 +12,8 @@ namespace ContinuousLoadAmmo.Utils;
 
 public static class CommonUtils
 {
+    public static bool InRaid => GClass2340.InRaid;
+
     private static Transform _eftBattleUIScreenTransform;
 
     public static Transform EftBattleUIScreenTransform
@@ -43,15 +47,72 @@ public static class CommonUtils
         }
     }
 
-    public static bool CheckIfAnyDifferentCaliber(this MagazineItemClass magazine, AmmoItemClass ammo)
+    /// <summary>
+    /// Check if magazine has ammo that doesn't match ammoToLoad's caliber
+    /// </summary>
+    public static bool CheckIfAnyDifferentCaliber(this MagazineItemClass magazine, AmmoItemClass ammoToLoad)
     {
         foreach (var cartridge in magazine.Cartridges.Items_1)
         {
             if (cartridge is not AmmoItemClass cartridgeAmmo) continue;
-            if (cartridgeAmmo.Caliber != ammo.Caliber) return true;
+
+            if (cartridgeAmmo.Caliber != ammoToLoad.Caliber) return true;
         }
         return false;
     }
 
-    public static bool InRaid => GClass2340.InRaid;
+    /// <summary>
+    /// Get acceptable items recursively
+    /// </summary>
+    public static void GetAcceptableItemsNonAlloc<TItem>(
+        this InventoryEquipment inventoryEquipment,
+        EquipmentSlot[] equipmentSlots,
+        List<TItem> preAllocatedList,
+        Predicate<TItem> predicate = null,
+        Predicate<GClass3248> goDeeperPredicate = null)
+        where TItem : Item
+    {
+        foreach (EquipmentSlot equipmentSlot in equipmentSlots)
+        {
+            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 parentContainer || (goDeeperPredicate != null && !goDeeperPredicate(parentContainer))) continue;
+
+            foreach (var container in parentContainer.Containers)
+            {
+                foreach (Item item in container.Items)
+                {
+                    if (item is GClass3248 childContainer && (goDeeperPredicate == null || goDeeperPredicate(childContainer)))
+                    {
+                        childContainer.GetAllItemsOfContainer(preAllocatedList, predicate, goDeeperPredicate);
+                    }
+                    if (item is TItem genericItem && (predicate == null || predicate(genericItem)))
+                    {
+                        preAllocatedList.Add(genericItem);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void GetAllItemsOfContainer<TItem>(
+        this GClass3248 parentContainer,
+        List<TItem> preAllocatedList,
+        Predicate<TItem> predicate = null,
+        Predicate<GClass3248> goDeeperPredicate = null)
+        where TItem : Item
+    {
+        foreach (var container in parentContainer.Containers)
+        {
+            foreach (Item item in container.Items)
+            {
+                if (item is GClass3248 childContainer && (goDeeperPredicate == null || goDeeperPredicate(childContainer)))
+                {
+                    childContainer.GetAllItemsOfContainer(preAllocatedList, predicate, goDeeperPredicate);
+                }
+                if (item is TItem genericItem && (predicate == null || predicate(genericItem)))
+                {
+                    preAllocatedList.Add(genericItem);
+                }
+            }
+        }
+    }
 }
