@@ -51,7 +51,7 @@ public class LoadAmmoController : IDisposable
 
     public bool CanLoadOutsideInventory()
     {
-        return !PlayerInventoryController.HasAnyHandsAction() &&
+        return !PlayerInventoryController.HasAnyHandsActionNonLinq() &&
                _isReachable;
     }
 

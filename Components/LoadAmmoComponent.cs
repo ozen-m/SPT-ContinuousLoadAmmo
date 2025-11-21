@@ -46,8 +46,8 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (!_loadAmmoControllerController.CanLoadOutsideInventory() ||
-            _loadAmmoControllerController.IsInventoryOpened)
+        if (_loadAmmoControllerController.IsInventoryOpened ||
+            !_loadAmmoControllerController.CanLoadOutsideInventory())
             return ETranslateResult.Ignore;
 
         if (_loadAmmoControllerController.IsActive)

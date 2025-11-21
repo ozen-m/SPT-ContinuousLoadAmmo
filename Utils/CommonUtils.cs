@@ -115,4 +115,16 @@ public static class CommonUtils
             }
         }
     }
+
+    public static bool HasAnyHandsActionNonLinq(this TraderControllerClass traderController)
+    {
+        foreach (var eventArgs in traderController.List_0)
+        {
+            if (eventArgs is GInterface418)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
