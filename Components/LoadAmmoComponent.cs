@@ -44,6 +44,15 @@ public class LoadAmmoComponent : InputNode
         return loadAmmoSelector;
     }
 
+    public void Update()
+    {
+        // Transfer to TranslateCommand, our custom hotkey _may_ not be an ECommand
+        if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
+        {
+            TranslateCommand(ECommand.BeginSpecialInteracting); // No other uses?
+        }
+    }
+
     public override ETranslateResult TranslateCommand(ECommand command)
     {
         if (_loadAmmoControllerController.IsInventoryOpened ||
@@ -73,10 +82,12 @@ public class LoadAmmoComponent : InputNode
                 Previous();
                 return ETranslateResult.Block;
             }
-            if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
+            if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
+                command.IsCommand(ECommand.BeginSpecialInteracting) /* Only transferred from update to avoid duplicates */)
             {
                 SetChosenAmmo(GetSelectedAmmo());
                 Close();
+                return ETranslateResult.Block;
             }
             return ETranslateResult.Ignore;
         }
@@ -87,7 +98,8 @@ public class LoadAmmoComponent : InputNode
             _ = OpenAmmoSelectorAsync();
             return ETranslateResult.Block;
         }
-        if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
+        if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
+            command.IsCommand(ECommand.BeginSpecialInteracting) /* Only transferred from update to avoid duplicates */)
         {
             _loadAmmoControllerController.TryQuickLoadAmmo();
             return ETranslateResult.Block;
