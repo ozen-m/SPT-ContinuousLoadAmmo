@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using Comfort.Common;
+using ContinuousLoadAmmo.Models;
 using ContinuousLoadAmmo.Patches;
 using ContinuousLoadAmmo.Utils;
 using EFT;
@@ -14,6 +17,8 @@ namespace ContinuousLoadAmmo.Controllers;
 public class LoadAmmoController : IDisposable
 {
     private readonly Player _player;
+    private readonly MagazineBuildPresetClass.Class1023 _missingItemsError;
+    private readonly MagPresetCancelled _magPresetCancelled;
     private MagazineItemClass _magazine;
     private bool _isReachable = true;
 
@@ -22,7 +27,7 @@ public class LoadAmmoController : IDisposable
     public event Action OnEndLoading;
     public event Action OnPlayerDestroy;
 
-    public bool IsActive => PlayerInventoryController.Interface19_0 != null;
+    public bool IsActive => PlayerInventoryController.Interface19_0 != null || ApplyMagPresetPatch.PresetLoaderIsActive;
     public bool IsInventoryOpened => _player.IsInventoryOpened;
     public PlayerInventoryController PlayerInventoryController { get; }
 
@@ -41,12 +46,16 @@ public class LoadAmmoController : IDisposable
         InventoryScreenClosePatch.OnInventoryClose += LoadingOutsideInventory; // Sucks to have to use this workaround
         UnloadMagazineStartPatch.OnLoadingEnd += LoadingEnd;
         LoadMagazineStartPatch.OnLoadingEnd += LoadingEnd;
+        ApplyMagPresetPatch.OnApplyMagPreset += LoadingMagPreset;
         /*
          _player.OnInventoryOpened += LoadingOutsideInventory; // Why does BSG CALL THIS _TWICE_
         _player.InventoryController.ActiveEventsChanged += LoadingEnd; // Can't use since always CommandStatus.Begin, but why
         */
         _player.OnHandsControllerChanged += StopLoadingOnHandsChange;
         _player.OnIPlayerDeadOrUnspawn += OnDestroy;
+
+        _missingItemsError = new MagazineBuildPresetClass.Class1023(null);
+        _magPresetCancelled = new MagPresetCancelled();
     }
 
     public bool CanLoadOutsideInventory()
@@ -59,7 +68,7 @@ public class LoadAmmoController : IDisposable
     {
         reachableAmmo = null;
         foundMagazine = null;
-        return GetAmmoItemsFromEquipment(out reachableAmmo) && GetMagazineForAmmo(reachableAmmo[0], out foundMagazine);
+        return GetReachableAmmoForCurrentWeapon(out reachableAmmo) && GetMagazineForAmmo(reachableAmmo[0], out foundMagazine);
     }
 
     public void TryQuickLoadAmmo()
@@ -111,6 +120,18 @@ public class LoadAmmoController : IDisposable
         _ = PlayerInventoryController.LoadMagazine(ammo, magazine, loadCount, false);
     }
 
+    public async Task<IResult> LoadMagazineAsync(AmmoItemClass ammo, MagazineItemClass magazine, CancellationToken token, int? ammoCount = null)
+    {
+        //Plugin.LogSource.LogDebug($"Mag {magazine.LocalizedShortName()} ({magazine.Count}); Ammo {ammo.LocalizedShortName()} ({ammo.StackObjectsCount})");
+        int loadCount = ammoCount ?? Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
+        while (PlayerInventoryController.Locked)
+        {
+            token.ThrowIfCancellationRequested();
+            await Task.Yield();
+        }
+        return await PlayerInventoryController.LoadMagazine(ammo, magazine, loadCount, false);
+    }
+
     /// <summary>
     /// Find reachable magazine for ammo
     /// </summary>
@@ -158,10 +179,10 @@ public class LoadAmmoController : IDisposable
     }
 
     /// <summary>
-    /// Find reachable ammo for the current weapon.
+    /// Find reachable ammo for the current weapon. Used by quick load
     /// </summary>
     /// <param name="reachableAmmo">One of each ammo type found then sorted by Penetration Power descending</param>
-    public bool GetAmmoItemsFromEquipment(out List<AmmoItemClass> reachableAmmo)
+    public bool GetReachableAmmoForCurrentWeapon(out List<AmmoItemClass> reachableAmmo)
     {
         reachableAmmo = [];
         if (_player.LastEquippedWeaponOrKnifeItem is not Weapon weapon) return false;
@@ -203,13 +224,41 @@ public class LoadAmmoController : IDisposable
             }
             return result;
         });
+
         // Only return one of each type
         var seen = new HashSet<MongoID>();
         reachableAmmo.RemoveAll(ammo => !seen.Add(ammo.TemplateId));
         return true;
     }
 
-    public void StopLoading() => PlayerInventoryController.StopProcesses();
+    /// <summary>
+    /// Find ammo for <paramref name="magazine"/>. Used by mag presets
+    /// </summary>
+    /// <param name="magazine">Magazine to be checked compatible with</param>
+    public bool GetAllAmmoForMagazine(out List<AmmoItemClass> allAmmo, MagazineItemClass magazine)
+    {
+        allAmmo = [];
+        PlayerInventoryController.Inventory.Equipment.GetAcceptableItemsNonAlloc(
+            _reachableAll,
+            allAmmo,
+            (ammo) =>
+                PlayerInventoryController.Examined(ammo) &&
+                ammo.Parent.Container.ParentItem is not MagazineItemClass && /* Do not pull from ammo inside mags */
+                magazine.CheckCompatibility(ammo),
+            ContainerIsSearched
+        );
+        if (allAmmo.Count <= 0) return false;
+
+        // Sort stack count ascending
+        allAmmo.Sort((a, b) => a.StackObjectsCount.CompareTo(b.StackObjectsCount));
+        return true;
+    }
+
+    public void StopLoading()
+    {
+        ApplyMagPresetPatch.CancelMagPresetLoading();
+        PlayerInventoryController.StopProcesses();
+    }
 
     public string GetMagAmmoCountByLevel()
     {
@@ -225,7 +274,7 @@ public class LoadAmmoController : IDisposable
 
     public void Dispose()
     {
-        PlayerInventoryController.StopProcesses();
+        PlayerInventoryController?.StopProcesses();
         if (PlayerInventoryController != null)
         {
             PlayerInventoryController.ActiveEventAdded -= LoadingStart;
@@ -235,6 +284,7 @@ public class LoadAmmoController : IDisposable
             InventoryScreenClosePatch.OnInventoryClose -= LoadingOutsideInventory;
             UnloadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
             LoadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
+            ApplyMagPresetPatch.OnApplyMagPreset -= LoadingMagPreset;
             _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
             _player.OnIPlayerDeadOrUnspawn -= OnDestroy;
         }
@@ -292,6 +342,154 @@ public class LoadAmmoController : IDisposable
         OnEndLoading?.Invoke();
     }
 
+// ReSharper disable once AsyncVoidMethod
+#pragma warning disable VSTHRD100
+    private async void LoadingMagPreset(
+        MagazineBuildPresetClass preset,
+        IReadOnlyCollection<MagazineItemClass> magazines,
+        TaskCompletionSource<GStruct155> taskCompletion,
+        CancellationToken token
+    )
+#pragma warning restore VSTHRD100
+    {
+        // TODO: Stop preset loading outside inventory if unreachable
+        _missingItemsError.String_1 = MagazineBuildPresetClass.Class1023.String_0.Localized();
+
+        if (!GetAllAmmoForMagazine(out var availableAmmo, ((List<MagazineItemClass>)magazines)[0]))
+        {
+            _missingItemsError.String_1 += $" No available ammo found for magazine";
+            taskCompletion.TrySetResult(_missingItemsError);
+            return;
+        }
+
+        try
+        {
+            foreach (var magazine in magazines)
+            {
+                // TODO: Move to common utils
+                if (ContinuousLoadAmmo.QuickLoadNotify.Value)
+                {
+                    NotificationManagerClass.DisplayMessageNotification(
+                        $"Loading {preset.Name}",
+                        iconType: ENotificationIconType.Note
+                    );
+                }
+
+                // Bottom
+                var bottomCount = 0;
+                foreach (var bottom in preset.Bottom)
+                {
+                    token.ThrowIfCancellationRequested();
+
+                    if (bottom == null) continue;
+
+                    bottomCount = bottom.Count;
+                    if (magazine.Count >= bottom.Count) continue;
+
+                    var toLoad = Mathf.Min(bottom.Count, bottom.Count - magazine.Count);
+                    await TryLoadPresetStepAsync(availableAmmo, magazine, bottom, toLoad, taskCompletion, token);
+                }
+
+                // Loop
+                // Track toSkip to resume loading from current count
+                var toSkip = magazine.Count - bottomCount;
+                var freeLoopSpace = magazine.MaxCount - magazine.Count;
+                var topCount = 0;
+                foreach (var top in preset.Top)
+                {
+                    if (top != null) topCount += top.Count;
+                }
+                freeLoopSpace -= topCount;
+
+                while (freeLoopSpace > 0)
+                {
+                    token.ThrowIfCancellationRequested();
+
+                    foreach (var loop in preset.Loop)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        if (loop == null) continue;
+
+                        var toLoad = (int)loop.Count;
+                        if (toSkip > 0) // Resume loading from current count
+                        {
+                            // Should skip entire group?
+                            if (toSkip >= toLoad)
+                            {
+                                toSkip -= toLoad;
+                                continue;
+                            }
+
+                            // Load remaining
+                            toLoad -= toSkip;
+                            toSkip = 0;
+                        }
+                        toLoad = Mathf.Min(toLoad, freeLoopSpace);
+                        await TryLoadPresetStepAsync(availableAmmo, magazine, loop, toLoad, taskCompletion, token);
+                        freeLoopSpace -= toLoad;
+                    }
+                }
+
+                // Top
+                foreach (var top in preset.Top)
+                {
+                    token.ThrowIfCancellationRequested();
+
+                    if (top == null) continue;
+
+                    var toLoad = Mathf.Min(top.Count, magazine.MaxCount - magazine.Count);
+                    await TryLoadPresetStepAsync(availableAmmo, magazine, top, toLoad, taskCompletion, token);
+                }
+            }
+            taskCompletion.TrySetResult(default);
+        }
+        catch (OperationCanceledException)
+        {
+            // NotificationManagerClass.DisplayWarningNotification(_magPresetCancelled.ToString());
+            taskCompletion.TrySetResult(_magPresetCancelled);
+        }
+        catch (Exception ex)
+        {
+            taskCompletion.TrySetException(ex);
+        }
+    }
+
+    private async Task TryLoadPresetStepAsync(
+        List<AmmoItemClass> availableAmmo,
+        MagazineItemClass magazine,
+        MagazineBuildPresetClass.GClass2578 preset,
+        int toLoad,
+        TaskCompletionSource<GStruct155> taskCompletion,
+        CancellationToken token
+    )
+    {
+        var matchingAmmo = GetMatchingAmmo(availableAmmo, preset.TemplateId, toLoad);
+        if (matchingAmmo == null)
+        {
+            _missingItemsError.String_1 += $" {preset.TemplateId.LocalizedShortName()}, Count: {toLoad}";
+            NotificationManagerClass.DisplayWarningNotification(_missingItemsError.String_1);
+            taskCompletion.TrySetResult(_missingItemsError);
+            return;
+        }
+        await LoadMagazineAsync(matchingAmmo, magazine, token, toLoad);
+    }
+
+    private static AmmoItemClass GetMatchingAmmo(List<AmmoItemClass> ammo, MongoID templateId, int count)
+    {
+        foreach (var ammoItem in ammo)
+        {
+            if (ammoItem.TemplateId != templateId ||
+                ammoItem.StackObjectsCount < count)
+            {
+                continue;
+            }
+
+            return ammoItem;
+        }
+
+        return null;
+    }
+
     private async Task SetPlayerStateAsync(bool startAnim)
     {
         if (startAnim)
@@ -306,7 +504,7 @@ public class LoadAmmoController : IDisposable
             await Task.Delay(800);
 
             // Check for active MultiSelect load/unload
-            if (MultiSelectInterop.IsMultiSelectLoadSerializerActive) return;
+            if (MultiSelectInterop.IsMultiSelectLoadSerializerActive || ApplyMagPresetPatch.PresetLoaderIsActive) return;
 
             if (_player.HandsIsEmpty)
             {
@@ -349,8 +547,8 @@ public class LoadAmmoController : IDisposable
 
     private void GetReachableItems<TItem>(
         List<TItem> preAllocatedList,
-        Predicate<TItem> predicate = null)
-        where TItem : Item
+        Predicate<TItem> predicate = null
+    ) where TItem : Item
     {
         PlayerInventoryController.Inventory.Equipment.GetAcceptableItemsNonAlloc(
             ReachableSlots,
@@ -381,7 +579,10 @@ public class LoadAmmoController : IDisposable
         Dispose();
     }
 
-    private static EquipmentSlot[] ReachableSlots => ContinuousLoadAmmo.ReachableOnly.Value ? _reachableOnly : _reachableAll;
+    private static EquipmentSlot[] ReachableSlots =>
+        ContinuousLoadAmmo.ReachableOnly.Value
+            ? _reachableOnly
+            : _reachableAll;
 
     private static readonly EquipmentSlot[] _reachableOnly =
     [

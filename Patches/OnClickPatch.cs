@@ -1,0 +1,35 @@
+﻿using System.Reflection;
+using ContinuousLoadAmmo.Utils;
+using EFT.UI.DragAndDrop;
+using SPT.Reflection.Patching;
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+namespace ContinuousLoadAmmo.Patches;
+
+/// <summary>
+/// Cancel mag preset loading when loading is canceled through ItemView click
+/// </summary>
+public class OnClickPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(ItemView).GetMethod(nameof(ItemView.OnClick));
+    }
+
+    [PatchPrefix]
+    protected static void Prefix(ItemView __instance, PointerEventData.InputButton button)
+    {
+        if (!CommonUtils.InRaid || button != PointerEventData.InputButton.Left) return;
+        
+        bool modifierControl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        bool modifierShift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+
+        if (modifierControl || modifierShift) return;
+
+        if (__instance.IsBeingLoadedMagazine.Value || __instance.IsBeingUnloadedMagazine.Value)
+        {
+            ApplyMagPresetPatch.CancelMagPresetLoading();
+        }
+    }
+}

@@ -20,7 +20,7 @@ public static class CommonUtils
     {
         get
         {
-            if (_eftBattleUIScreenTransform != null) return _eftBattleUIScreenTransform;
+            if (_eftBattleUIScreenTransform) return _eftBattleUIScreenTransform;
 
             _eftBattleUIScreenTransform = Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
             return _eftBattleUIScreenTransform;
@@ -33,7 +33,7 @@ public static class CommonUtils
     {
         get
         {
-            // Thanks Lacyway!
+            // Thanks Fika team/Lacyway!
             if (_inputTree != null) return _inputTree;
 
             var inputObj = GameObject.Find("___Input");
@@ -120,7 +120,7 @@ public static class CommonUtils
     {
         foreach (var eventArgs in traderController.List_0)
         {
-            if (eventArgs is GInterface418)
+            if (eventArgs is GInterface418 and not GEventArgs10) /* (GEventArgs10) RemoveFromHandsEventArgs - not considered as busy hands, here mainly for successive unloading of different bullets */
             {
                 return true;
             }
