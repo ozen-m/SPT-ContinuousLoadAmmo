@@ -11,9 +11,15 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class ApplyMagPresetPatch : ModulePatch
 {
-    public static Action<MagazineBuildPresetClass, IReadOnlyCollection<MagazineItemClass>, TaskCompletionSource<GStruct155>, CancellationToken> OnApplyMagPreset { get; set; }
-    private static CancellationTokenSource _presetCancellationSource = new();
-    private static TaskCompletionSource<GStruct155> _presetLoadTaskCompletion = new();
+    private static CancellationTokenSource _presetCancellationSource;
+    private static TaskCompletionSource<GStruct155> _presetLoadTaskCompletion;
+
+    public static Action<
+            MagazineBuildPresetClass,
+            IReadOnlyCollection<MagazineItemClass>,
+            TaskCompletionSource<GStruct155>,
+            CancellationToken>
+        OnApplyMagPreset { get; set; }
 
     public static bool PresetLoaderIsActive => _presetLoadTaskCompletion is { Task.IsCompleted: false };
 
