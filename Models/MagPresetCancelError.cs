@@ -2,7 +2,7 @@
 
 namespace ContinuousLoadAmmo.Models;
 
-public class MagPresetCancelled : InventoryError
+public class MagPresetCancelError : InventoryError
 {
     private const string Error = "Magazine preset loading is cancelled";
 

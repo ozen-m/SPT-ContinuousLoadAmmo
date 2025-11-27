@@ -51,7 +51,7 @@ public static class CommonUtils
     /// <summary>
     /// Check if magazine has ammo that doesn't match ammoToLoad's caliber
     /// </summary>
-    public static bool CheckIfAnyDifferentCaliber(this MagazineItemClass magazine, AmmoItemClass ammoToLoad)
+    public static bool HasAmmoWithDifferentCaliber(this MagazineItemClass magazine, AmmoItemClass ammoToLoad)
     {
         foreach (var cartridge in magazine.Cartridges.Items_1)
         {
@@ -131,17 +131,14 @@ public static class CommonUtils
 
     public static void DisplayNotification(
         string message,
-        ENotificationDurationType duration = ENotificationDurationType.Default,
         ENotificationIconType iconType = ENotificationIconType.Default,
-        Color? textColor = null)
+        bool alwaysDisplay = false)
     {
-        if (ContinuousLoadAmmo.QuickLoadNotify.Value)
+        if (ContinuousLoadAmmo.QuickLoadNotify.Value || alwaysDisplay)
         {
             NotificationManagerClass.DisplayMessageNotification(
                 message,
-                duration,
-                iconType,
-                textColor
+                iconType: iconType
             );
         }
     }
