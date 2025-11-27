@@ -489,7 +489,10 @@ public class LoadAmmoController : IDisposable
         {
             _player.TrySaveLastItemInHands();
             _player.SetEmptyHands(null);
-            _player.MovementContext.ChangeSpeedLimit(ContinuousLoadAmmo.SpeedLimit.Value, ESpeedLimit.BarbedWire);
+            _player.MovementContext.ChangeSpeedLimit(
+                ContinuousLoadAmmo.SpeedLimit.Value * _player.MovementContext.MaxSpeed,
+                ESpeedLimit.BarbedWire
+            );
         }
         else
         {
