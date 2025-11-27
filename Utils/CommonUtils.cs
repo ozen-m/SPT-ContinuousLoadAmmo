@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Comfort.Common;
+using EFT.Communications;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
 using EFT.UI;
@@ -126,5 +127,22 @@ public static class CommonUtils
             }
         }
         return false;
+    }
+
+    public static void DisplayNotification(
+        string message,
+        ENotificationDurationType duration = ENotificationDurationType.Default,
+        ENotificationIconType iconType = ENotificationIconType.Default,
+        Color? textColor = null)
+    {
+        if (ContinuousLoadAmmo.QuickLoadNotify.Value)
+        {
+            NotificationManagerClass.DisplayMessageNotification(
+                message,
+                duration,
+                iconType,
+                textColor
+            );
+        }
     }
 }

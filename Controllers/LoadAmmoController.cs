@@ -75,10 +75,10 @@ public class LoadAmmoController : IDisposable
     {
         if (!IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine))
         {
-            if (ContinuousLoadAmmo.QuickLoadNotify.Value)
-            {
-                NotificationManagerClass.DisplayWarningNotification("No ammo or magazines found for the current weapon");
-            }
+            CommonUtils.DisplayNotification(
+                "No ammo or magazines found for the current weapon",
+                iconType: ENotificationIconType.Alert
+            );
             return;
         }
 
@@ -104,13 +104,10 @@ public class LoadAmmoController : IDisposable
         chosenAmmo ??= reachableAmmo[0];
         LoadMagazine(chosenAmmo, foundMagazine);
 
-        if (ContinuousLoadAmmo.QuickLoadNotify.Value)
-        {
-            NotificationManagerClass.DisplayMessageNotification(
-                $"Loading {chosenAmmo.LocalizedShortName()}",
-                iconType: ENotificationIconType.Note
-            );
-        }
+        CommonUtils.DisplayNotification(
+            $"Loading {chosenAmmo.LocalizedShortName()}",
+            iconType: ENotificationIconType.Note
+        );
     }
 
     public void LoadMagazine(AmmoItemClass ammo, MagazineItemClass magazine)
@@ -366,14 +363,10 @@ public class LoadAmmoController : IDisposable
         {
             foreach (var magazine in magazines)
             {
-                // TODO: Move to common utils
-                if (ContinuousLoadAmmo.QuickLoadNotify.Value)
-                {
-                    NotificationManagerClass.DisplayMessageNotification(
-                        $"Loading {preset.Name}",
-                        iconType: ENotificationIconType.Note
-                    );
-                }
+                CommonUtils.DisplayNotification(
+                    $"Loading {preset.Name} ({MagazineBuildClass.GetCaliberName(preset.Caliber)})",
+                    iconType: ENotificationIconType.Note
+                );
 
                 // Bottom
                 var bottomCount = 0;
