@@ -343,7 +343,7 @@ public class LoadAmmoController : IDisposable
 #pragma warning disable VSTHRD100
     private async void LoadingMagPreset(
         MagazineBuildPresetClass preset,
-        IReadOnlyCollection<MagazineItemClass> magazines,
+        List<MagazineItemClass> magazines,
         TaskCompletionSource<GStruct155> taskCompletion,
         CancellationToken token
     )
@@ -352,7 +352,7 @@ public class LoadAmmoController : IDisposable
         // TODO: Stop preset loading outside inventory if unreachable
         _missingItemsError.String_1 = MagazineBuildPresetClass.Class1023.String_0.Localized();
 
-        if (!GetAllAmmoForMagazine(out var availableAmmo, ((List<MagazineItemClass>)magazines)[0]))
+        if (!GetAllAmmoForMagazine(out var availableAmmo, magazines[0]))
         {
             _missingItemsError.String_1 += $" No available ammo found for magazine";
             taskCompletion.TrySetResult(_missingItemsError);

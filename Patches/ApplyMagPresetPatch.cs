@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ public class ApplyMagPresetPatch : ModulePatch
 
     public static Action<
             MagazineBuildPresetClass,
-            IReadOnlyCollection<MagazineItemClass>,
+            List<MagazineItemClass>,
             TaskCompletionSource<GStruct155>,
             CancellationToken>
         OnApplyMagPreset { get; set; }
@@ -38,7 +39,12 @@ public class ApplyMagPresetPatch : ModulePatch
         _presetLoadTaskCompletion = new TaskCompletionSource<GStruct155>();
         __result = _presetLoadTaskCompletion.Task;
 
-        OnApplyMagPreset?.Invoke(preset, magazines, _presetLoadTaskCompletion, _presetCancellationSource.Token);
+        OnApplyMagPreset?.Invoke(
+            preset,
+            magazines as List<MagazineItemClass> ?? magazines.ToList() /* Safeguard, all calls are lists */,
+            _presetLoadTaskCompletion,
+            _presetCancellationSource.Token
+        );
         return false;
     }
 
