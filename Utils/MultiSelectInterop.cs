@@ -15,14 +15,14 @@ internal static class MultiSelectInterop
     private static AccessTools.FieldRef<object, TaskCompletionSource> _totalTaskField;
     private static MethodInfo _stopLoadingMethod;
 
-    public static bool IsMultiSelectLoadSerializerActive
+    public static bool MultiSelectLoadSerializerIsActive
     {
         get
         {
             if (!Loaded()) return false;
 
             var serializer = _loadUnloadSerializerGetter?.Invoke();
-            if (serializer == null) return false;
+            if (serializer is null) return false;
 
             return !_totalTaskField(serializer).Task.IsCompleted;
         }
@@ -40,7 +40,7 @@ internal static class MultiSelectInterop
         if (!_uiFixesLoaded.Value) return _uiFixesLoaded.Value;
 
         var multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
-        if (multiSelectType != null)
+        if (multiSelectType is not null)
         {
             var loadUnloadSerializerMethod = AccessTools.PropertyGetter(multiSelectType, "LoadUnloadSerializer");
             _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
@@ -48,7 +48,7 @@ internal static class MultiSelectInterop
         }
 
         var taskSerializerType = Type.GetType("UIFixes.MultiSelectItemContextTaskSerializer, Tyfon.UIFixes");
-        if (taskSerializerType != null)
+        if (taskSerializerType is not null)
         {
             _totalTaskField = AccessTools.FieldRefAccess<TaskCompletionSource>(taskSerializerType, "totalTask");
         }

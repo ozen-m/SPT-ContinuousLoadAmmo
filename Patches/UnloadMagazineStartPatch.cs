@@ -13,7 +13,7 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class UnloadMagazineStartPatch : ModulePatch
 {
-    public static Action OnLoadingEnd { get; set; }
+    public static event Action OnLoadingEnd;
 
     protected override MethodBase GetTargetMethod()
     {

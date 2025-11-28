@@ -2,7 +2,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using ContinuousLoadAmmo.Controllers;
+using ContinuousLoadAmmo.Models;
 using ContinuousLoadAmmo.Utils;
+using EFT;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
 using EFT.UI.DragAndDrop;
@@ -16,11 +18,12 @@ public class LoadAmmoComponent : InputNode
 {
     private readonly List<GridItemView> _gridItemViews = [];
     private readonly List<AmmoItemClass> _ammoItems = [];
+    private readonly HashSet<MongoID> _seenAmmoTplScratch = [];
     private LoadAmmoController _loadAmmoControllerController;
     private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
     private GClass3450 _emptySourceContext = new();
 
-    public bool IsShown => _chosenAmmoTcs != null;
+    public bool IsShown => _chosenAmmoTcs is not null;
 
     private int _index;
 
@@ -55,8 +58,7 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (_loadAmmoControllerController.IsInventoryOpened ||
-            !_loadAmmoControllerController.CanLoadOutsideInventory())
+        if (_loadAmmoControllerController.IsInventoryOpened || !_loadAmmoControllerController.CanLoadOutsideInventory())
             return ETranslateResult.Ignore;
 
         if (_loadAmmoControllerController.IsActive)
@@ -83,7 +85,7 @@ public class LoadAmmoComponent : InputNode
                 return ETranslateResult.Block;
             }
             if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
-                command.IsCommand(ECommand.BeginSpecialInteracting) /* Only transferred from update to avoid duplicates */)
+                command.IsCommand(ECommand.BeginSpecialInteracting)) /* Only transferred from update to avoid duplicates */
             {
                 SetChosenAmmo(GetSelectedAmmo());
                 Close();
@@ -99,9 +101,20 @@ public class LoadAmmoComponent : InputNode
             return ETranslateResult.Block;
         }
         if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
-            command.IsCommand(ECommand.BeginSpecialInteracting) /* Only transferred from update to avoid duplicates */)
+            command.IsCommand(ECommand.BeginSpecialInteracting)) /* Only transferred from update to avoid duplicates */
         {
-            _loadAmmoControllerController.TryQuickLoadAmmo();
+            switch (ContinuousLoadAmmo.QuickLoadMode.Value)
+            {
+                case QuickLoadMode.HighestPenetrationAvailable:
+                case QuickLoadMode.LastBulletMagazine:
+                    _loadAmmoControllerController.TryQuickLoadAmmo();
+                    break;
+                case QuickLoadMode.LastMagazinePreset:
+                    _loadAmmoControllerController.TryQuickLoadLastPreset();
+                    break;
+                default:
+                    return ETranslateResult.Ignore;
+            }
             return ETranslateResult.Block;
         }
         return ETranslateResult.Ignore;
@@ -122,13 +135,23 @@ public class LoadAmmoComponent : InputNode
 
     private async Task OpenAmmoSelectorAsync()
     {
-        if (!_loadAmmoControllerController.IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
+        if (!_loadAmmoControllerController.IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine))
+            return;
+
+        // Only show one of each type
+        _seenAmmoTplScratch.Clear();
+        reachableAmmo.RemoveAll(ShouldRemoveFromList);
 
         AmmoItemClass chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoControllerController.PlayerInventoryController);
-        if (chosenAmmo != null)
+        if (chosenAmmo is not null)
         {
             _loadAmmoControllerController.LoadMagazine(chosenAmmo, foundMagazine);
         }
+    }
+
+    private bool ShouldRemoveFromList(AmmoItemClass ammo)
+    {
+        return !_seenAmmoTplScratch.Add(ammo.TemplateId);
     }
 
     [SuppressMessage("Usage", "VSTHRD003:Avoid awaiting foreign Tasks")]

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Comfort.Common;
+using EFT.Communications;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
 using EFT.UI;
@@ -20,7 +21,7 @@ public static class CommonUtils
     {
         get
         {
-            if (_eftBattleUIScreenTransform != null) return _eftBattleUIScreenTransform;
+            if (_eftBattleUIScreenTransform) return _eftBattleUIScreenTransform;
 
             _eftBattleUIScreenTransform = Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
             return _eftBattleUIScreenTransform;
@@ -33,7 +34,7 @@ public static class CommonUtils
     {
         get
         {
-            // Thanks Lacyway!
+            // Thanks Fika team/Lacyway!
             if (_inputTree != null) return _inputTree;
 
             var inputObj = GameObject.Find("___Input");
@@ -50,7 +51,7 @@ public static class CommonUtils
     /// <summary>
     /// Check if magazine has ammo that doesn't match ammoToLoad's caliber
     /// </summary>
-    public static bool CheckIfAnyDifferentCaliber(this MagazineItemClass magazine, AmmoItemClass ammoToLoad)
+    public static bool HasAmmoWithDifferentCaliber(this MagazineItemClass magazine, AmmoItemClass ammoToLoad)
     {
         foreach (var cartridge in magazine.Cartridges.Items_1)
         {
@@ -74,17 +75,17 @@ public static class CommonUtils
     {
         foreach (EquipmentSlot equipmentSlot in equipmentSlots)
         {
-            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 parentContainer || (goDeeperPredicate != null && !goDeeperPredicate(parentContainer))) continue;
+            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 parentContainer || (goDeeperPredicate is not null && !goDeeperPredicate(parentContainer))) continue;
 
             foreach (var container in parentContainer.Containers)
             {
                 foreach (Item item in container.Items)
                 {
-                    if (item is GClass3248 childContainer && (goDeeperPredicate == null || goDeeperPredicate(childContainer)))
+                    if (item is GClass3248 childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
                     {
                         childContainer.GetAllItemsOfContainer(preAllocatedList, predicate, goDeeperPredicate);
                     }
-                    if (item is TItem genericItem && (predicate == null || predicate(genericItem)))
+                    if (item is TItem genericItem && (predicate is null || predicate(genericItem)))
                     {
                         preAllocatedList.Add(genericItem);
                     }
@@ -104,11 +105,11 @@ public static class CommonUtils
         {
             foreach (Item item in container.Items)
             {
-                if (item is GClass3248 childContainer && (goDeeperPredicate == null || goDeeperPredicate(childContainer)))
+                if (item is GClass3248 childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
                 {
                     childContainer.GetAllItemsOfContainer(preAllocatedList, predicate, goDeeperPredicate);
                 }
-                if (item is TItem genericItem && (predicate == null || predicate(genericItem)))
+                if (item is TItem genericItem && (predicate is null || predicate(genericItem)))
                 {
                     preAllocatedList.Add(genericItem);
                 }
@@ -120,11 +121,30 @@ public static class CommonUtils
     {
         foreach (var eventArgs in traderController.List_0)
         {
-            if (eventArgs is GInterface418)
+            if (eventArgs is GInterface418 and not GEventArgs10) /* (GEventArgs10) RemoveFromHandsEventArgs - not considered as busy hands, mainly for successive unloading of different bullets */
             {
                 return true;
             }
         }
         return false;
+    }
+
+    public static void DisplayNotification(
+        string message,
+        ENotificationIconType iconType = ENotificationIconType.Default,
+        bool alwaysDisplay = false)
+    {
+        if (ContinuousLoadAmmo.QuickLoadNotify.Value || alwaysDisplay)
+        {
+            NotificationManagerClass.DisplayMessageNotification(
+                message,
+                iconType: iconType
+            );
+        }
+    }
+
+    public static string DisplayText(this MagazineBuildPresetClass preset)
+    {
+        return $"{preset.Name} ({preset.Caliber.Replace("Caliber", string.Empty)})";
     }
 }
