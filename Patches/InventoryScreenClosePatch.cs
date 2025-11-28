@@ -10,7 +10,7 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class InventoryScreenClosePatch : ModulePatch
 {
-    public static Action OnInventoryClose { get; set; }
+    public static event Action OnInventoryClose;
 
     protected override MethodBase GetTargetMethod()
     {

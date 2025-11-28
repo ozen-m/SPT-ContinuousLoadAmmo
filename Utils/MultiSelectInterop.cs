@@ -15,7 +15,7 @@ internal static class MultiSelectInterop
     private static AccessTools.FieldRef<object, TaskCompletionSource> _totalTaskField;
     private static MethodInfo _stopLoadingMethod;
 
-    public static bool IsMultiSelectLoadSerializerActive
+    public static bool MultiSelectLoadSerializerIsActive
     {
         get
         {

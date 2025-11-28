@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using ContinuousLoadAmmo.Utils;
 using EFT.UI.DragAndDrop;
 using SPT.Reflection.Patching;
@@ -12,6 +13,8 @@ namespace ContinuousLoadAmmo.Patches;
 /// </summary>
 public class OnClickPatch : ModulePatch
 {
+    public static event Action CancelPresetLoaderOnClick;
+
     protected override MethodBase GetTargetMethod()
     {
         return typeof(ItemView).GetMethod(nameof(ItemView.OnClick));
@@ -21,7 +24,7 @@ public class OnClickPatch : ModulePatch
     protected static void Prefix(ItemView __instance, PointerEventData.InputButton button)
     {
         if (!CommonUtils.InRaid || button != PointerEventData.InputButton.Left) return;
-        
+
         bool modifierControl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
         bool modifierShift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
@@ -29,7 +32,7 @@ public class OnClickPatch : ModulePatch
 
         if (__instance.IsBeingLoadedMagazine.Value || __instance.IsBeingUnloadedMagazine.Value)
         {
-            ApplyMagPresetPatch.CancelMagPresetLoading();
+            CancelPresetLoaderOnClick?.Invoke();
         }
     }
 }
