@@ -142,4 +142,9 @@ public static class CommonUtils
             );
         }
     }
+
+    public static string DisplayText(this MagazineBuildPresetClass preset)
+    {
+        return $"{preset.Name} ({preset.Caliber.Replace("Caliber", string.Empty)})";
+    }
 }

@@ -35,7 +35,7 @@ public class MagazinePresetLoader : IDisposable
                 _lastPreset.Caliber.Replace("Caliber", string.Empty)))
         {
             CommonUtils.DisplayNotification(
-                "No reachable ammo or magazines found for the current weapon",
+                $"No reachable ammo or magazines found to load for preset: {_lastPreset.DisplayText()}",
                 iconType: ENotificationIconType.Alert
             );
             return;
@@ -70,7 +70,7 @@ public class MagazinePresetLoader : IDisposable
         if (!_loadAmmoController.GetAllAmmoForMagazine(out var availableAmmo, magazines[0]))
         {
             CommonUtils.DisplayNotification(
-                "No reachable ammo or magazines found for the current weapon",
+                $"No reachable ammo or magazines found to load for preset: {_lastPreset.DisplayText()}",
                 iconType: ENotificationIconType.Alert,
                 true
             );
@@ -95,7 +95,7 @@ public class MagazinePresetLoader : IDisposable
                 token.ThrowIfCancellationRequested();
 
                 CommonUtils.DisplayNotification(
-                    $"Loading {preset.Name} ({preset.Caliber.Replace("Caliber", string.Empty)})",
+                    $"Loading {preset.DisplayText()}",
                     iconType: ENotificationIconType.Note
                 );
 
