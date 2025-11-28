@@ -37,7 +37,7 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
         var patchManager = new PatchManager(this, true);
         patchManager.EnablePatches();
 
-        if (MultiSelectInterop.StopLoadingMethod != null)
+        if (MultiSelectInterop.StopLoadingMethod is not null)
         {
             new ScreensPatches.MultiSelectStopLoadingPatch().Enable();
         }

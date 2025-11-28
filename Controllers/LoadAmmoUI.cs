@@ -96,7 +96,7 @@ public class LoadAmmoUI
         gridItemView.Kill();
     }
 
-    private void HandleStart(float oneAmmoDuration, int ammoTotal, int ammoDone = 0)
+    private void HandleStart(float oneAmmoDuration, int ammoTotal, int ammoDone)
     {
         CancellationTokenSource cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
         cts?.Dispose();
@@ -157,7 +157,7 @@ public class LoadAmmoUI
     {
         Close();
         _loadUITransform.gameObject.SetActive(false);
-        if (_loadAmmoController == null) return;
+        if (_loadAmmoController is null) return;
 
         _loadAmmoController.OnStartLoading -= HandleStart;
         _loadAmmoController.OnCloseInventoryLoading -= Show;

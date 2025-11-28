@@ -23,7 +23,7 @@ public class LoadAmmoComponent : InputNode
     private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
     private GClass3450 _emptySourceContext = new();
 
-    public bool IsShown => _chosenAmmoTcs != null;
+    public bool IsShown => _chosenAmmoTcs is not null;
 
     private int _index;
 
@@ -58,8 +58,7 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (_loadAmmoControllerController.IsInventoryOpened ||
-            !_loadAmmoControllerController.CanLoadOutsideInventory())
+        if (_loadAmmoControllerController.IsInventoryOpened || !_loadAmmoControllerController.CanLoadOutsideInventory())
             return ETranslateResult.Ignore;
 
         if (_loadAmmoControllerController.IsActive)
@@ -136,14 +135,15 @@ public class LoadAmmoComponent : InputNode
 
     private async Task OpenAmmoSelectorAsync()
     {
-        if (!_loadAmmoControllerController.IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine)) return;
+        if (!_loadAmmoControllerController.IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine))
+            return;
 
         // Only show one of each type
         _seenAmmoTplScratch.Clear();
         reachableAmmo.RemoveAll(ShouldRemoveFromList);
 
         AmmoItemClass chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoControllerController.PlayerInventoryController);
-        if (chosenAmmo != null)
+        if (chosenAmmo is not null)
         {
             _loadAmmoControllerController.LoadMagazine(chosenAmmo, foundMagazine);
         }

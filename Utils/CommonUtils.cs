@@ -75,17 +75,17 @@ public static class CommonUtils
     {
         foreach (EquipmentSlot equipmentSlot in equipmentSlots)
         {
-            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 parentContainer || (goDeeperPredicate != null && !goDeeperPredicate(parentContainer))) continue;
+            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 parentContainer || (goDeeperPredicate is not null && !goDeeperPredicate(parentContainer))) continue;
 
             foreach (var container in parentContainer.Containers)
             {
                 foreach (Item item in container.Items)
                 {
-                    if (item is GClass3248 childContainer && (goDeeperPredicate == null || goDeeperPredicate(childContainer)))
+                    if (item is GClass3248 childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
                     {
                         childContainer.GetAllItemsOfContainer(preAllocatedList, predicate, goDeeperPredicate);
                     }
-                    if (item is TItem genericItem && (predicate == null || predicate(genericItem)))
+                    if (item is TItem genericItem && (predicate is null || predicate(genericItem)))
                     {
                         preAllocatedList.Add(genericItem);
                     }
@@ -105,11 +105,11 @@ public static class CommonUtils
         {
             foreach (Item item in container.Items)
             {
-                if (item is GClass3248 childContainer && (goDeeperPredicate == null || goDeeperPredicate(childContainer)))
+                if (item is GClass3248 childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
                 {
                     childContainer.GetAllItemsOfContainer(preAllocatedList, predicate, goDeeperPredicate);
                 }
-                if (item is TItem genericItem && (predicate == null || predicate(genericItem)))
+                if (item is TItem genericItem && (predicate is null || predicate(genericItem)))
                 {
                     preAllocatedList.Add(genericItem);
                 }
@@ -121,7 +121,7 @@ public static class CommonUtils
     {
         foreach (var eventArgs in traderController.List_0)
         {
-            if (eventArgs is GInterface418 and not GEventArgs10) /* (GEventArgs10) RemoveFromHandsEventArgs - not considered as busy hands, here mainly for successive unloading of different bullets */
+            if (eventArgs is GInterface418 and not GEventArgs10) /* (GEventArgs10) RemoveFromHandsEventArgs - not considered as busy hands, mainly for successive unloading of different bullets */
             {
                 return true;
             }

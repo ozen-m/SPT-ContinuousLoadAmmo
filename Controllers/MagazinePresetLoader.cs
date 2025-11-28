@@ -51,6 +51,8 @@ public class MagazinePresetLoader : IDisposable
         _loadPresetCancellationSource.Cancel();
         _loadPresetCancellationSource.Dispose();
         _loadPresetCancellationSource = null;
+
+        // BUG: While loading preset, dragging ammo to another magazine does not stop the previous load preset process
     }
 
     private void StartNewLoadMagPreset(out CancellationToken token)
@@ -105,7 +107,7 @@ public class MagazinePresetLoader : IDisposable
                 {
                     token.ThrowIfCancellationRequested();
 
-                    if (bottom == null) continue;
+                    if (bottom is null) continue;
 
                     bottomCount = bottom.Count;
                     if (magazine.Count >= bottom.Count) continue;
@@ -121,7 +123,7 @@ public class MagazinePresetLoader : IDisposable
                 var topCount = 0;
                 foreach (var top in preset.Top)
                 {
-                    if (top != null) topCount += top.Count;
+                    if (top is not null) topCount += top.Count;
                 }
                 freeLoopSpace -= topCount;
 
@@ -130,7 +132,7 @@ public class MagazinePresetLoader : IDisposable
                     foreach (var loop in preset.Loop)
                     {
                         token.ThrowIfCancellationRequested();
-                        if (loop == null || freeLoopSpace <= 0) continue;
+                        if (loop is null || freeLoopSpace <= 0) continue;
 
                         var toLoad = (int)loop.Count;
                         if (toSkip > 0) // Resume loading from current count
@@ -157,7 +159,7 @@ public class MagazinePresetLoader : IDisposable
                 {
                     token.ThrowIfCancellationRequested();
 
-                    if (top == null) continue;
+                    if (top is null) continue;
 
                     var toLoad = Mathf.Min(top.Count, magazine.MaxCount - magazine.Count);
                     await TryLoadPresetStepAsync(availableAmmo, magazine, top, toLoad, token);
@@ -181,7 +183,7 @@ public class MagazinePresetLoader : IDisposable
     )
     {
         var matchingAmmo = GetMatchingAmmo(availableAmmo, preset.TemplateId, toLoad);
-        if (matchingAmmo == null)
+        if (matchingAmmo is null)
         {
             var missingMessage =
                 $"{MagazineBuildPresetClass.Class1023.String_0.Localized()} {preset.TemplateId.LocalizedShortName()}, Count: {toLoad}";
@@ -196,11 +198,7 @@ public class MagazinePresetLoader : IDisposable
     {
         foreach (var ammoItem in ammo)
         {
-            if (ammoItem.TemplateId != templateId ||
-                ammoItem.StackObjectsCount < count)
-            {
-                continue;
-            }
+            if (ammoItem.TemplateId != templateId || ammoItem.StackObjectsCount < count) continue;
 
             return ammoItem;
         }

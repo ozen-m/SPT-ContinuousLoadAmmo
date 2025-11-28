@@ -25,7 +25,7 @@ public class LoadAmmoController : IDisposable
     public event Action OnEndLoading;
     public event Action OnPlayerDestroy;
 
-    public bool IsActive => PlayerInventoryController.Interface19_0 != null || _magazinePresetLoader.PresetLoaderIsActive;
+    public bool IsActive => PlayerInventoryController.Interface19_0 is not null || _magazinePresetLoader.PresetLoaderIsActive;
     public bool IsInventoryOpened => _player.IsInventoryOpened;
     public PlayerInventoryController PlayerInventoryController { get; }
 
@@ -83,7 +83,7 @@ public class LoadAmmoController : IDisposable
         if (ContinuousLoadAmmo.QuickLoadMode.Value == QuickLoadMode.LastBulletMagazine)
         {
             MagazineItemClass currentMagazine = _player.LastEquippedWeaponOrKnifeItem.GetCurrentMagazine();
-            if (currentMagazine != null)
+            if (currentMagazine is not null)
             {
                 foreach (var currAmmo in reachableAmmo)
                 {
@@ -287,7 +287,7 @@ public class LoadAmmoController : IDisposable
     public void Dispose()
     {
         _magazinePresetLoader.Dispose();
-        if (PlayerInventoryController != null)
+        if (PlayerInventoryController is not null)
         {
             PlayerInventoryController.StopProcesses();
             PlayerInventoryController.ActiveEventAdded -= LoadingStart;
@@ -383,6 +383,7 @@ public class LoadAmmoController : IDisposable
             }
             _player.MovementContext.RemoveStateSpeedLimit(ESpeedLimit.BarbedWire);
         }
+
         _player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
     }
 
@@ -397,7 +398,7 @@ public class LoadAmmoController : IDisposable
     /// </summary>
     private bool IsAtReachablePlace(Item item)
     {
-        if (item.CurrentAddress == null) return false;
+        if (item.CurrentAddress is null) return false;
 
         var reachableItems = new List<Item>();
         GetReachableItems(reachableItems);
@@ -409,7 +410,7 @@ public class LoadAmmoController : IDisposable
     /// </summary>
     private bool IsAtReachablePlace(Item item, Item item2)
     {
-        if (item.CurrentAddress == null || item2.CurrentAddress == null) return false;
+        if (item.CurrentAddress is null || item2.CurrentAddress is null) return false;
 
         var reachableItems = new List<Item>();
         GetReachableItems(reachableItems);
