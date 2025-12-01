@@ -8,7 +8,7 @@ namespace ContinuousLoadAmmo.Utils;
 
 internal static class MultiSelectInterop
 {
-    private static readonly Version _requiredVersion = new(5, 0);
+    private static readonly Version _requiredVersion = new(5, 0, 0);
 
     private static bool? _uiFixesLoaded;
     private static Func<object> _loadUnloadSerializerGetter;
@@ -34,23 +34,33 @@ internal static class MultiSelectInterop
     {
         if (_uiFixesLoaded.HasValue) return _uiFixesLoaded.Value;
 
-        bool present = Chainloader.PluginInfos.TryGetValue("Tyfon.UIFixes", out PluginInfo pluginInfo);
-        _uiFixesLoaded = present && pluginInfo.Metadata.Version >= _requiredVersion;
+        bool present = Chainloader.PluginInfos.TryGetValue("com.tyfon.uifixes", out PluginInfo pluginInfo) ||
+                       Chainloader.PluginInfos.TryGetValue("Tyfon.UIFixes", out pluginInfo); // TODO: Remove in 4.1.x
+        bool correctVersion = present && pluginInfo.Metadata.Version >= _requiredVersion;
+        _uiFixesLoaded = present && correctVersion;
 
-        if (!_uiFixesLoaded.Value) return _uiFixesLoaded.Value;
-
-        var multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
-        if (multiSelectType is not null)
+        if (_uiFixesLoaded.Value)
         {
-            var loadUnloadSerializerMethod = AccessTools.PropertyGetter(multiSelectType, "LoadUnloadSerializer");
-            _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
-            _stopLoadingMethod = AccessTools.Method(multiSelectType, "StopLoading");
+            var multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
+            var taskSerializerType = Type.GetType("UIFixes.MultiSelectItemContextTaskSerializer, Tyfon.UIFixes");
+            if (multiSelectType is not null && taskSerializerType is not null)
+            {
+                var loadUnloadSerializerMethod = AccessTools.PropertyGetter(multiSelectType, "LoadUnloadSerializer");
+                _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
+                _stopLoadingMethod = AccessTools.Method(multiSelectType, "StopLoading");
+                _totalTaskField = AccessTools.FieldRefAccess<TaskCompletionSource>(taskSerializerType, "totalTask");
+                ContinuousLoadAmmo.LogSource.LogInfo("UI Fixes interop loaded successfully");
+            }
+            else
+            {
+                ContinuousLoadAmmo.LogSource.LogError($"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong");
+                _uiFixesLoaded = false;
+            }
         }
 
-        var taskSerializerType = Type.GetType("UIFixes.MultiSelectItemContextTaskSerializer, Tyfon.UIFixes");
-        if (taskSerializerType is not null)
+        if (present && !correctVersion)
         {
-            _totalTaskField = AccessTools.FieldRefAccess<TaskCompletionSource>(taskSerializerType, "totalTask");
+            ContinuousLoadAmmo.LogSource.LogWarning($"UI Fixes {pluginInfo.Metadata.Version} is present but {_requiredVersion} is required, interop will not work");
         }
 
         return _uiFixesLoaded.Value;

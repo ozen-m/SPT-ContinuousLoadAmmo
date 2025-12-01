@@ -10,8 +10,9 @@ using UnityEngine;
 
 namespace ContinuousLoadAmmo;
 
-[BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.1.2")]
-[BepInDependency("Tyfon.UIFixes", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.1.3")]
+[BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency("Tyfon.UIFixes", BepInDependency.DependencyFlags.SoftDependency)] // Old version; TODO: Remove in 4.1.x
 [SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible")]
 public class ContinuousLoadAmmo : BaseUnityPlugin
 {
