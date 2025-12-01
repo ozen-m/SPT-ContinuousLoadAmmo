@@ -147,4 +147,13 @@ public static class CommonUtils
     {
         return $"{preset.Name} ({preset.Caliber.Replace("Caliber", string.Empty)})";
     }
+
+    /// <summary>
+    /// PP-9 Klin special case
+    /// </summary>
+    public static string GetWeaponCaliber(this Weapon weapon)
+    {
+        var ammoCaliber = weapon.AmmoCaliber;
+        return ammoCaliber == "9x18PMM" ? "9x18PM" : ammoCaliber;
+    }
 }

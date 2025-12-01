@@ -198,7 +198,7 @@ public class LoadAmmoController : IDisposable
         {
             if (_player.LastEquippedWeaponOrKnifeItem is not Weapon weapon) return false;
 
-            ammoCaliber = weapon.AmmoCaliber;
+            ammoCaliber = weapon.GetWeaponCaliber();
         }
 
         if (ContinuousLoadAmmo.ReachableOnly.Value)
