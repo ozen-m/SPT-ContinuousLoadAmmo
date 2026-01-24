@@ -15,27 +15,23 @@ public static class CommonUtils
 {
     public static bool InRaid => GClass2340.InRaid;
 
-    private static Transform _eftBattleUIScreenTransform;
-
     public static Transform EftBattleUIScreenTransform
     {
         get
         {
-            if (_eftBattleUIScreenTransform) return _eftBattleUIScreenTransform;
+            if (field != null) return field;
 
-            _eftBattleUIScreenTransform = Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
-            return _eftBattleUIScreenTransform;
+            field = Singleton<CommonUI>.Instance.EftBattleUIScreen.transform;
+            return field;
         }
     }
-
-    private static InputTree _inputTree;
 
     public static InputTree InputTree
     {
         get
         {
             // Thanks Fika team/Lacyway!
-            if (_inputTree != null) return _inputTree;
+            if (field != null) return field;
 
             var inputObj = GameObject.Find("___Input");
             if (inputObj == null)
@@ -43,8 +39,8 @@ public static class CommonUtils
                 throw new NullReferenceException("Could not find InputTree object!");
             }
 
-            _inputTree = inputObj.GetComponent<InputTree>();
-            return _inputTree;
+            field = inputObj.GetComponent<InputTree>();
+            return field;
         }
     }
 
