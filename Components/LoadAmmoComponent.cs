@@ -58,19 +58,7 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (_loadAmmoControllerController.IsInventoryOpened || !_loadAmmoControllerController.CanLoadOutsideInventory())
-            return ETranslateResult.Ignore;
-
-        if (_loadAmmoControllerController.IsActive)
-        {
-            if (command.IsCommand(ECommand.ToggleShooting) ||
-                command.IsCommand(ECommand.ToggleAlternativeShooting))
-            {
-                _loadAmmoControllerController.StopLoading();
-                return ETranslateResult.Block;
-            }
-            return ETranslateResult.Ignore;
-        }
+        if (!_loadAmmoControllerController.CanLoadOutsideInventory()) return ETranslateResult.Ignore;
 
         if (IsShown)
         {
@@ -79,11 +67,14 @@ public class LoadAmmoComponent : InputNode
                 Next();
                 return ETranslateResult.Block;
             }
+
             if (command.IsCommand(ECommand.ScrollPrevious))
             {
                 Previous();
                 return ETranslateResult.Block;
             }
+
+            // Select ammo
             if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
                 command.IsCommand(ECommand.BeginSpecialInteracting)) /* Only transferred from update to avoid duplicates */
             {
@@ -94,12 +85,27 @@ public class LoadAmmoComponent : InputNode
             return ETranslateResult.Ignore;
         }
 
-        if (Input.GetKey(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
-            (command.IsCommand(ECommand.ScrollNext) || command.IsCommand(ECommand.ScrollPrevious)))
+        if (!_loadAmmoControllerController.IsInventoryOpened)
         {
-            _ = OpenAmmoSelectorAsync();
-            return ETranslateResult.Block;
+            if (_loadAmmoControllerController.IsActive)
+            {
+                // Cancel on shoot/alt shoot if loading ammo outside inventory
+                if (command.IsCommand(ECommand.ToggleShooting) || command.IsCommand(ECommand.ToggleAlternativeShooting))
+                {
+                    _loadAmmoControllerController.StopLoading();
+                    return ETranslateResult.Block;
+                }
+                return ETranslateResult.Ignore;
+            }
+
+            if (Input.GetKey(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
+                command.IsCommand(ECommand.ScrollNext) || command.IsCommand(ECommand.ScrollPrevious))
+            {
+                _ = OpenAmmoSelectorAsync();
+                return ETranslateResult.Block;
+            }
         }
+
         if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
             command.IsCommand(ECommand.BeginSpecialInteracting)) /* Only transferred from update to avoid duplicates */
         {
