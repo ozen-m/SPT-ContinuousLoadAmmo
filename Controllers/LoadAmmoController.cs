@@ -158,7 +158,7 @@ public class LoadAmmoController : IDisposable
                     PlayerInventoryController.Examined(mag) &&
                     mag.Count != mag.MaxCount &&
                     mag.CheckCompatibility(ammo),
-                ContainerIsSearched
+                ContainerPredicate
             );
         }
         else
@@ -214,9 +214,8 @@ public class LoadAmmoController : IDisposable
                 reachableAmmo,
                 (ammo) =>
                     PlayerInventoryController.Examined(ammo) &&
-                    ammo.Caliber == ammoCaliber &&
-                    ammo.Parent.Container.ParentItem is not MagazineItemClass /* Do not pull from ammo inside mags */,
-                ContainerIsSearched
+                    ammo.Caliber == ammoCaliber,
+                ContainerPredicate
             );
         }
         else
@@ -226,8 +225,7 @@ public class LoadAmmoController : IDisposable
                 reachableAmmo,
                 (ammo) =>
                     PlayerInventoryController.Examined(ammo) &&
-                    ammo.Caliber == ammoCaliber &&
-                    ammo.Parent.Container.ParentItem is not MagazineItemClass /* Do not pull from ammo inside mags */
+                    ammo.Caliber == ammoCaliber
             );
         }
         if (reachableAmmo.Count <= 0) return false;
@@ -258,9 +256,8 @@ public class LoadAmmoController : IDisposable
             allAmmo,
             (ammo) =>
                 PlayerInventoryController.Examined(ammo) &&
-                magazine.CheckCompatibility(ammo) &&
-                ammo.Parent.Container.ParentItem is not MagazineItemClass, /* Do not pull from ammo inside mags */
-            ContainerIsSearched
+                magazine.CheckCompatibility(ammo),
+            ContainerPredicate
         );
         if (allAmmo.Count <= 0) return false;
 
@@ -436,14 +433,18 @@ public class LoadAmmoController : IDisposable
             ReachableSlots,
             preAllocatedList,
             predicate,
-            ContainerIsSearched
+            ContainerPredicate
         );
     }
 
-    private bool ContainerIsSearched(GClass3248 container)
+    /// <summary>
+    /// Do not pull ammo inside magazines/ammo boxes and only searched containers
+    /// </summary>
+    private bool ContainerPredicate(GClass3248 container)
     {
-        return container is not SearchableItemItemClass searchable ||
-               PlayerInventoryController.SearchController.IsSearched(searchable); /* Only searched containers */
+        return container is not IAmmoContainer &&
+               (container is not SearchableItemItemClass searchable ||
+                PlayerInventoryController.SearchController.IsSearched(searchable));
     }
 
     private void StopLoadingOnHandsChange(AbstractHandsController oldHands, AbstractHandsController newHands)
