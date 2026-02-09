@@ -109,7 +109,7 @@ public class LoadAmmoController : IDisposable
 
     public void TryQuickLoadLastPreset()
     {
-        if (!_magazinePresetLoader.LastPresetIsAvailable)
+        if (!ApplyMagPresetPatch.LastPresetIsAvailable)
         {
             // Fallback, no preset selected yet through context menu
             TryQuickLoadAmmo();

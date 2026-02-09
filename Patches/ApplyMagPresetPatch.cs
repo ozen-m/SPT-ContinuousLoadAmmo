@@ -11,9 +11,10 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class ApplyMagPresetPatch : ModulePatch
 {
-    public static event
-        Action<MagazineBuildPresetClass, List<MagazineItemClass>>
-        OnApplyMagPreset;
+    public static MagazineBuildPresetClass LastMagazinePreset { get; private set; }
+    public static event Action<MagazineBuildPresetClass, List<MagazineItemClass>> OnApplyMagPreset;
+
+    public static bool LastPresetIsAvailable => LastMagazinePreset is not null;
 
     protected override MethodBase GetTargetMethod()
     {
@@ -28,6 +29,8 @@ public class ApplyMagPresetPatch : ModulePatch
         ref Task<GStruct155> __result
     )
     {
+        LastMagazinePreset = preset;
+
         if (!CommonUtils.InRaid) return true;
 
         __result = Task.FromResult(default(GStruct155)); // Task only used by mag presets window, which we disable in-raid

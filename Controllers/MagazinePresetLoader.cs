@@ -13,11 +13,9 @@ namespace ContinuousLoadAmmo.Controllers;
 public class MagazinePresetLoader : IDisposable
 {
     private readonly LoadAmmoController _loadAmmoController;
-    private MagazineBuildPresetClass _lastPreset;
     private CancellationTokenSource _loadPresetCancellationSource;
 
     public bool PresetLoaderIsActive => _loadPresetCancellationSource is not null;
-    public bool LastPresetIsAvailable => _lastPreset is not null;
 
     public MagazinePresetLoader(LoadAmmoController loadAmmoController)
     {
@@ -32,16 +30,17 @@ public class MagazinePresetLoader : IDisposable
         if (!_loadAmmoController.IsQuickLoadAvailable(
                 out var availableAmmo,
                 out var magazine,
-                _lastPreset.Caliber.Replace("Caliber", string.Empty)))
+                ApplyMagPresetPatch.LastMagazinePreset.Caliber.Replace("Caliber", string.Empty)
+            ))
         {
             CommonUtils.DisplayNotification(
-                $"No reachable ammo or magazines found to load for preset: {_lastPreset.DisplayText()}",
+                $"No reachable ammo or magazines found to load for preset: {ApplyMagPresetPatch.LastMagazinePreset.DisplayText()}",
                 iconType: ENotificationIconType.Alert
             );
             return;
         }
 
-        _ = LoadingMagPresetInternalAsync(_lastPreset, [magazine], availableAmmo);
+        _ = LoadingMagPresetInternalAsync(ApplyMagPresetPatch.LastMagazinePreset, [magazine], availableAmmo);
     }
 
     public void CancelMagPresetLoading()
@@ -67,12 +66,10 @@ public class MagazinePresetLoader : IDisposable
         List<MagazineItemClass> magazines
     )
     {
-        _lastPreset = preset;
-
         if (!_loadAmmoController.GetAllAmmoForMagazine(out var availableAmmo, magazines[0]))
         {
             CommonUtils.DisplayNotification(
-                $"No reachable ammo or magazines found to load for preset: {_lastPreset.DisplayText()}",
+                $"No reachable ammo or magazines found to load for preset: {ApplyMagPresetPatch.LastMagazinePreset.DisplayText()}",
                 iconType: ENotificationIconType.Alert,
                 true
             );
