@@ -22,22 +22,19 @@ public class LoadAmmoUI
     private GClass929 _imageLoader;
     private Action _unbindImageLoader;
     private TextMeshProUGUI _magValue;
-    private bool _initialized;
 
     public void Initialize(LoadAmmoController loadAmmoController)
     {
         _loadAmmoController = loadAmmoController;
-        Subscribe();
+        SubscribeToController();
         if (_loadUITransform != null)
         {
             _loadUITransform.gameObject.SetActive(true);
+            return;
         }
-
-        if (_initialized) return;
 
         PrepareGameObjects();
         CloneTemplates();
-        _initialized = true;
     }
 
     public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
@@ -50,7 +47,7 @@ public class LoadAmmoUI
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
     }
 
-    private void Subscribe()
+    private void SubscribeToController()
     {
         _loadAmmoController.OnStartLoading += HandleStart;
         _loadAmmoController.OnCloseInventoryLoading += Show;
@@ -76,17 +73,27 @@ public class LoadAmmoUI
 
     private void CloneTemplates()
     {
-        GridItemView gridItemView = ItemViewFactory.CreateFromPool<GridItemView>("grid_layout");
+        GridItemView gridItemView = ItemViewFactory.CreateFromPrefab<GridItemView>("grid_layout");
 
-        var itemViewAnimationField = typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
+        var itemViewAnimationField = typeof(ItemView)
+            .GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
         var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField!.GetValue(gridItemView);
 
-        var itemViewLoadAmmoComponentTemplateField = typeof(ItemViewAnimation).GetField("_loadAmmoComponentTemplate", BindingFlags.Instance | BindingFlags.NonPublic);
-        _itemViewLoadAmmoComponent = Object.Instantiate((ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField!.GetValue(itemViewAnimation), _loadUITransform, false);
+        var itemViewLoadAmmoComponentTemplateField = typeof(ItemViewAnimation)
+            .GetField("_loadAmmoComponentTemplate", BindingFlags.Instance | BindingFlags.NonPublic);
+        var itemViewLoadAmmoComponentTemplate = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField!
+            .GetValue(itemViewAnimation);
+        _itemViewLoadAmmoComponent = Object.Instantiate(itemViewLoadAmmoComponentTemplate, _loadUITransform, false);
         SetUI(_itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
 
-        var itemViewBottomPanelField = typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
-        _magValue = Object.Instantiate(((ItemViewBottomPanel)itemViewBottomPanelField!.GetValue(gridItemView)).ItemValue, _loadUITransform, false);
+        var itemViewBottomPanelField = typeof(ItemView)
+            .GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
+        var itemViewBottomPanelTemplate = (ItemViewBottomPanel)itemViewBottomPanelField?.GetValue(gridItemView);
+        _magValue = Object.Instantiate(
+            itemViewBottomPanelTemplate!.ItemValue,
+            _loadUITransform,
+            false
+        );
         SetUI(_magValue.transform, new Vector2(0f, -190f));
         _magValue.enableWordWrapping = false;
         _magValue.overflowMode = TextOverflowModes.Overflow;
@@ -147,6 +154,7 @@ public class LoadAmmoUI
             _magImage.enabled = false;
         }
         _unbindImageLoader?.Invoke();
+        _unbindImageLoader = null;
         if (_magValue != null)
         {
             _magValue.enabled = false;
