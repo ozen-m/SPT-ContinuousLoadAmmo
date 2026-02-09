@@ -274,6 +274,12 @@ public class LoadAmmoController : IDisposable
 
     public string GetMagAmmoCountByLevel()
     {
+        if (_magazine is null)
+        {
+            ContinuousLoadAmmo.LogSource.LogError("Magazine is null while trying to get ammo count");
+            return "MAG NULL";
+        }
+
         int skill = Mathf.Max(
             _player.Profile.MagDrillsMastering,
             Mathf.Max(
