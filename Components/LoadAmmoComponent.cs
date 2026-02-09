@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using Comfort.Common;
 using ContinuousLoadAmmo.Controllers;
 using ContinuousLoadAmmo.Models;
 using ContinuousLoadAmmo.Utils;
@@ -49,6 +50,8 @@ public class LoadAmmoComponent : InputNode
 
     public void Update()
     {
+        if (Singleton<GameWorld>.Instance is HideoutGameWorld) return;
+
         // Transfer to TranslateCommand, our custom hotkey _may_ not be an ECommand
         if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
         {
@@ -58,8 +61,13 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (!_loadAmmoControllerController.CanLoadOutsideInventory()) return ETranslateResult.Ignore;
+        if (Singleton<GameWorld>.Instance is HideoutGameWorld ||
+            !_loadAmmoControllerController.CanLoadOutsideInventory())
+        {
+            return ETranslateResult.Ignore;
+        }
 
+        // TODO: Fix conflict with BTR driver interaction
         if (IsShown)
         {
             if (command.IsCommand(ECommand.ScrollNext))
