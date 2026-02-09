@@ -111,11 +111,29 @@ public class LoadAmmoController : IDisposable
     {
         if (!ApplyMagPresetPatch.LastPresetIsAvailable)
         {
-            // Fallback, no preset selected yet through context menu
-            TryQuickLoadAmmo();
+            if (ContinuousLoadAmmo.MagPresetFallback.Value)
+            {
+                // Fallback, no preset selected yet through context menu
+                TryQuickLoadAmmo();
+            }
+            else
+            {
+                CommonUtils.DisplayNotification(
+                    "No magazine preset selected",
+                    iconType: ENotificationIconType.Alert,
+                    true
+                );
+            }
             return;
         }
-        _magazinePresetLoader.QuickLoadMagPreset();
+
+        if (_magazinePresetLoader.IsSelectedPresetCompatibleWithCurrentWeapon())
+        {
+            _magazinePresetLoader.QuickLoadMagPreset();
+            return;
+        }
+
+        TryQuickLoadAmmo();
     }
 
     public void LoadMagazine(AmmoItemClass ammo, MagazineItemClass magazine)
@@ -199,11 +217,10 @@ public class LoadAmmoController : IDisposable
         _reachableAmmoScratch.Clear();
         reachableAmmo = _reachableAmmoScratch;
 
+        ammoCaliber ??= GetCurrentWeaponCaliber();
         if (ammoCaliber.IsNullOrEmpty())
         {
-            if (_player.LastEquippedWeaponOrKnifeItem is not Weapon weapon) return false;
-
-            ammoCaliber = weapon.GetWeaponCaliber();
+            return false;
         }
 
         if (ContinuousLoadAmmo.ReachableOnly.Value)
@@ -461,6 +478,16 @@ public class LoadAmmoController : IDisposable
         {
             StopLoading();
         }
+    }
+
+    public string GetCurrentWeaponCaliber()
+    {
+        if (_player.HandsController is FirearmController fc)
+        {
+            return fc.Weapon.GetWeaponCaliber();
+        }
+
+        return string.Empty;
     }
 
     private void OnDestroy(IPlayer player)

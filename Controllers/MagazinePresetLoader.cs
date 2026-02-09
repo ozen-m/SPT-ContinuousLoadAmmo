@@ -30,7 +30,7 @@ public class MagazinePresetLoader : IDisposable
         if (!_loadAmmoController.IsQuickLoadAvailable(
                 out var availableAmmo,
                 out var magazine,
-                ApplyMagPresetPatch.LastMagazinePreset.Caliber.Replace("Caliber", string.Empty)
+                ApplyMagPresetPatch.PresetCaliber
             ))
         {
             CommonUtils.DisplayNotification(
@@ -52,6 +52,14 @@ public class MagazinePresetLoader : IDisposable
         _loadPresetCancellationSource = null;
 
         // BUG: While loading preset, dragging ammo to another magazine does not stop the previous load preset process
+    }
+
+    public bool IsSelectedPresetCompatibleWithCurrentWeapon()
+    {
+        var presetCaliber = ApplyMagPresetPatch.PresetCaliber;
+        var weaponCaliber = _loadAmmoController.GetCurrentWeaponCaliber();
+
+        return presetCaliber == weaponCaliber;
     }
 
     private void StartNewLoadMagPreset(out CancellationToken token)
@@ -186,6 +194,11 @@ public class MagazinePresetLoader : IDisposable
                 $"{MagazineBuildPresetClass.Class1023.String_0.Localized()} {preset.TemplateId.LocalizedShortName()}, Count: {toLoad}";
             CommonUtils.DisplayNotification(missingMessage, ENotificationIconType.Alert, true);
             CancelMagPresetLoading();
+
+            if (ContinuousLoadAmmo.MagPresetFallback.Value)
+            {
+                _loadAmmoController.TryQuickLoadAmmo();
+            }
             return;
         }
         await _loadAmmoController.LoadMagazineAsync(matchingAmmo, magazine, token, toLoad);

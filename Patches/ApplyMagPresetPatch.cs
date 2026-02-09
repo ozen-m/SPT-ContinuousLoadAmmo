@@ -15,6 +15,7 @@ public class ApplyMagPresetPatch : ModulePatch
     public static event Action<MagazineBuildPresetClass, List<MagazineItemClass>> OnApplyMagPreset;
 
     public static bool LastPresetIsAvailable => LastMagazinePreset is not null;
+    public static string PresetCaliber => LastMagazinePreset?.Caliber.Replace("Caliber", string.Empty);
 
     protected override MethodBase GetTargetMethod()
     {
