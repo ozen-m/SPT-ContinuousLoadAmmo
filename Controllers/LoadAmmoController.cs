@@ -110,30 +110,13 @@ public class LoadAmmoController : IDisposable
 
     public void TryQuickLoadLastPreset()
     {
-        if (!ApplyMagPresetPatch.LastPresetIsAvailable)
-        {
-            if (ContinuousLoadAmmo.MagPresetFallback.Value)
-            {
-                // Fallback, no preset selected yet through context menu
-                TryQuickLoadAmmo();
-            }
-            else
-            {
-                CommonUtils.DisplayNotification(
-                    "No magazine preset selected",
-                    iconType: ENotificationIconType.Alert,
-                    true
-                );
-            }
-            return;
-        }
-
         if (_magazinePresetLoader.IsSelectedPresetCompatibleWithCurrentWeapon())
         {
             _magazinePresetLoader.QuickLoadMagPreset();
             return;
         }
 
+        // Fallback, no preset selected yet through context menu or preset not compatible with weapon
         TryQuickLoadAmmo();
     }
 
@@ -279,8 +262,16 @@ public class LoadAmmoController : IDisposable
         );
         if (allAmmo.Count <= 0) return false;
 
-        // Sort stack count ascending
-        allAmmo.Sort((a, b) => a.StackObjectsCount.CompareTo(b.StackObjectsCount));
+        // Sort penetration power highest to lowest, then stack count ascending
+        allAmmo.Sort((a, b) =>
+        {
+            int result = b.PenetrationPower.CompareTo(a.PenetrationPower);
+            if (result == 0)
+            {
+                result = a.StackObjectsCount.CompareTo(b.StackObjectsCount);
+            }
+            return result;
+        });
         return true;
     }
 

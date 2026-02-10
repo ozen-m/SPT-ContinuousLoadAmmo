@@ -193,13 +193,26 @@ public class MagazinePresetLoader : IDisposable
         {
             var missingMessage =
                 $"{MagazineBuildPresetClass.Class1023.String_0.Localized()} {preset.TemplateId.LocalizedShortName()}, Count: {toLoad}";
-            CommonUtils.DisplayNotification(missingMessage, ENotificationIconType.Alert, true);
-            CancelMagPresetLoading();
+            CommonUtils.DisplayNotification(
+                missingMessage,
+                ENotificationIconType.Alert,
+                true,
+                ENotificationDurationType.Long
+            );
 
             if (ContinuousLoadAmmo.MagPresetFallback.Value)
             {
-                _loadAmmoController.TryQuickLoadAmmo();
+                var fallbackAmmo = GetValidAmmo(availableAmmo);
+                if (fallbackAmmo is not null)
+                {
+                    CommonUtils.DisplayNotification(
+                        $"Loading {fallbackAmmo.LocalizedShortName()}",
+                        ENotificationIconType.Note
+                    );
+                    await _loadAmmoController.LoadMagazineAsync(fallbackAmmo, magazine, token);
+                }
             }
+            CancelMagPresetLoading();
             return;
         }
         await _loadAmmoController.LoadMagazineAsync(matchingAmmo, magazine, token, toLoad);
@@ -210,6 +223,18 @@ public class MagazinePresetLoader : IDisposable
         foreach (var ammoItem in ammo)
         {
             if (ammoItem.TemplateId != templateId || ammoItem.StackObjectsCount < count) continue;
+
+            return ammoItem;
+        }
+
+        return null;
+    }
+
+    private static AmmoItemClass GetValidAmmo(List<AmmoItemClass> ammo)
+    {
+        foreach (var ammoItem in ammo)
+        {
+            if (ammoItem.StackObjectsCount <= 0) continue;
 
             return ammoItem;
         }
