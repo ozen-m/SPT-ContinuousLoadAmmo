@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Comfort.Common;
 using ContinuousLoadAmmo.Controllers;
 using ContinuousLoadAmmo.Models;
 using ContinuousLoadAmmo.Utils;
@@ -50,7 +49,7 @@ public class LoadAmmoComponent : InputNode
 
     public void Update()
     {
-        if (Singleton<GameWorld>.Instance is HideoutGameWorld) return;
+        if (!CommonUtils.InRaid) return;
 
         // Transfer to TranslateCommand, our custom hotkey _may_ not be an ECommand
         if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
@@ -61,8 +60,7 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (Singleton<GameWorld>.Instance is HideoutGameWorld ||
-            !_loadAmmoControllerController.CanLoadOutsideInventory())
+        if (!CommonUtils.InRaid || !_loadAmmoControllerController.CanLoadOutsideInventory())
         {
             return ETranslateResult.Ignore;
         }
