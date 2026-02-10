@@ -74,7 +74,8 @@ public class LoadAmmoController : IDisposable
         {
             CommonUtils.DisplayNotification(
                 "No reachable ammo or magazines found for the current weapon",
-                iconType: ENotificationIconType.Alert
+                ENotificationIconType.Alert,
+                true
             );
             return;
         }
@@ -103,7 +104,7 @@ public class LoadAmmoController : IDisposable
 
         CommonUtils.DisplayNotification(
             $"Loading {chosenAmmo.LocalizedShortName()}",
-            iconType: ENotificationIconType.Note
+            ENotificationIconType.Note
         );
     }
 

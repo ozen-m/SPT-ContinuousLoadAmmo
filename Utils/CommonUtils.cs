@@ -128,13 +128,15 @@ public static class CommonUtils
     public static void DisplayNotification(
         string message,
         ENotificationIconType iconType = ENotificationIconType.Default,
-        bool alwaysDisplay = false)
+        bool alwaysDisplay = false,
+        ENotificationDurationType duration = ENotificationDurationType.Default)
     {
         if (ContinuousLoadAmmo.QuickLoadNotify.Value || alwaysDisplay)
         {
             NotificationManagerClass.DisplayMessageNotification(
                 message,
-                iconType: iconType
+                duration,
+                iconType
             );
         }
     }

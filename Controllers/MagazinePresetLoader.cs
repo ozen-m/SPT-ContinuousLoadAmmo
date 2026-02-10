@@ -35,7 +35,8 @@ public class MagazinePresetLoader : IDisposable
         {
             CommonUtils.DisplayNotification(
                 $"No reachable ammo or magazines found to load for preset: {ApplyMagPresetPatch.LastMagazinePreset.DisplayText()}",
-                iconType: ENotificationIconType.Alert
+                ENotificationIconType.Alert,
+                true
             );
             return;
         }
@@ -78,7 +79,7 @@ public class MagazinePresetLoader : IDisposable
         {
             CommonUtils.DisplayNotification(
                 $"No reachable ammo or magazines found to load for preset: {ApplyMagPresetPatch.LastMagazinePreset.DisplayText()}",
-                iconType: ENotificationIconType.Alert,
+                ENotificationIconType.Alert,
                 true
             );
             CancelMagPresetLoading();
@@ -103,7 +104,7 @@ public class MagazinePresetLoader : IDisposable
 
                 CommonUtils.DisplayNotification(
                     $"Loading {preset.DisplayText()}",
-                    iconType: ENotificationIconType.Note
+                    ENotificationIconType.Note
                 );
 
                 // Bottom
