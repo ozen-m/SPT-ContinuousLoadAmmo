@@ -60,7 +60,7 @@ public class MagazinePresetLoader : IDisposable
         var presetCaliber = ApplyMagPresetPatch.PresetCaliber;
         var weaponCaliber = _loadAmmoController.GetCurrentWeaponCaliber();
 
-        return presetCaliber == weaponCaliber;
+        return string.Equals(presetCaliber, weaponCaliber);
     }
 
     private void StartNewLoadMagPreset(out CancellationToken token)

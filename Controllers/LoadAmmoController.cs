@@ -301,6 +301,16 @@ public class LoadAmmoController : IDisposable
         return _magazine.GetAmmoCountByLevel(_magazine.Count, _magazine.MaxCount, skill, "#ffffff", true, false, "<color={2}>{0}</color>/{1}");
     }
 
+    public string GetCurrentWeaponCaliber()
+    {
+        if (_player.HandsController is FirearmController fc)
+        {
+            return fc.Weapon.GetWeaponCaliber();
+        }
+
+        return string.Empty;
+    }
+
     public void Dispose()
     {
         _magazinePresetLoader.Dispose();
@@ -470,16 +480,6 @@ public class LoadAmmoController : IDisposable
         {
             StopLoading();
         }
-    }
-
-    public string GetCurrentWeaponCaliber()
-    {
-        if (_player.HandsController is FirearmController fc)
-        {
-            return fc.Weapon.GetWeaponCaliber();
-        }
-
-        return string.Empty;
     }
 
     private void OnDestroy(IPlayer player)
