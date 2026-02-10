@@ -65,7 +65,6 @@ public class LoadAmmoComponent : InputNode
             return ETranslateResult.Ignore;
         }
 
-        // TODO: Fix conflict with BTR driver interaction
         if (IsShown)
         {
             if (command.IsCommand(ECommand.ScrollNext))
@@ -105,7 +104,7 @@ public class LoadAmmoComponent : InputNode
             }
 
             if (Input.GetKey(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
-                command.IsCommand(ECommand.ScrollNext) || command.IsCommand(ECommand.ScrollPrevious))
+                (command.IsCommand(ECommand.ScrollNext) || command.IsCommand(ECommand.ScrollPrevious)))
             {
                 _ = OpenAmmoSelectorAsync();
                 return ETranslateResult.Block;
