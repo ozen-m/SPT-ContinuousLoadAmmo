@@ -17,11 +17,10 @@ public class RegisterPlayerPatch : ModulePatch
     }
 
     [PatchPostfix]
-    protected static void Postfix(IPlayer iPlayer)
+    protected static void Postfix(GameWorld __instance, IPlayer iPlayer)
     {
-        if (iPlayer == null)
+        if (__instance is HideoutGameWorld)
         {
-            ContinuousLoadAmmo.LogSource.LogError("Could not add component, player was null!");
             return;
         }
         if (!iPlayer.IsYourPlayer)

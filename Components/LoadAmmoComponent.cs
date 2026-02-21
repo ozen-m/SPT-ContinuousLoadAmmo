@@ -49,8 +49,6 @@ public class LoadAmmoComponent : InputNode
 
     public void Update()
     {
-        if (!CommonUtils.InRaid) return;
-
         // Transfer to TranslateCommand, our custom hotkey _may_ not be an ECommand
         if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey))
         {
@@ -60,7 +58,7 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (!CommonUtils.InRaid || !_loadAmmoControllerController.CanLoadOutsideInventory())
+        if (!_loadAmmoControllerController.CanLoadOutsideInventory())
         {
             return ETranslateResult.Ignore;
         }
