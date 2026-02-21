@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>ContinuousLoadAmmo</AssemblyName>
     <Authors>ozen</Authors>
-    <Version>1.1.4</Version>
+    <Version>1.1.5</Version>
     <LangVersion>latest</LangVersion>
     <RepositoryUrl>https://github.com/ozen-m/SPT-ContinuousLoadAmmo</RepositoryUrl>
   </PropertyGroup>

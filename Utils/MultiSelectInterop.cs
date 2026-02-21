@@ -8,7 +8,7 @@ namespace ContinuousLoadAmmo.Utils;
 
 internal static class MultiSelectInterop
 {
-    private static readonly Version _requiredVersion = new(5, 0, 0);
+    private static readonly Version _requiredVersion = new(5, 3, 4);
 
     private static bool? _uiFixesLoaded;
     private static Func<object> _loadUnloadSerializerGetter;
@@ -21,7 +21,7 @@ internal static class MultiSelectInterop
         {
             if (!Loaded()) return false;
 
-            var serializer = _loadUnloadSerializerGetter?.Invoke();
+            var serializer = _loadUnloadSerializerGetter.Invoke();
             if (serializer is null) return false;
 
             return !_totalTaskField(serializer).Task.IsCompleted;
@@ -39,28 +39,33 @@ internal static class MultiSelectInterop
         bool correctVersion = present && pluginInfo.Metadata.Version >= _requiredVersion;
         _uiFixesLoaded = present && correctVersion;
 
-        if (_uiFixesLoaded.Value)
+        if (present && !correctVersion)
+        {
+            ContinuousLoadAmmo.LogSource.LogWarning($"UI Fixes {pluginInfo.Metadata.Version} is present but minimum version: {_requiredVersion} is required, interop will not work");
+        }
+        if (!_uiFixesLoaded.Value) return false;
+
+        try
         {
             var multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
             var taskSerializerType = Type.GetType("UIFixes.MultiSelectItemContextTaskSerializer, Tyfon.UIFixes");
-            if (multiSelectType is not null && taskSerializerType is not null)
-            {
-                var loadUnloadSerializerMethod = AccessTools.PropertyGetter(multiSelectType, "LoadUnloadSerializer");
-                _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
-                _stopLoadingMethod = AccessTools.Method(multiSelectType, "StopLoading");
-                _totalTaskField = AccessTools.FieldRefAccess<TaskCompletionSource>(taskSerializerType, "totalTask");
-                ContinuousLoadAmmo.LogSource.LogInfo("UI Fixes interop loaded successfully");
-            }
-            else
-            {
-                ContinuousLoadAmmo.LogSource.LogError($"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong");
-                _uiFixesLoaded = false;
-            }
-        }
+            var loadUnloadSerializerMethod = AccessTools.PropertyGetter(multiSelectType, "LoadUnloadSerializer");
+            _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
+            _stopLoadingMethod = AccessTools.Method(multiSelectType, "StopLoading");
+            _totalTaskField = AccessTools.FieldRefAccess<TaskCompletionSource>(taskSerializerType, "_totalTask");
 
-        if (present && !correctVersion)
+            if (_loadUnloadSerializerGetter is null || _stopLoadingMethod is null || _totalTaskField is null)
+            {
+                throw new InvalidOperationException("UI Fixes interop: Required method or field could not be found.");
+            }
+
+            ContinuousLoadAmmo.LogSource.LogInfo("UI Fixes interop loaded successfully");
+        }
+        catch (Exception ex)
         {
-            ContinuousLoadAmmo.LogSource.LogWarning($"UI Fixes {pluginInfo.Metadata.Version} is present but {_requiredVersion} is required, interop will not work");
+            ContinuousLoadAmmo.LogSource.LogError($"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong");
+            ContinuousLoadAmmo.LogSource.LogError(ex.ToString());
+            _uiFixesLoaded = false;
         }
 
         return _uiFixesLoaded.Value;
