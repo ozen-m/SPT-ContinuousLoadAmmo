@@ -63,9 +63,9 @@ internal static class MultiSelectInterop
         }
         catch (Exception ex)
         {
-            ContinuousLoadAmmo.LogSource.LogError($"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong");
-            ContinuousLoadAmmo.LogSource.LogError(ex.ToString());
             _uiFixesLoaded = false;
+            ContinuousLoadAmmo.LogSource.LogWarning($"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong, interop will not work");
+            ContinuousLoadAmmo.LogSource.LogWarning(ex.ToString());
         }
 
         return _uiFixesLoaded.Value;
