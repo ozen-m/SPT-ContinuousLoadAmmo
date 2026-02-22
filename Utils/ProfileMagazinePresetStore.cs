@@ -10,7 +10,7 @@ namespace ContinuousLoadAmmo.Utils;
 
 public static class ProfileMagazinePresetStore
 {
-    private const string StoreFilename = "profilelastmagpresets.json";
+    private const string StoreFilename = "lastMagPresets.json";
 
     // TODO: 4.1.x, move assembly to its own folder
     // TODO: 4.1.x, update storeFileNameDirectory
