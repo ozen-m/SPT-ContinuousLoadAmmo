@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using EFT;
 using Newtonsoft.Json;
 using SPT.Reflection.Utils;
@@ -9,8 +10,16 @@ namespace ContinuousLoadAmmo.Utils;
 
 public static class ProfileMagazinePresetStore
 {
-    private const string StoreFilename = "com.ozen.continuousloadammo.magpresets.json";
-    private static readonly string _pathToStoreFile = Path.Combine(BepInEx.Paths.ConfigPath, StoreFilename);
+    private const string StoreFilename = "profilelastmagpresets.json";
+
+    // TODO: 4.1.x, move assembly to its own folder
+    // TODO: 4.1.x, update storeFileNameDirectory
+    private static readonly string _storeFileNameDirectory = Path.Combine(
+        Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
+        "ozen-ContinuousLoadAmmo"
+    );
+
+    private static readonly string _pathToStoreFile = Path.Combine(_storeFileNameDirectory, StoreFilename);
 
     private static ProfileLastMagPresets _profileLastMagPresets = [];
 
@@ -65,6 +74,11 @@ public static class ProfileMagazinePresetStore
 
     private static void SaveProfileLastPresets()
     {
+        if (!Directory.Exists(_storeFileNameDirectory))
+        {
+            Directory.CreateDirectory(_storeFileNameDirectory);
+        }
+
         try
         {
             var json = JsonConvert.SerializeObject(_profileLastMagPresets);
@@ -79,11 +93,11 @@ public static class ProfileMagazinePresetStore
 }
 
 /// <summary>
-/// Key: ProfileId, Value: Key: Caliber, Value: Mag Preset Id
+/// Key: ProfileId, Value: Key: Caliber, Value: Mag Preset ID
 /// </summary>
 public class ProfileLastMagPresets : Dictionary<string, CaliberLastPreset>;
 
 /// <summary>
-/// Key: Caliber, Value: Mag Preset Id
+/// Key: Caliber, Value: Mag Preset ID
 /// </summary>
 public class CaliberLastPreset : Dictionary<string, MongoID>;
