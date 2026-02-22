@@ -154,4 +154,9 @@ public static class CommonUtils
         var ammoCaliber = weapon.AmmoCaliber;
         return ammoCaliber == "9x18PMM" ? "9x18PM" : ammoCaliber;
     }
+
+    public static string GetCaliberReally(this MagazineBuildPresetClass preset)
+    {
+        return preset.Caliber.Replace("Caliber", string.Empty);
+    }
 }

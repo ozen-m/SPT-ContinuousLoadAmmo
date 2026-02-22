@@ -44,5 +44,7 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
         {
             new ScreensPatches.MultiSelectStopLoadingPatch().Enable();
         }
+        
+        ProfileMagazinePresetStore.LoadProfileLastPresets();
     }
 }

@@ -25,23 +25,23 @@ public class MagazinePresetLoader : IDisposable
         ApplyMagPresetPatch.OnApplyMagPreset += InventoryLoadMagPreset;
     }
 
-    public void QuickLoadMagPreset()
+    public void QuickLoadMagPreset(MagazineBuildPresetClass preset)
     {
         if (!_loadAmmoController.IsQuickLoadAvailable(
                 out var availableAmmo,
                 out var magazine,
-                ApplyMagPresetPatch.PresetCaliber
+                preset.GetCaliberReally()
             ))
         {
             CommonUtils.DisplayNotification(
-                $"No reachable ammo or magazines found to load for preset: {ApplyMagPresetPatch.LastMagazinePreset.DisplayText()}",
+                $"No reachable ammo or magazines found to load for preset: {preset.DisplayText()}",
                 ENotificationIconType.Alert,
                 true
             );
             return;
         }
 
-        _ = LoadingMagPresetInternalAsync(ApplyMagPresetPatch.LastMagazinePreset, [magazine], availableAmmo);
+        _ = LoadingMagPresetInternalAsync(preset, [magazine], availableAmmo);
     }
 
     public void CancelMagPresetLoading()
@@ -55,12 +55,12 @@ public class MagazinePresetLoader : IDisposable
         // BUG: While loading preset, dragging ammo to another magazine does not stop the previous load preset process
     }
 
-    public bool IsSelectedPresetCompatibleWithCurrentWeapon()
+    public bool IsPresetAvailableForCurrentWeapon(out MagazineBuildPresetClass preset)
     {
-        var presetCaliber = ApplyMagPresetPatch.PresetCaliber;
         var weaponCaliber = _loadAmmoController.GetCurrentWeaponCaliber();
+        preset = ProfileMagazinePresetStore.GetMagPreset(weaponCaliber);
 
-        return string.Equals(presetCaliber, weaponCaliber);
+        return preset is not null;
     }
 
     private void StartNewLoadMagPreset(out CancellationToken token)
@@ -78,7 +78,7 @@ public class MagazinePresetLoader : IDisposable
         if (!_loadAmmoController.GetAllAmmoForMagazine(out var availableAmmo, magazines[0]))
         {
             CommonUtils.DisplayNotification(
-                $"No reachable ammo or magazines found to load for preset: {ApplyMagPresetPatch.LastMagazinePreset.DisplayText()}",
+                $"No reachable ammo or magazines found to load for preset: {preset.DisplayText()}",
                 ENotificationIconType.Alert,
                 true
             );

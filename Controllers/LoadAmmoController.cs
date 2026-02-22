@@ -110,9 +110,9 @@ public class LoadAmmoController : IDisposable
 
     public void TryQuickLoadLastPreset()
     {
-        if (_magazinePresetLoader.IsSelectedPresetCompatibleWithCurrentWeapon())
+        if (_magazinePresetLoader.IsPresetAvailableForCurrentWeapon(out var preset))
         {
-            _magazinePresetLoader.QuickLoadMagPreset();
+            _magazinePresetLoader.QuickLoadMagPreset(preset);
             return;
         }
 
