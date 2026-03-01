@@ -383,6 +383,8 @@ public class LoadAmmoController : IDisposable
 
     private async Task SetPlayerStateAsync(bool startAnim)
     {
+        _player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
+
         if (startAnim)
         {
             _player.TrySaveLastItemInHands();
@@ -410,8 +412,6 @@ public class LoadAmmoController : IDisposable
             }
             _player.MovementContext.RemoveStateSpeedLimit(ESpeedLimit.BarbedWire);
         }
-
-        _player.MovementContext.SetPhysicalCondition(EPhysicalCondition.SprintDisabled, startAnim);
     }
 
     private void ResetLoading()
