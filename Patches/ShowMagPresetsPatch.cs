@@ -21,11 +21,7 @@ public class SetSubInteractionsPatch : ModulePatch
     {
         if (!CommonUtils.InRaid) return true;
 
-        CommonUtils.DisplayNotification(
-            "Cannot create a new magazine preset while in-raid",
-            ENotificationIconType.Alert,
-            true
-        );
+        CommonUtils.DisplayNotification("Cannot create a new magazine preset while in-raid", ENotificationIconType.Alert, true);
         __result = null;
         return false;
     }

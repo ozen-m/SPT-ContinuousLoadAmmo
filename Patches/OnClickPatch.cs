@@ -25,10 +25,13 @@ public class OnClickPatch : ModulePatch
     {
         if (!CommonUtils.InRaid || button != PointerEventData.InputButton.Left) return;
 
-        bool modifierControl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-        bool modifierShift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-
-        if (modifierControl || modifierShift) return;
+        if (Input.GetKey(KeyCode.LeftControl) // Modifier control
+            || Input.GetKey(KeyCode.RightControl)
+            || Input.GetKey(KeyCode.LeftShift) // Modifier shift
+            || Input.GetKey(KeyCode.RightShift))
+        {
+            return;
+        }
 
         if (__instance.IsBeingLoadedMagazine.Value || __instance.IsBeingUnloadedMagazine.Value)
         {

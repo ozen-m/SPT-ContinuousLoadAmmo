@@ -78,8 +78,8 @@ public class LoadAmmoComponent : InputNode
             }
 
             // Select ammo
-            if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
-                command.IsCommand(ECommand.BeginSpecialInteracting)) /* Only transferred from update to avoid duplicates */
+            if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey)
+                && command.IsCommand(ECommand.BeginSpecialInteracting)) // Only transferred from update to avoid duplicates
             {
                 SetChosenAmmo(GetSelectedAmmo());
                 Close();
@@ -93,10 +93,10 @@ public class LoadAmmoComponent : InputNode
             if (_loadAmmoControllerController.IsActive)
             {
                 // Cancel on shoot/alt shoot, or quick load key, if loading ammo outside inventory
-                if (command.IsCommand(ECommand.ToggleShooting) ||
-                    command.IsCommand(ECommand.ToggleAlternativeShooting) ||
-                    (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
-                     command.IsCommand(ECommand.BeginSpecialInteracting)))
+                if (command.IsCommand(ECommand.ToggleShooting)
+                    || command.IsCommand(ECommand.ToggleAlternativeShooting)
+                    || (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey)
+                        && command.IsCommand(ECommand.BeginSpecialInteracting)))
                 {
                     _loadAmmoControllerController.StopLoading();
                     return ETranslateResult.Block;
@@ -105,16 +105,16 @@ public class LoadAmmoComponent : InputNode
                 return ETranslateResult.Ignore;
             }
 
-            if (Input.GetKey(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
-                (command.IsCommand(ECommand.ScrollNext) || command.IsCommand(ECommand.ScrollPrevious)))
+            if (Input.GetKey(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey)
+                && (command.IsCommand(ECommand.ScrollNext) || command.IsCommand(ECommand.ScrollPrevious)))
             {
                 _ = OpenAmmoSelectorAsync();
                 return ETranslateResult.Block;
             }
         }
 
-        if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
-            command.IsCommand(ECommand.BeginSpecialInteracting)) /* Only transferred from update to avoid duplicates */
+        if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey)
+            && command.IsCommand(ECommand.BeginSpecialInteracting)) // Only transferred from update to avoid duplicates
         {
             if (_loadAmmoControllerController.IsActive)
             {
@@ -124,7 +124,7 @@ public class LoadAmmoComponent : InputNode
 
             switch (ContinuousLoadAmmo.QuickLoadMode.Value)
             {
-                case QuickLoadMode.HighestPenetrationAvailable:
+                case QuickLoadMode.HighestPenetration:
                 case QuickLoadMode.LastBulletMagazine:
                     _loadAmmoControllerController.TryQuickLoadAmmo();
                     break;
@@ -143,7 +143,10 @@ public class LoadAmmoComponent : InputNode
     {
     }
 
-    public override ECursorResult ShouldLockCursor() => ECursorResult.Ignore;
+    public override ECursorResult ShouldLockCursor()
+    {
+        return ECursorResult.Ignore;
+    }
 
     public void OnDestroy()
     {
@@ -154,14 +157,16 @@ public class LoadAmmoComponent : InputNode
 
     private async Task OpenAmmoSelectorAsync()
     {
-        if (!_loadAmmoControllerController.IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine))
+        if (!_loadAmmoControllerController.IsQuickLoadAvailable(out var reachableAmmo, out var foundMagazine))
+        {
             return;
+        }
 
         // Only show one of each type
         _seenAmmoTplScratch.Clear();
         reachableAmmo.RemoveAll(ShouldRemoveFromList);
 
-        AmmoItemClass chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoControllerController.PlayerInventoryController);
+        var chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoControllerController.PlayerInventoryController);
         if (chosenAmmo is not null)
         {
             _loadAmmoControllerController.LoadMagazine(chosenAmmo, foundMagazine);
@@ -178,7 +183,7 @@ public class LoadAmmoComponent : InputNode
     {
         foreach (var ammo in foundAmmo)
         {
-            GridItemView view = GridItemView.Create(
+            var view = GridItemView.Create(
                 ammo,
                 _emptySourceContext,
                 ItemRotation.Horizontal,
@@ -188,7 +193,8 @@ public class LoadAmmoComponent : InputNode
                 null,
                 null,
                 null,
-                null);
+                null
+            );
 
             _gridItemViews.Add(view);
             _ammoItems.Add(ammo);
@@ -214,8 +220,8 @@ public class LoadAmmoComponent : InputNode
     private AmmoItemClass GetSelectedAmmo()
     {
         return _index == _ammoItems.Count
-            ? null // Cancel/no option is selected
-            : _ammoItems[_index];
+                   ? null // Cancel/no option is selected
+                   : _ammoItems[_index];
     }
 
     private void Close()
@@ -232,19 +238,19 @@ public class LoadAmmoComponent : InputNode
 
     private void Previous() // method_3
     {
-        int num = _gridItemViews.Count;
+        var num = _gridItemViews.Count;
         Index = (Index + 1) % num;
     }
 
     private void Next() // method_4
     {
-        int num = _gridItemViews.Count;
-        Index = (Index - 1 + num) % num;
+        var num = _gridItemViews.Count;
+        Index = ((Index - 1) + num) % num;
     }
 
     private void AddCancelView(AmmoItemClass templateItem, InventoryController inventoryController)
     {
-        GridItemView cancelView = GridItemView.Create(
+        var cancelView = GridItemView.Create(
             templateItem,
             _emptySourceContext,
             ItemRotation.Horizontal,
@@ -254,7 +260,8 @@ public class LoadAmmoComponent : InputNode
             null,
             null,
             null,
-            null);
+            null
+        );
 
         _infoPanelField(cancelView).gameObject.SetActive(false);
         _backgroundColorField(cancelView) = Color.clear;
@@ -271,17 +278,17 @@ public class LoadAmmoComponent : InputNode
         if (_gridItemViews.Count <= 0) return;
 
         const float spacing = 5f;
-        float gridWidth = ((RectTransform)_gridItemViews[0].transform).rect.width;
+        var gridWidth = ((RectTransform)_gridItemViews[0].transform).rect.width;
 
-        float totalGridWidth = spacing + gridWidth;
-        float totalWidth = ((_gridItemViews.Count - 1) * totalGridWidth) - spacing;
-        float startX = -totalWidth / 2f;
+        var totalGridWidth = spacing + gridWidth;
+        var totalWidth = ((_gridItemViews.Count - 1) * totalGridWidth) - spacing;
+        var startX = -totalWidth / 2f;
 
-        for (int i = 0; i < _gridItemViews.Count; i++)
+        for (var i = 0; i < _gridItemViews.Count; i++)
         {
             var viewTransform = _gridItemViews[i].transform;
-            viewTransform.SetParent(CommonUtils.EftBattleUIScreenTransform, worldPositionStays: false);
-            LoadAmmoUI.SetUI(viewTransform, new Vector2((startX + (i * totalGridWidth)), -150f));
+            viewTransform.SetParent(CommonUtils.EftBattleUIScreenTransform, false);
+            LoadAmmoUI.SetUI(viewTransform, new Vector2(startX + (i * totalGridWidth), -150f));
         }
     }
 

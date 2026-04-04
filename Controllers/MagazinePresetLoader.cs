@@ -27,11 +27,7 @@ public class MagazinePresetLoader : IDisposable
 
     public void QuickLoadMagPreset(MagazineBuildPresetClass preset)
     {
-        if (!_loadAmmoController.IsQuickLoadAvailable(
-                out var availableAmmo,
-                out var magazine,
-                preset.GetCaliberReally()
-            ))
+        if (!_loadAmmoController.IsQuickLoadAvailable(out var availableAmmo, out var magazine, preset.GetCaliberReally()))
         {
             CommonUtils.DisplayNotification(
                 $"No reachable ammo or magazines found to load for preset: {preset.DisplayText()}",
@@ -70,10 +66,7 @@ public class MagazinePresetLoader : IDisposable
         token = _loadPresetCancellationSource.Token;
     }
 
-    private void InventoryLoadMagPreset(
-        MagazineBuildPresetClass preset,
-        List<MagazineItemClass> magazines
-    )
+    private void InventoryLoadMagPreset(MagazineBuildPresetClass preset, List<MagazineItemClass> magazines)
     {
         if (!_loadAmmoController.GetAllAmmoForMagazine(out var availableAmmo, magazines[0]))
         {
@@ -102,10 +95,7 @@ public class MagazinePresetLoader : IDisposable
             {
                 token.ThrowIfCancellationRequested();
 
-                CommonUtils.DisplayNotification(
-                    $"Loading {preset.DisplayText()}",
-                    ENotificationIconType.Note
-                );
+                CommonUtils.DisplayNotification($"Loading {preset.DisplayText()}", ENotificationIconType.Note);
 
                 // Bottom
                 var bottomCount = 0;
@@ -193,22 +183,14 @@ public class MagazinePresetLoader : IDisposable
         {
             var missingMessage =
                 $"{MagazineBuildPresetClass.Class1023.String_0.Localized()} {preset.TemplateId.LocalizedShortName()}, Count: {toLoad}";
-            CommonUtils.DisplayNotification(
-                missingMessage,
-                ENotificationIconType.Alert,
-                true,
-                ENotificationDurationType.Long
-            );
+            CommonUtils.DisplayNotification(missingMessage, ENotificationIconType.Alert, true, ENotificationDurationType.Long);
 
             if (ContinuousLoadAmmo.MagPresetFallback.Value)
             {
                 var fallbackAmmo = GetValidAmmo(availableAmmo);
                 if (fallbackAmmo is not null)
                 {
-                    CommonUtils.DisplayNotification(
-                        $"Loading {fallbackAmmo.LocalizedShortName()}",
-                        ENotificationIconType.Note
-                    );
+                    CommonUtils.DisplayNotification($"Loading {fallbackAmmo.LocalizedShortName()}", ENotificationIconType.Note);
                     await _loadAmmoController.LoadMagazineAsync(fallbackAmmo, magazine, token);
                 }
             }

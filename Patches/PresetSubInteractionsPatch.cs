@@ -18,8 +18,8 @@ public class PresetSubInteractionsPatch : ModulePatch
         if (!CommonUtils.InRaid || parentInteraction != EItemInfoButton.ApplyMagPreset) return true;
 
         var magPresetItemContext = GClass3458.CreateFromDefaultContext(__instance.ItemContextAbstractClass);
-        ISession session = __instance.ItemUiContext_1.Session;
-        GClass3780 magPresetItemInfoInteractions = new GClass3780(magPresetItemContext, session?.MagBuildsStorage, __instance.ItemUiContext_1);
+        var session = __instance.ItemUiContext_1.Session;
+        var magPresetItemInfoInteractions = new GClass3780(magPresetItemContext, session?.MagBuildsStorage, __instance.ItemUiContext_1);
         subInteractionsWrapper.SetSubInteractions(magPresetItemInfoInteractions);
         return false;
     }

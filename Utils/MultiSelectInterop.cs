@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reflection;
-using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
 
@@ -34,14 +33,16 @@ internal static class MultiSelectInterop
     {
         if (_uiFixesLoaded.HasValue) return _uiFixesLoaded.Value;
 
-        bool present = Chainloader.PluginInfos.TryGetValue("com.tyfon.uifixes", out PluginInfo pluginInfo) ||
-                       Chainloader.PluginInfos.TryGetValue("Tyfon.UIFixes", out pluginInfo); // TODO: Remove in 4.1.x
-        bool correctVersion = present && pluginInfo.Metadata.Version >= _requiredVersion;
+        var present = Chainloader.PluginInfos.TryGetValue("Tyfon.UIFixes", out var pluginInfo) // TODO: Remove in 4.1.x
+                      || Chainloader.PluginInfos.TryGetValue("com.tyfon.uifixes", out pluginInfo);
+        var correctVersion = present && pluginInfo.Metadata.Version >= _requiredVersion;
         _uiFixesLoaded = present && correctVersion;
 
         if (present && !correctVersion)
         {
-            ContinuousLoadAmmo.LogSource.LogWarning($"UI Fixes {pluginInfo.Metadata.Version} is present but minimum version: {_requiredVersion} is required, interop will not work");
+            ContinuousLoadAmmo.LogSource.LogWarning(
+                $"UI Fixes {pluginInfo.Metadata.Version} is present but minimum version: {_requiredVersion} is required, interop will not work"
+            );
         }
         if (!_uiFixesLoaded.Value) return false;
 
@@ -64,7 +65,9 @@ internal static class MultiSelectInterop
         catch (Exception ex)
         {
             _uiFixesLoaded = false;
-            ContinuousLoadAmmo.LogSource.LogWarning($"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong, interop will not work");
+            ContinuousLoadAmmo.LogSource.LogWarning(
+                $"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong, interop will not work"
+            );
             ContinuousLoadAmmo.LogSource.LogWarning(ex.ToString());
         }
 

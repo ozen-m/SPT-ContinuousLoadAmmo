@@ -92,7 +92,13 @@ public static class ScreensPatches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(InventoryPlayerModelWithStatsWindow).GetMethod(nameof(InventoryPlayerModelWithStatsWindow.Show), [typeof(GInterface214), typeof(int), typeof(EMemberCategory), typeof(ProfileStats), typeof(LastPlayerStateClass), typeof(InventoryController), typeof(bool)]);
+            return typeof(InventoryPlayerModelWithStatsWindow).GetMethod(
+                nameof(InventoryPlayerModelWithStatsWindow.Show),
+                [
+                    typeof(GInterface214), typeof(int), typeof(EMemberCategory), typeof(ProfileStats), typeof(LastPlayerStateClass),
+                    typeof(InventoryController), typeof(bool),
+                ]
+            );
         }
 
         [PatchPrefix]

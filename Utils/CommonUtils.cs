@@ -66,16 +66,20 @@ public static class CommonUtils
         EquipmentSlot[] equipmentSlots,
         List<TItem> preAllocatedList,
         Predicate<TItem> predicate = null,
-        Predicate<GClass3248> goDeeperPredicate = null)
-        where TItem : Item
+        Predicate<GClass3248> goDeeperPredicate = null
+    ) where TItem : Item
     {
-        foreach (EquipmentSlot equipmentSlot in equipmentSlots)
+        foreach (var equipmentSlot in equipmentSlots)
         {
-            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 parentContainer || (goDeeperPredicate is not null && !goDeeperPredicate(parentContainer))) continue;
+            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 parentContainer
+                || (goDeeperPredicate is not null && !goDeeperPredicate(parentContainer)))
+            {
+                continue;
+            }
 
             foreach (var container in parentContainer.Containers)
             {
-                foreach (Item item in container.Items)
+                foreach (var item in container.Items)
                 {
                     if (item is GClass3248 childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
                     {
@@ -94,12 +98,12 @@ public static class CommonUtils
         this GClass3248 parentContainer,
         List<TItem> preAllocatedList,
         Predicate<TItem> predicate = null,
-        Predicate<GClass3248> goDeeperPredicate = null)
-        where TItem : Item
+        Predicate<GClass3248> goDeeperPredicate = null
+    ) where TItem : Item
     {
         foreach (var container in parentContainer.Containers)
         {
-            foreach (Item item in container.Items)
+            foreach (var item in container.Items)
             {
                 if (item is GClass3248 childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
                 {
@@ -117,8 +121,9 @@ public static class CommonUtils
     {
         foreach (var eventArgs in traderController.List_0)
         {
-            if (eventArgs is GInterface418 and not GEventArgs10) /* (GEventArgs10) RemoveFromHandsEventArgs - not considered as busy hands, mainly for successive unloading of different bullets */
+            if (eventArgs is GInterface418 and not GEventArgs10)
             {
+                // (GEventArgs10) RemoveFromHandsEventArgs - not considered as busy hands, for successive unloading of different bullets
                 return true;
             }
         }
@@ -129,15 +134,12 @@ public static class CommonUtils
         string message,
         ENotificationIconType iconType = ENotificationIconType.Default,
         bool alwaysDisplay = false,
-        ENotificationDurationType duration = ENotificationDurationType.Default)
+        ENotificationDurationType duration = ENotificationDurationType.Default
+    )
     {
         if (ContinuousLoadAmmo.QuickLoadNotify.Value || alwaysDisplay)
         {
-            NotificationManagerClass.DisplayMessageNotification(
-                message,
-                duration,
-                iconType
-            );
+            NotificationManagerClass.DisplayMessageNotification(message, duration, iconType);
         }
     }
 

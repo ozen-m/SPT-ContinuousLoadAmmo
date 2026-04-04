@@ -39,7 +39,7 @@ public class LoadAmmoUI
 
     public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
     {
-        RectTransform rectTransform = (RectTransform)transform;
+        var rectTransform = (RectTransform)transform;
         rectTransform.anchoredPosition = offset ?? Vector2.zero;
         rectTransform.localScale = scale ?? Vector3.one;
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
@@ -73,27 +73,23 @@ public class LoadAmmoUI
 
     private void CloneTemplates()
     {
-        GridItemView gridItemView = ItemViewFactory.CreateFromPrefab<GridItemView>("grid_layout");
+        var gridItemView = ItemViewFactory.CreateFromPrefab<GridItemView>("grid_layout");
 
-        var itemViewAnimationField = typeof(ItemView)
-            .GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
+        var itemViewAnimationField = typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
         var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField!.GetValue(gridItemView);
 
-        var itemViewLoadAmmoComponentTemplateField = typeof(ItemViewAnimation)
-            .GetField("_loadAmmoComponentTemplate", BindingFlags.Instance | BindingFlags.NonPublic);
-        var itemViewLoadAmmoComponentTemplate = (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField!
-            .GetValue(itemViewAnimation);
+        var itemViewLoadAmmoComponentTemplateField = typeof(ItemViewAnimation).GetField(
+            "_loadAmmoComponentTemplate",
+            BindingFlags.Instance | BindingFlags.NonPublic
+        );
+        var itemViewLoadAmmoComponentTemplate =
+            (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField!.GetValue(itemViewAnimation);
         _itemViewLoadAmmoComponent = Object.Instantiate(itemViewLoadAmmoComponentTemplate, _loadUITransform, false);
         SetUI(_itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
 
-        var itemViewBottomPanelField = typeof(ItemView)
-            .GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
+        var itemViewBottomPanelField = typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
         var itemViewBottomPanelTemplate = (ItemViewBottomPanel)itemViewBottomPanelField?.GetValue(gridItemView);
-        _magValue = Object.Instantiate(
-            itemViewBottomPanelTemplate!.ItemValue,
-            _loadUITransform,
-            false
-        );
+        _magValue = Object.Instantiate(itemViewBottomPanelTemplate!.ItemValue, _loadUITransform, false);
         SetUI(_magValue.transform, new Vector2(0f, -190f));
         _magValue.enableWordWrapping = false;
         _magValue.overflowMode = TextOverflowModes.Overflow;
@@ -105,7 +101,7 @@ public class LoadAmmoUI
 
     private void HandleStart(float oneAmmoDuration, int ammoTotal, int ammoDone)
     {
-        CancellationTokenSource cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
+        var cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
         cts?.Dispose();
         _itemViewLoadAmmoComponent.Show(oneAmmoDuration, ammoTotal, ammoDone);
     }
@@ -145,7 +141,7 @@ public class LoadAmmoUI
     {
         if (_itemViewLoadAmmoComponent != null)
         {
-            CancellationTokenSource cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
+            var cts = _itemViewLoadAmmoCtsField(_itemViewLoadAmmoComponent);
             cts?.Cancel();
             _itemViewLoadAmmoComponent.gameObject.SetActive(false);
         }

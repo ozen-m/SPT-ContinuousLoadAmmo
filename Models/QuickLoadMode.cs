@@ -5,9 +5,11 @@ namespace ContinuousLoadAmmo.Models;
 public enum QuickLoadMode
 {
     [Description("Highest Penetration Available")]
-    HighestPenetrationAvailable,
+    HighestPenetration,
+
     [Description("Last Bullet in Magazine")]
     LastBulletMagazine,
+
     [Description("Last Used Magazine Preset")]
-    LastMagazinePreset
+    LastMagazinePreset,
 }
