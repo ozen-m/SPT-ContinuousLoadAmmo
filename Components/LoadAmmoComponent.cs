@@ -92,12 +92,16 @@ public class LoadAmmoComponent : InputNode
         {
             if (_loadAmmoControllerController.IsActive)
             {
-                // Cancel on shoot/alt shoot if loading ammo outside inventory
-                if (command.IsCommand(ECommand.ToggleShooting) || command.IsCommand(ECommand.ToggleAlternativeShooting))
+                // Cancel on shoot/alt shoot, or quick load key, if loading ammo outside inventory
+                if (command.IsCommand(ECommand.ToggleShooting) ||
+                    command.IsCommand(ECommand.ToggleAlternativeShooting) ||
+                    (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
+                     command.IsCommand(ECommand.BeginSpecialInteracting)))
                 {
                     _loadAmmoControllerController.StopLoading();
                     return ETranslateResult.Block;
                 }
+
                 return ETranslateResult.Ignore;
             }
 
@@ -112,6 +116,12 @@ public class LoadAmmoComponent : InputNode
         if (Input.GetKeyUp(ContinuousLoadAmmo.QuickLoadHotkey.Value.MainKey) &&
             command.IsCommand(ECommand.BeginSpecialInteracting)) /* Only transferred from update to avoid duplicates */
         {
+            if (_loadAmmoControllerController.IsActive)
+            {
+                _loadAmmoControllerController.StopLoading();
+                return ETranslateResult.Block;
+            }
+
             switch (ContinuousLoadAmmo.QuickLoadMode.Value)
             {
                 case QuickLoadMode.HighestPenetrationAvailable:
