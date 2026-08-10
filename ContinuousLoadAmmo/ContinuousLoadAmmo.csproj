@@ -1,18 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>ContinuousLoadAmmo</AssemblyName>
-    <Authors>ozen</Authors>
+    <LangVersion>preview</LangVersion>
+    <RootNamespace>ContinuousLoadAmmo</RootNamespace>
     <Version>1.1.6</Version>
-    <LangVersion>latest</LangVersion>
+    <Authors>ozen</Authors>
+    <AssemblyName>$(Authors)-$(RootNamespace)</AssemblyName>
     <RepositoryUrl>https://github.com/ozen-m/SPT-ContinuousLoadAmmo</RepositoryUrl>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Unity.Analyzers" Version="1.25.*-*" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.*-*" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.*-*" PrivateAssets="all" />
-    <PackageReference Include="RoR2.BepInEx.Analyzers" Version="1.0.*-*" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Unity.Analyzers" Version="1.*" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.*" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.*" PrivateAssets="all" />
+    <PackageReference Include="RoR2.BepInEx.Analyzers" Version="1.0.*" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -83,11 +85,11 @@
 
   <Target Name="SetOutput" AfterTargets="Build">
     <PropertyGroup>
-      <DestDir>BepInEx\plugins</DestDir>
+      <DestDir>BepInEx\plugins\$(Authors).$(SolutionName)</DestDir>
     </PropertyGroup>
     <ItemGroup>
       <OutputDLL Include="$(TargetPath)" />
-      <PDB Include="$(TargetDir)$(TargetName).pdb" Condition="'$(Configuration)' != 'Release'" />
+      <OutputDLL Include="$(TargetDir)$(TargetName).pdb" />
     </ItemGroup>
   </Target>
 </Project>
