@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using ContinuousLoadAmmo.Utils;
 using EFT.InventoryLogic;
+using EFT.UI;
 using SPT.Reflection.Patching;
 
 namespace ContinuousLoadAmmo.Patches;
@@ -9,17 +10,17 @@ public class PresetSubInteractionsPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(GClass3757).GetMethod(nameof(GClass3757.CreateSubInteractions));
+        return typeof(BaseInventoryItemContextInteractions).GetMethod(nameof(BaseInventoryItemContextInteractions.CreateSubInteractions));
     }
 
     [PatchPrefix]
-    protected static bool Prefix(GClass3757 __instance, EItemInfoButton parentInteraction, ISubInteractions subInteractionsWrapper)
+    protected static bool Prefix(BaseInventoryItemContextInteractions __instance, EItemInfoButton parentInteraction, ISubInteractionsWrapper subInteractionsWrapper)
     {
         if (!CommonUtils.InRaid || parentInteraction != EItemInfoButton.ApplyMagPreset) return true;
 
-        var magPresetItemContext = GClass3458.CreateFromDefaultContext(__instance.ItemContextAbstractClass);
-        var session = __instance.ItemUiContext_1.Session;
-        var magPresetItemInfoInteractions = new GClass3780(magPresetItemContext, session?.MagBuildsStorage, __instance.ItemUiContext_1);
+        var magPresetItemContext = InventorySelectableItemContext.CreateFromDefaultContext(__instance.ItemContext);
+        var session = __instance.ItemUiContext.Session;
+        var magPresetItemInfoInteractions = new MagPresetContextInteractions(magPresetItemContext, session?.MagBuildsStorage, __instance.ItemUiContext);
         subInteractionsWrapper.SetSubInteractions(magPresetItemInfoInteractions);
         return false;
     }

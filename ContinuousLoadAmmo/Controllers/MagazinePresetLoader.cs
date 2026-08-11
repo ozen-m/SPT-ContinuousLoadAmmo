@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using ContinuousLoadAmmo.Patches;
 using ContinuousLoadAmmo.Utils;
 using EFT;
+using EFT.Builds;
 using EFT.Communications;
+using EFT.InventoryLogic;
 using UnityEngine;
 
 namespace ContinuousLoadAmmo.Controllers;
@@ -25,7 +27,7 @@ public class MagazinePresetLoader : IDisposable
         ApplyMagPresetPatch.OnApplyMagPreset += InventoryLoadMagPreset;
     }
 
-    public void QuickLoadMagPreset(MagazineBuildPresetClass preset)
+    public void QuickLoadMagPreset(MagPreset preset)
     {
         if (!_loadAmmoController.IsQuickLoadAvailable(out var availableAmmo, out var magazine, preset.GetCaliberReally()))
         {
@@ -51,7 +53,7 @@ public class MagazinePresetLoader : IDisposable
         // BUG: While loading preset, dragging ammo to another magazine does not stop the previous load preset process
     }
 
-    public bool IsPresetAvailableForCurrentWeapon(out MagazineBuildPresetClass preset)
+    public bool IsPresetAvailableForCurrentWeapon(out MagPreset preset)
     {
         var weaponCaliber = _loadAmmoController.GetCurrentWeaponCaliber();
         preset = ProfileMagazinePresetStore.GetMagPreset(weaponCaliber);
@@ -66,7 +68,7 @@ public class MagazinePresetLoader : IDisposable
         token = _loadPresetCancellationSource.Token;
     }
 
-    private void InventoryLoadMagPreset(MagazineBuildPresetClass preset, List<MagazineItemClass> magazines)
+    private void InventoryLoadMagPreset(MagPreset preset, List<Magazine> magazines)
     {
         if (!_loadAmmoController.GetAllAmmoForMagazine(out var availableAmmo, magazines[0]))
         {
@@ -83,9 +85,9 @@ public class MagazinePresetLoader : IDisposable
     }
 
     private async Task LoadingMagPresetInternalAsync(
-        MagazineBuildPresetClass preset,
-        List<MagazineItemClass> magazines,
-        List<AmmoItemClass> availableAmmo
+        MagPreset preset,
+        List<Magazine> magazines,
+        List<Ammo> availableAmmo
     )
     {
         try
@@ -171,9 +173,9 @@ public class MagazinePresetLoader : IDisposable
     }
 
     private async Task TryLoadPresetStepAsync(
-        List<AmmoItemClass> availableAmmo,
-        MagazineItemClass magazine,
-        MagazineBuildPresetClass.GClass2578 preset,
+        List<Ammo> availableAmmo,
+        Magazine magazine,
+        MagPreset.MagPresetItem preset,
         int toLoad,
         CancellationToken token
     )
@@ -182,7 +184,7 @@ public class MagazinePresetLoader : IDisposable
         if (matchingAmmo is null)
         {
             var missingMessage =
-                $"{MagazineBuildPresetClass.Class1023.String_0.Localized()} {preset.TemplateId.LocalizedShortName()}, Count: {toLoad}";
+                $"{MagPreset.NotEnoughAmmoError.MAG_PRESET_MISSING_ITEMS_NOTIFICATION.Localized()} {preset.TemplateId.LocalizedShortName()}, Count: {toLoad}";
             CommonUtils.DisplayNotification(missingMessage, ENotificationIconType.Alert, true, ENotificationDurationType.Long);
 
             if (ContinuousLoadAmmo.MagPresetFallback.Value)
@@ -200,7 +202,7 @@ public class MagazinePresetLoader : IDisposable
         await _loadAmmoController.LoadMagazineAsync(matchingAmmo, magazine, token, toLoad);
     }
 
-    private static AmmoItemClass GetMatchingAmmo(List<AmmoItemClass> ammo, MongoID templateId, int count)
+    private static Ammo GetMatchingAmmo(List<Ammo> ammo, MongoID templateId, int count)
     {
         foreach (var ammoItem in ammo)
         {
@@ -212,7 +214,7 @@ public class MagazinePresetLoader : IDisposable
         return null;
     }
 
-    private static AmmoItemClass GetValidAmmo(List<AmmoItemClass> ammo)
+    private static Ammo GetValidAmmo(List<Ammo> ammo)
     {
         foreach (var ammoItem in ammo)
         {

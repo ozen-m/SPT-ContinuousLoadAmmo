@@ -11,17 +11,18 @@ using SPT.Reflection.Patching;
 
 namespace ContinuousLoadAmmo.Patches;
 
+// TODO: Fika
 public class LoadMagazineStartPatch : ModulePatch
 {
     public static event Action OnLoadingEnd;
 
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(Player.PlayerInventoryController.Class1204).GetMethod(nameof(Player.PlayerInventoryController.Class1204.Start));
+        return typeof(Player.PlayerInventoryController.LoadMagazineProcess).GetMethod(nameof(Player.PlayerInventoryController.LoadMagazineProcess.Start));
     }
 
     [PatchPostfix]
-    protected static async void Postfix(Player.PlayerInventoryController.Class1204 __instance, Task<IResult> __result)
+    protected static async void Postfix(Player.PlayerInventoryController.LoadMagazineProcess __instance, Task<IResult> __result)
     {
         await __result;
         OnLoadingEnd?.Invoke();

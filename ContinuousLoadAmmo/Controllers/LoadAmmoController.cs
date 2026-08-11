@@ -17,7 +17,7 @@ public class LoadAmmoController : IDisposable
 {
     private readonly Player _player;
     private readonly MagazinePresetLoader _magazinePresetLoader;
-    private MagazineItemClass _magazine;
+    private Magazine _magazine;
     private bool _isReachable = true;
 
     public event Action<float, int, int> OnStartLoading;
@@ -25,7 +25,7 @@ public class LoadAmmoController : IDisposable
     public event Action OnEndLoading;
     public event Action OnPlayerDestroy;
 
-    public bool IsActive => PlayerInventoryController.Interface19_0 is not null || _magazinePresetLoader.PresetLoaderIsActive;
+    public bool IsActive => PlayerInventoryController._loadProcess is not null || _magazinePresetLoader.PresetLoaderIsActive;
     public bool IsInventoryOpened => _player.IsInventoryOpened;
     public PlayerInventoryController PlayerInventoryController { get; }
 
@@ -59,7 +59,7 @@ public class LoadAmmoController : IDisposable
         return !PlayerInventoryController.HasAnyHandsActionNonLinq() && _isReachable;
     }
 
-    public bool IsQuickLoadAvailable(out List<AmmoItemClass> reachableAmmo, out MagazineItemClass foundMagazine, string caliber = null)
+    public bool IsQuickLoadAvailable(out List<Ammo> reachableAmmo, out Magazine foundMagazine, string caliber = null)
     {
         reachableAmmo = null;
         foundMagazine = null;
@@ -78,7 +78,7 @@ public class LoadAmmoController : IDisposable
             return;
         }
 
-        AmmoItemClass chosenAmmo = null;
+        Ammo chosenAmmo = null;
         if (ContinuousLoadAmmo.QuickLoadMode.Value == QuickLoadMode.LastBulletMagazine)
         {
             var currentMagazine = _player.LastEquippedWeaponOrKnifeItem.GetCurrentMagazine();
@@ -86,7 +86,7 @@ public class LoadAmmoController : IDisposable
             {
                 foreach (var currAmmo in reachableAmmo)
                 {
-                    if (currentMagazine.FirstRealAmmo() is not AmmoItemClass ammoInsideMag
+                    if (currentMagazine.FirstRealAmmo() is not Ammo ammoInsideMag
                         || ammoInsideMag.TemplateId != currAmmo.TemplateId)
                     {
                         continue;
@@ -117,13 +117,13 @@ public class LoadAmmoController : IDisposable
         TryQuickLoadAmmo();
     }
 
-    public void LoadMagazine(AmmoItemClass ammo, MagazineItemClass magazine)
+    public void LoadMagazine(Ammo ammo, Magazine magazine)
     {
         var loadCount = Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
         _ = PlayerInventoryController.LoadMagazine(ammo, magazine, loadCount, false);
     }
 
-    public async Task LoadMagazineAsync(AmmoItemClass ammo, MagazineItemClass magazine, CancellationToken token, int? ammoCount = null)
+    public async Task LoadMagazineAsync(Ammo ammo, Magazine magazine, CancellationToken token, int? ammoCount = null)
     {
         var loadCount = ammoCount ?? Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
         while (PlayerInventoryController.Locked)
@@ -134,13 +134,13 @@ public class LoadAmmoController : IDisposable
         await PlayerInventoryController.LoadMagazine(ammo, magazine, loadCount, false);
     }
 
-    private readonly List<MagazineItemClass> _reachableMagazinesScratch = [];
+    private readonly List<Magazine> _reachableMagazinesScratch = [];
 
     /// <summary>
     /// Find reachable magazine for ammo
     /// </summary>
     /// <param name="ammo">Ammo that should be compatible with the magazine</param>
-    public bool GetMagazineForAmmo(AmmoItemClass ammo, out MagazineItemClass foundMagazine)
+    public bool GetMagazineForAmmo(Ammo ammo, out Magazine foundMagazine)
     {
         foundMagazine = null;
         _reachableMagazinesScratch.Clear();
@@ -175,14 +175,14 @@ public class LoadAmmoController : IDisposable
         return true;
     }
 
-    private static readonly List<AmmoItemClass> _reachableAmmoScratch = [];
+    private static readonly List<Ammo> _reachableAmmoScratch = [];
 
     /// <summary>
     /// Find reachable ammo of specified caliber. Used by quick load
     /// </summary>
     /// <param name="reachableAmmo">One of each ammo type found then sorted by Penetration Power descending</param>
     /// <param name="ammoCaliber">Optional, fallbacks to current weapon's caliber</param>
-    public bool GetReachableAmmoOfCaliber(out List<AmmoItemClass> reachableAmmo, string ammoCaliber = null)
+    public bool GetReachableAmmoOfCaliber(out List<Ammo> reachableAmmo, string ammoCaliber = null)
     {
         _reachableAmmoScratch.Clear();
         reachableAmmo = _reachableAmmoScratch;
@@ -229,7 +229,7 @@ public class LoadAmmoController : IDisposable
     /// Find ammo for <paramref name="magazine"/>. Used by loading mag presets in the inventory screen
     /// </summary>
     /// <param name="magazine">Magazine to be checked compatible with</param>
-    public bool GetAllAmmoForMagazine(out List<AmmoItemClass> allAmmo, MagazineItemClass magazine)
+    public bool GetAllAmmoForMagazine(out List<Ammo> allAmmo, Magazine magazine)
     {
         allAmmo = [];
         PlayerInventoryController.Inventory.Equipment.GetAcceptableItemsNonAlloc(
@@ -318,12 +318,12 @@ public class LoadAmmoController : IDisposable
         OnPlayerDestroy = null;
     }
 
-    private void LoadingStart(GEventArgs1 eventArgs)
+    private void LoadingStart(ItemEventArgs eventArgs)
     {
         switch (eventArgs)
         {
-            case GEventArgs7 loadEvent:
-                if (loadEvent.TargetItem is not MagazineItemClass loadMagazine || loadEvent.Item is not AmmoItemClass ammo)
+            case LoadMagazineEventArgs loadEvent:
+                if (loadEvent.TargetItem is not Magazine loadMagazine || loadEvent.Item is not Ammo ammo)
                 {
                     return;
                 }
@@ -332,7 +332,7 @@ public class LoadAmmoController : IDisposable
                 _isReachable = IsAtReachablePlace(_magazine, ammo);
                 OnStartLoading?.Invoke(loadEvent.LoadTime, loadEvent.LoadCount, 0);
                 break;
-            case GEventArgs8 unloadEvent:
+            case UnloadMagazineEventArgs unloadEvent:
                 _magazine = unloadEvent.FromItem;
                 _isReachable = IsAtReachablePlace(_magazine);
                 OnStartLoading?.Invoke(unloadEvent.UnloadTime, unloadEvent.UnloadCount, unloadEvent.StartCount);
@@ -446,10 +446,10 @@ public class LoadAmmoController : IDisposable
     /// <summary>
     /// Do not pull ammo inside magazines/ammo boxes and only searched containers
     /// </summary>
-    private bool ContainerPredicate(GClass3248 container)
+    private bool ContainerPredicate(ContainerCollection container)
     {
         return container is not IAmmoContainer
-               && (container is not SearchableItemItemClass searchable
+               && (container is not SearchableItem searchable
                    || PlayerInventoryController.SearchController.IsSearched(searchable));
     }
 

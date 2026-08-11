@@ -10,7 +10,9 @@ using UnityEngine;
 
 namespace ContinuousLoadAmmo;
 
-[BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.1.6")]
+// TODO: Mag drill skill
+
+[BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.2.0")]
 [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
 [SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible")]
 public class ContinuousLoadAmmo : BaseUnityPlugin
@@ -77,7 +79,7 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
         QuickLoadMode = Config.Bind(
             "Quick Load",
             "Mode",
-            Models.QuickLoadMode.LastMagazinePreset,
+            Models.QuickLoadMode.HighestPenetration,
             new ConfigDescription(
                 "Highest Penetration Available - choose ammo that has the highest penetration power.\nLast Bullet in Magazine - prioritize the last ammo of the current weapon's magazine.\nLast Used Magazine Preset - load the last used magazine preset",
                 null,

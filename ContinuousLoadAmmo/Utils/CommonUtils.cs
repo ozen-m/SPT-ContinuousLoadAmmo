@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Comfort.Common;
+using EFT;
+using EFT.Builds;
 using EFT.Communications;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
@@ -13,7 +15,7 @@ namespace ContinuousLoadAmmo.Utils;
 
 public static class CommonUtils
 {
-    public static bool InRaid => GClass2340.InRaid;
+    public static bool InRaid => InGameStatus.InRaid;
 
     public static Transform EftBattleUIScreenTransform
     {
@@ -47,11 +49,11 @@ public static class CommonUtils
     /// <summary>
     /// Check if magazine has ammo that doesn't match ammoToLoad's caliber
     /// </summary>
-    public static bool HasAmmoWithDifferentCaliber(this MagazineItemClass magazine, AmmoItemClass ammoToLoad)
+    public static bool HasAmmoWithDifferentCaliber(this Magazine magazine, Ammo ammoToLoad)
     {
-        foreach (var cartridge in magazine.Cartridges.Items_1)
+        foreach (var cartridge in magazine.Cartridges._items)
         {
-            if (cartridge is not AmmoItemClass cartridgeAmmo) continue;
+            if (cartridge is not Ammo cartridgeAmmo) continue;
 
             if (cartridgeAmmo.Caliber != ammoToLoad.Caliber) return true;
         }
@@ -66,12 +68,12 @@ public static class CommonUtils
         EquipmentSlot[] equipmentSlots,
         List<TItem> preAllocatedList,
         Predicate<TItem> predicate = null,
-        Predicate<GClass3248> goDeeperPredicate = null
+        Predicate<ContainerCollection> goDeeperPredicate = null
     ) where TItem : Item
     {
         foreach (var equipmentSlot in equipmentSlots)
         {
-            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not GClass3248 parentContainer
+            if (inventoryEquipment.GetSlot(equipmentSlot).ContainedItem is not ContainerCollection parentContainer
                 || (goDeeperPredicate is not null && !goDeeperPredicate(parentContainer)))
             {
                 continue;
@@ -81,7 +83,7 @@ public static class CommonUtils
             {
                 foreach (var item in container.Items)
                 {
-                    if (item is GClass3248 childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
+                    if (item is ContainerCollection childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
                     {
                         childContainer.GetAllItemsOfContainer(preAllocatedList, predicate, goDeeperPredicate);
                     }
@@ -95,17 +97,17 @@ public static class CommonUtils
     }
 
     public static void GetAllItemsOfContainer<TItem>(
-        this GClass3248 parentContainer,
+        this ContainerCollection parentContainer,
         List<TItem> preAllocatedList,
         Predicate<TItem> predicate = null,
-        Predicate<GClass3248> goDeeperPredicate = null
+        Predicate<ContainerCollection> goDeeperPredicate = null
     ) where TItem : Item
     {
         foreach (var container in parentContainer.Containers)
         {
             foreach (var item in container.Items)
             {
-                if (item is GClass3248 childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
+                if (item is ContainerCollection childContainer && (goDeeperPredicate is null || goDeeperPredicate(childContainer)))
                 {
                     childContainer.GetAllItemsOfContainer(preAllocatedList, predicate, goDeeperPredicate);
                 }
@@ -117,13 +119,13 @@ public static class CommonUtils
         }
     }
 
-    public static bool HasAnyHandsActionNonLinq(this TraderControllerClass traderController)
+    public static bool HasAnyHandsActionNonLinq(this ItemController itemController)
     {
-        foreach (var eventArgs in traderController.List_0)
+        foreach (var eventArgs in itemController.ActiveEvents)
         {
-            if (eventArgs is GInterface418 and not GEventArgs10)
+            if (eventArgs is IItemInHandsEventArgs and not RemoveFromHandsEventArgs)
             {
-                // (GEventArgs10) RemoveFromHandsEventArgs - not considered as busy hands, for successive unloading of different bullets
+                // RemoveFromHandsEventArgs - not considered as busy hands, for successive unloading of different bullets
                 return true;
             }
         }
@@ -139,11 +141,11 @@ public static class CommonUtils
     {
         if (ContinuousLoadAmmo.QuickLoadNotify.Value || alwaysDisplay)
         {
-            NotificationManagerClass.DisplayMessageNotification(message, duration, iconType);
+            NotificationManager.DisplayMessageNotification(message, duration, iconType);
         }
     }
 
-    public static string DisplayText(this MagazineBuildPresetClass preset)
+    public static string DisplayText(this MagPreset preset)
     {
         return $"{preset.Name} ({preset.Caliber.Replace("Caliber", string.Empty)})";
     }
@@ -157,7 +159,7 @@ public static class CommonUtils
         return ammoCaliber == "9x18PMM" ? "9x18PM" : ammoCaliber;
     }
 
-    public static string GetCaliberReally(this MagazineBuildPresetClass preset)
+    public static string GetCaliberReally(this MagPreset preset)
     {
         return preset.Caliber.Replace("Caliber", string.Empty);
     }

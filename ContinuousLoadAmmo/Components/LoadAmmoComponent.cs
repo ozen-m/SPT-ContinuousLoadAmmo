@@ -10,18 +10,17 @@ using EFT.InventoryLogic;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace ContinuousLoadAmmo.Components;
 
 public class LoadAmmoComponent : InputNode
 {
     private readonly List<GridItemView> _gridItemViews = [];
-    private readonly List<AmmoItemClass> _ammoItems = [];
+    private readonly List<Ammo> _ammoItems = [];
     private readonly HashSet<MongoID> _seenAmmoTplScratch = [];
+    private readonly EmptyItemContext _emptyItemContext = new();
     private LoadAmmoController _loadAmmoControllerController;
-    private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
-    private GClass3450 _emptySourceContext = new();
+    private TaskCompletionSource<Ammo> _chosenAmmoTcs;
 
     public bool IsShown => _chosenAmmoTcs is not null;
 
@@ -173,19 +172,19 @@ public class LoadAmmoComponent : InputNode
         }
     }
 
-    private bool ShouldRemoveFromList(AmmoItemClass ammo)
+    private bool ShouldRemoveFromList(Ammo ammo)
     {
         return !_seenAmmoTplScratch.Add(ammo.TemplateId);
     }
 
     [SuppressMessage("Usage", "VSTHRD003:Avoid awaiting foreign Tasks")]
-    private Task<AmmoItemClass> ShowAcceptableAmmoAsync(List<AmmoItemClass> foundAmmo, InventoryController inventoryController) // method_5
+    private Task<Ammo> ShowAcceptableAmmoAsync(List<Ammo> foundAmmo, InventoryController inventoryController) // method_5
     {
         foreach (var ammo in foundAmmo)
         {
             var view = GridItemView.Create(
                 ammo,
-                _emptySourceContext,
+                _emptyItemContext,
                 ItemRotation.Horizontal,
                 inventoryController,
                 inventoryController,
@@ -206,18 +205,18 @@ public class LoadAmmoComponent : InputNode
         HighlightIndex(_index, 0);
 
         SetChosenAmmo(null);
-        _chosenAmmoTcs = new TaskCompletionSource<AmmoItemClass>();
+        _chosenAmmoTcs = new TaskCompletionSource<Ammo>();
 
         return _chosenAmmoTcs.Task;
     }
 
-    private void SetChosenAmmo(AmmoItemClass ammo)
+    private void SetChosenAmmo(Ammo ammo)
     {
         _chosenAmmoTcs?.SetResult(ammo);
         _chosenAmmoTcs = null;
     }
 
-    private AmmoItemClass GetSelectedAmmo()
+    private Ammo GetSelectedAmmo()
     {
         return _index == _ammoItems.Count
                    ? null // Cancel/no option is selected
@@ -248,11 +247,11 @@ public class LoadAmmoComponent : InputNode
         Index = ((Index - 1) + num) % num;
     }
 
-    private void AddCancelView(AmmoItemClass templateItem, InventoryController inventoryController)
+    private void AddCancelView(Ammo templateItem, InventoryController inventoryController)
     {
         var cancelView = GridItemView.Create(
             templateItem,
-            _emptySourceContext,
+            _emptyItemContext,
             ItemRotation.Horizontal,
             inventoryController,
             inventoryController,
@@ -263,10 +262,10 @@ public class LoadAmmoComponent : InputNode
             null
         );
 
-        _infoPanelField(cancelView).gameObject.SetActive(false);
+        cancelView._infoPanel.gameObject.SetActive(false);
         _backgroundColorField(cancelView) = Color.clear;
-        _mainImageAlphaField(cancelView) = 0f; // method_4 checks this for alpha
-        var mainImage = _mainImageField(cancelView);
+        cancelView._mainImageAlpha = 0f; // method_4 checks this for alpha
+        var mainImage = cancelView.MainImage;
         mainImage.color = mainImage.color with { a = 0f };
         cancelView.ChangeSelectedStatus(true); // Red stripes
         cancelView.UpdateColor(); // Update color with alpha 0f
@@ -306,15 +305,6 @@ public class LoadAmmoComponent : InputNode
         }
     }
 
-    private static readonly AccessTools.FieldRef<GridItemView, Image> _mainImageField =
-        AccessTools.FieldRefAccess<GridItemView, Image>("MainImage");
-
-    private static readonly AccessTools.FieldRef<GridItemView, float> _mainImageAlphaField =
-        AccessTools.FieldRefAccess<GridItemView, float>("_mainImageAlpha");
-
     private static readonly AccessTools.FieldRef<GridItemView, Color> _backgroundColorField =
         AccessTools.FieldRefAccess<GridItemView, Color>("BackgroundColor");
-
-    private static readonly AccessTools.FieldRef<GridItemView, RectTransform> _infoPanelField =
-        AccessTools.FieldRefAccess<GridItemView, RectTransform>("_infoPanel");
 }

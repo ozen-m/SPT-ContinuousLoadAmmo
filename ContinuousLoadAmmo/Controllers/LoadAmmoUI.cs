@@ -19,7 +19,7 @@ public class LoadAmmoUI
     private Transform _loadUITransform;
     private ItemViewLoadAmmoComponent _itemViewLoadAmmoComponent;
     private Image _magImage;
-    private GClass929 _imageLoader;
+    private ItemIcon _itemIcon;
     private Action _unbindImageLoader;
     private TextMeshProUGUI _magValue;
 
@@ -74,21 +74,12 @@ public class LoadAmmoUI
     private void CloneTemplates()
     {
         var gridItemView = ItemViewFactory.CreateFromPrefab<GridItemView>("grid_layout");
-
-        var itemViewAnimationField = typeof(ItemView).GetField("Animator", BindingFlags.Instance | BindingFlags.NonPublic);
-        var itemViewAnimation = (ItemViewAnimation)itemViewAnimationField!.GetValue(gridItemView);
-
-        var itemViewLoadAmmoComponentTemplateField = typeof(ItemViewAnimation).GetField(
-            "_loadAmmoComponentTemplate",
-            BindingFlags.Instance | BindingFlags.NonPublic
-        );
-        var itemViewLoadAmmoComponentTemplate =
-            (ItemViewLoadAmmoComponent)itemViewLoadAmmoComponentTemplateField!.GetValue(itemViewAnimation);
+        var itemViewAnimation = gridItemView.Animator;
+        var itemViewLoadAmmoComponentTemplate = itemViewAnimation._loadAmmoComponentTemplate;
         _itemViewLoadAmmoComponent = Object.Instantiate(itemViewLoadAmmoComponentTemplate, _loadUITransform, false);
         SetUI(_itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
 
-        var itemViewBottomPanelField = typeof(ItemView).GetField("BottomPanel", BindingFlags.Instance | BindingFlags.NonPublic);
-        var itemViewBottomPanelTemplate = (ItemViewBottomPanel)itemViewBottomPanelField?.GetValue(gridItemView);
+        var itemViewBottomPanelTemplate = gridItemView.BottomPanel;
         _magValue = Object.Instantiate(itemViewBottomPanelTemplate!.ItemValue, _loadUITransform, false);
         SetUI(_magValue.transform, new Vector2(0f, -190f));
         _magValue.enableWordWrapping = false;
@@ -117,15 +108,15 @@ public class LoadAmmoUI
     private void GetImage(Item item)
     {
         _unbindImageLoader?.Invoke();
-        _imageLoader = ItemViewFactory.LoadItemIcon(item);
-        _unbindImageLoader = _imageLoader?.Changed.Bind(UpdateImage);
+        _itemIcon = ItemViewFactory.LoadItemIcon(item);
+        _unbindImageLoader = _itemIcon?.Changed.Bind(UpdateImage);
     }
 
     private void UpdateImage()
     {
-        if (_imageLoader.Sprite == null) return;
+        if (_itemIcon.Sprite == null) return;
 
-        _magImage.sprite = _imageLoader.Sprite;
+        _magImage.sprite = _itemIcon.Sprite;
         _magImage.SetNativeSize();
         _magImage.enabled = true;
     }
@@ -173,5 +164,5 @@ public class LoadAmmoUI
     }
 
     private static readonly AccessTools.FieldRef<ItemViewLoadAmmoComponent, CancellationTokenSource> _itemViewLoadAmmoCtsField =
-        AccessTools.FieldRefAccess<ItemViewLoadAmmoComponent, CancellationTokenSource>("cancellationTokenSource_0");
+        AccessTools.FieldRefAccess<ItemViewLoadAmmoComponent, CancellationTokenSource>("_taskCancellation");
 }
