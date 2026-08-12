@@ -5,9 +5,10 @@
     <RootNamespace>ContinuousLoadAmmo</RootNamespace>
     <Version>1.2.0</Version>
     <Authors>ozen</Authors>
-    <AssemblyName>$(Authors)-$(RootNamespace)</AssemblyName>
+    <AssemblyName>$(Authors).$(RootNamespace)</AssemblyName>
     <RepositoryUrl>https://github.com/ozen-m/SPT-ContinuousLoadAmmo</RepositoryUrl>
     <DebugType>portable</DebugType>
+    <PathMap Condition="'$(Configuration)' == 'Release'">$(MSBuildProjectDirectory)=/src/</PathMap>
   </PropertyGroup>
 
   <ItemGroup>
