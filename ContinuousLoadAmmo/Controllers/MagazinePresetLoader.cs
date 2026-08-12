@@ -193,13 +193,13 @@ public class MagazinePresetLoader : IDisposable
                 if (fallbackAmmo is not null)
                 {
                     CommonUtils.DisplayNotification($"Loading {fallbackAmmo.LocalizedShortName()}", ENotificationIconType.Note);
-                    await _loadAmmoController.LoadMagazineAsync(fallbackAmmo, magazine, token);
+                    await _loadAmmoController.LoadMagazineAsync(fallbackAmmo, magazine, token: token);
                 }
             }
             CancelMagPresetLoading();
             return;
         }
-        await _loadAmmoController.LoadMagazineAsync(matchingAmmo, magazine, token, toLoad);
+        await _loadAmmoController.LoadMagazineAsync(matchingAmmo, magazine, toLoad, token);
     }
 
     private static Ammo GetMatchingAmmo(List<Ammo> ammo, MongoID templateId, int count)

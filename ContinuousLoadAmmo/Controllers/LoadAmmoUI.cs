@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Reflection;
 using System.Threading;
 using ContinuousLoadAmmo.Utils;
 using EFT.InventoryLogic;
-using EFT.UI;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
 using TMPro;

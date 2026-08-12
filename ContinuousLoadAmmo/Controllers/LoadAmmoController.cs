@@ -120,10 +120,10 @@ public class LoadAmmoController : IDisposable
     public void LoadMagazine(Ammo ammo, Magazine magazine)
     {
         var loadCount = Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
-        _ = PlayerInventoryController.LoadMagazine(ammo, magazine, loadCount, false);
+        _ = LoadMagazineAsync(ammo, magazine, loadCount, CancellationToken.None);
     }
 
-    public async Task LoadMagazineAsync(Ammo ammo, Magazine magazine, CancellationToken token, int? ammoCount = null)
+    public async Task LoadMagazineAsync(Ammo ammo, Magazine magazine, int? ammoCount = null, CancellationToken token = default)
     {
         var loadCount = ammoCount ?? Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
         while (PlayerInventoryController.Locked)

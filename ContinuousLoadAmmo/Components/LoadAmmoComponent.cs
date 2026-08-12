@@ -168,7 +168,7 @@ public class LoadAmmoComponent : InputNode
         var chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoControllerController.PlayerInventoryController);
         if (chosenAmmo is not null)
         {
-            _loadAmmoControllerController.LoadMagazine(chosenAmmo, foundMagazine);
+            _ = _loadAmmoControllerController.LoadMagazineAsync(chosenAmmo, foundMagazine);
         }
     }
 

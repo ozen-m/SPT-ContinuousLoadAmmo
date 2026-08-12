@@ -10,8 +10,6 @@ using UnityEngine;
 
 namespace ContinuousLoadAmmo;
 
-// TODO: Mag drill skill
-
 [BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.2.0")]
 [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
 [SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible")]
