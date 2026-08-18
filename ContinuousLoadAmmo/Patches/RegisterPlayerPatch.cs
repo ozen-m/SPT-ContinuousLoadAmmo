@@ -31,7 +31,7 @@ public class RegisterPlayerPatch : ModulePatch
         if (iPlayer is Player player)
         {
             var loadAmmoController = new LoadAmmoController(player);
-            LoadAmmoComponent.Create(player.gameObject, loadAmmoController);
+            QuickAmmoSelector.Create(CommonUtils.EftBattleUIScreenTransform, _loadAmmoController);
             _loadAmmoUI.Initialize(loadAmmoController);
 
             ContinuousLoadAmmo.LogSource.LogInfo($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
