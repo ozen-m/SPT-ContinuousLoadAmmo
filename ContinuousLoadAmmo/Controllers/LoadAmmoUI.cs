@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using ContinuousLoadAmmo.Utils;
 using EFT.InventoryLogic;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
@@ -34,16 +35,6 @@ public class LoadAmmoUI
         CloneTemplates();
     }
 
-    public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
-    {
-        var rectTransform = (RectTransform)transform;
-        rectTransform.anchoredPosition = offset ?? Vector2.zero;
-        rectTransform.localScale = scale ?? Vector3.one;
-        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        rectTransform.pivot = new Vector2(0.5f, 0.5f);
-    }
-
     private void SubscribeToController()
     {
         _loadAmmoController.OnStartLoading += HandleStart;
@@ -59,11 +50,11 @@ public class LoadAmmoUI
         GameObject loadAmmoObj = new(nameof(LoadAmmoUI), typeof(RectTransform));
         _loadUITransform = loadAmmoObj.transform;
         _loadUITransform.SetParent(parent);
-        SetUI(_loadUITransform);
+        CommonUtils.SetUI(_loadUITransform);
 
         GameObject imageObj = new(nameof(Image), typeof(RectTransform), typeof(Image));
         imageObj.transform.SetParent(_loadUITransform);
-        SetUI(imageObj.transform, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
+        CommonUtils.SetUI(imageObj.transform, new Vector2(0f, -150f), new Vector3(0.25f, 0.25f, 0.25f));
         _magImage = imageObj.GetComponent<Image>();
         _magImage.enabled = false;
     }
@@ -74,11 +65,11 @@ public class LoadAmmoUI
         var itemViewAnimation = gridItemView.Animator;
         var itemViewLoadAmmoComponentTemplate = itemViewAnimation._loadAmmoComponentTemplate;
         _itemViewLoadAmmoComponent = Object.Instantiate(itemViewLoadAmmoComponentTemplate, _loadUITransform, false);
-        SetUI(_itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
+        CommonUtils.SetUI(_itemViewLoadAmmoComponent.transform, new Vector2(0f, -150f), new Vector3(1.5f, 1.5f, 1.5f));
 
         var itemViewBottomPanelTemplate = gridItemView.BottomPanel;
         _magValue = Object.Instantiate(itemViewBottomPanelTemplate!.ItemValue, _loadUITransform, false);
-        SetUI(_magValue.transform, new Vector2(0f, -190f));
+        CommonUtils.SetUI(_magValue.transform, new Vector2(0f, -190f));
         _magValue.enableWordWrapping = false;
         _magValue.overflowMode = TextOverflowModes.Overflow;
         _magValue.alignment = TextAlignmentOptions.Center;

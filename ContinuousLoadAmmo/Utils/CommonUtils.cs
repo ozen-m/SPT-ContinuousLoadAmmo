@@ -163,4 +163,14 @@ public static class CommonUtils
     {
         return preset.Caliber.Replace("Caliber", string.Empty);
     }
+
+    public static void SetUI(Transform transform, Vector2? offset = null, Vector3? scale = null)
+    {
+        var rectTransform = (RectTransform)transform;
+        rectTransform.anchoredPosition = offset ?? Vector2.zero;
+        rectTransform.localScale = scale ?? Vector3.one;
+        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+    }
 }

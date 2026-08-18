@@ -54,7 +54,7 @@ public class QuickAmmoSelector : InputNode
         gameObject.transform.SetParent(parent);
 
         var rectTransform = gameObject.GetComponent<RectTransform>();
-        LoadAmmoUI.SetUI(rectTransform, new Vector2(0, -150f));
+        CommonUtils.SetUI(rectTransform, new Vector2(0, -150f));
         rectTransform.anchorMin = new Vector2(0f, 0.5f);
         rectTransform.anchorMax = new Vector2(1f, 0.5f);
 
