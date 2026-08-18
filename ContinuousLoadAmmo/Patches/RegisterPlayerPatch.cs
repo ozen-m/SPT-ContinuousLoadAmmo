@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using ContinuousLoadAmmo.Components;
 using ContinuousLoadAmmo.Controllers;
+using ContinuousLoadAmmo.Utils;
 using EFT;
 using SPT.Reflection.Patching;
 
@@ -8,16 +9,15 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class RegisterPlayerPatch : ModulePatch
 {
-    private static LoadAmmoUI _loadAmmoUI;
+    private static LoadAmmoController _loadAmmoController;
 
     protected override MethodBase GetTargetMethod()
     {
-        _loadAmmoUI = new LoadAmmoUI();
         return typeof(GameWorld).GetMethod(nameof(GameWorld.RegisterPlayer));
     }
 
     [PatchPostfix]
-    protected static void Postfix(GameWorld __instance, IPlayer iPlayer)
+    public static void Postfix(GameWorld __instance, IPlayer iPlayer)
     {
         if (__instance is HideoutGameWorld)
         {
@@ -30,13 +30,20 @@ public class RegisterPlayerPatch : ModulePatch
 
         if (iPlayer is Player player)
         {
-            var loadAmmoController = new LoadAmmoController(player);
+            _loadAmmoController = new LoadAmmoController(player);
             QuickAmmoSelector.Create(CommonUtils.EftBattleUIScreenTransform, _loadAmmoController);
-            _loadAmmoUI.Initialize(loadAmmoController);
+            var loadAmmoUI = new LoadAmmoUI();
+            loadAmmoUI.Initialize(CommonUtils.EftBattleUIScreenTransform, _loadAmmoController);
 
             ContinuousLoadAmmo.LogSource.LogInfo($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
             return;
         }
         ContinuousLoadAmmo.LogSource.LogError($"Unable to add LoadAmmoComponent to player: {iPlayer.Profile.Nickname}");
+    }
+
+    public static void DisposeLoadAmmoController()
+    {
+        _loadAmmoController?.Dispose();
+        _loadAmmoController = null;
     }
 }

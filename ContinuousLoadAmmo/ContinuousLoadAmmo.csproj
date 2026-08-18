@@ -94,7 +94,11 @@
 
   <Target Name="SetOutput" AfterTargets="Build">
     <PropertyGroup>
+      <ScriptEngine Condition="'$(Configuration)' == 'DEBUG' AND Exists('$(SPTPath)BepInEx\plugins\ScriptEngine.dll')">true</ScriptEngine>
+    </PropertyGroup>
+    <PropertyGroup>
       <DestDir>BepInEx\plugins\$(Authors).$(SolutionName)</DestDir>
+      <DestDir Condition="'$(ScriptEngine)' == 'true'">BepInEx\scripts\</DestDir>
     </PropertyGroup>
     <ItemGroup>
       <OutputDLL Include="$(TargetPath)" />

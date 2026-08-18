@@ -2,9 +2,11 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using Comfort.Common;
 using ContinuousLoadAmmo.Models;
 using ContinuousLoadAmmo.Patches;
 using ContinuousLoadAmmo.Utils;
+using EFT;
 using SPT.Reflection.Patching;
 using UnityEngine;
 
@@ -104,5 +106,19 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
         }
 
         ProfileMagazinePresetStore.LoadProfileLastPresets();
+
+#if DEBUG
+        if (Singleton<GameWorld>.Instance is { MainPlayer: { } player } gameWorld)
+        {
+            RegisterPlayerPatch.Postfix(gameWorld, player);
+        }
+#endif
     }
+
+#if DEBUG
+    public void OnDestroy()
+    {
+        RegisterPlayerPatch.DisposeLoadAmmoController();
+    }
+#endif
 }

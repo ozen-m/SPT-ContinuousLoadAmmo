@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using ContinuousLoadAmmo.Utils;
 using EFT.InventoryLogic;
 using EFT.UI.DragAndDrop;
 using HarmonyLib;
@@ -21,7 +20,7 @@ public class LoadAmmoUI
     private Action _unbindImageLoader;
     private TextMeshProUGUI _magValue;
 
-    public void Initialize(LoadAmmoController loadAmmoController)
+    public void Initialize(Transform parent, LoadAmmoController loadAmmoController)
     {
         _loadAmmoController = loadAmmoController;
         SubscribeToController();
@@ -31,7 +30,7 @@ public class LoadAmmoUI
             return;
         }
 
-        PrepareGameObjects();
+        PrepareGameObjects(parent);
         CloneTemplates();
     }
 
@@ -52,14 +51,14 @@ public class LoadAmmoUI
         _loadAmmoController.OnEndLoading += Close;
         _loadAmmoController.PlayerInventoryController.OnAmmoLoaded += UpdateTextValue;
         _loadAmmoController.PlayerInventoryController.OnAmmoUnloaded += UpdateTextValue;
-        _loadAmmoController.OnPlayerDestroy += OnDestroy;
+        _loadAmmoController.OnPlayerDestroy += Dispose;
     }
 
-    private void PrepareGameObjects()
+    private void PrepareGameObjects(Transform parent)
     {
         GameObject loadAmmoObj = new(nameof(LoadAmmoUI), typeof(RectTransform));
         _loadUITransform = loadAmmoObj.transform;
-        _loadUITransform.SetParent(CommonUtils.EftBattleUIScreenTransform); // Part of do not destroy
+        _loadUITransform.SetParent(parent);
         SetUI(_loadUITransform);
 
         GameObject imageObj = new(nameof(Image), typeof(RectTransform), typeof(Image));
@@ -146,10 +145,13 @@ public class LoadAmmoUI
         }
     }
 
-    private void OnDestroy()
+    public void Dispose()
     {
         Close();
         _loadUITransform.gameObject.SetActive(false);
+#if DEBUG
+        Object.Destroy(_loadUITransform.gameObject);
+#endif
         if (_loadAmmoController is null) return;
 
         _loadAmmoController.OnStartLoading -= HandleStart;
@@ -157,7 +159,7 @@ public class LoadAmmoUI
         _loadAmmoController.OnEndLoading -= Close;
         _loadAmmoController.PlayerInventoryController.OnAmmoLoaded -= UpdateTextValue;
         _loadAmmoController.PlayerInventoryController.OnAmmoUnloaded -= UpdateTextValue;
-        _loadAmmoController.OnPlayerDestroy -= OnDestroy;
+        _loadAmmoController.OnPlayerDestroy -= Dispose;
         _loadAmmoController = null;
     }
 
