@@ -37,37 +37,38 @@ internal static class MultiSelectInterop
         var correctVersion = present && pluginInfo.Metadata.Version >= _requiredVersion;
         _uiFixesLoaded = present && correctVersion;
 
+        if (_uiFixesLoaded.Value)
+        {
+            try
+            {
+                var multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
+                var taskSerializerType = Type.GetType("UIFixes.MultiSelectItemContextTaskSerializer, Tyfon.UIFixes");
+                var loadUnloadSerializerMethod = AccessTools.PropertyGetter(multiSelectType, "LoadUnloadSerializer");
+                _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
+                _stopLoadingMethod = AccessTools.Method(multiSelectType, "StopLoading");
+                _totalTaskField = AccessTools.FieldRefAccess<TaskCompletionSource>(taskSerializerType, "_totalTask");
+
+                if (_loadUnloadSerializerGetter is null || _stopLoadingMethod is null || _totalTaskField is null)
+                {
+                    throw new InvalidOperationException("UI Fixes interop: Required method or field could not be found.");
+                }
+
+                ContinuousLoadAmmo.LogSource.LogInfo("UI Fixes interop loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                ContinuousLoadAmmo.LogSource.LogWarning(
+                    $"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong, interop will not work\n{ex}"
+                );
+                _uiFixesLoaded = false;
+            }
+        }
+
         if (present && !correctVersion)
         {
             ContinuousLoadAmmo.LogSource.LogWarning(
                 $"UI Fixes {pluginInfo.Metadata.Version} is present but minimum version: {_requiredVersion} is required, interop will not work"
             );
-        }
-        if (!_uiFixesLoaded.Value) return false;
-
-        try
-        {
-            var multiSelectType = Type.GetType("UIFixes.MultiSelect, Tyfon.UIFixes");
-            var taskSerializerType = Type.GetType("UIFixes.MultiSelectItemContextTaskSerializer, Tyfon.UIFixes");
-            var loadUnloadSerializerMethod = AccessTools.PropertyGetter(multiSelectType, "LoadUnloadSerializer");
-            _loadUnloadSerializerGetter = AccessTools.MethodDelegate<Func<object>>(loadUnloadSerializerMethod);
-            _stopLoadingMethod = AccessTools.Method(multiSelectType, "StopLoading");
-            _totalTaskField = AccessTools.FieldRefAccess<TaskCompletionSource>(taskSerializerType, "_totalTask");
-
-            if (_loadUnloadSerializerGetter is null || _stopLoadingMethod is null || _totalTaskField is null)
-            {
-                throw new InvalidOperationException("UI Fixes interop: Required method or field could not be found.");
-            }
-
-            ContinuousLoadAmmo.LogSource.LogInfo("UI Fixes interop loaded successfully");
-        }
-        catch (Exception ex)
-        {
-            _uiFixesLoaded = false;
-            ContinuousLoadAmmo.LogSource.LogWarning(
-                $"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong, interop will not work"
-            );
-            ContinuousLoadAmmo.LogSource.LogWarning(ex.ToString());
         }
 
         return _uiFixesLoaded.Value;
