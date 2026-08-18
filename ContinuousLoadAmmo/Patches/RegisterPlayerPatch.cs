@@ -31,6 +31,7 @@ public class RegisterPlayerPatch : ModulePatch
         if (iPlayer is Player player)
         {
             _loadAmmoController = new LoadAmmoController(player);
+            _loadAmmoController.OnDispose += OnDispose;
             QuickAmmoSelector.Create(CommonUtils.EftBattleUIScreenTransform, _loadAmmoController);
             var loadAmmoUI = new LoadAmmoUI();
             loadAmmoUI.Initialize(CommonUtils.EftBattleUIScreenTransform, _loadAmmoController);
@@ -44,6 +45,11 @@ public class RegisterPlayerPatch : ModulePatch
     public static void DisposeLoadAmmoController()
     {
         _loadAmmoController?.Dispose();
+    }
+
+    private static void OnDispose()
+    {
+        _loadAmmoController.OnDispose -= OnDispose;
         _loadAmmoController = null;
     }
 }
