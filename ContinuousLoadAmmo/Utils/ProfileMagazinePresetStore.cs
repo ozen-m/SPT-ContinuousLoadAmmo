@@ -62,8 +62,7 @@ public static class ProfileMagazinePresetStore
         }
         catch (Exception ex)
         {
-            ContinuousLoadAmmo.LogSource.LogWarning(ex);
-            ContinuousLoadAmmo.LogSource.LogWarning("Caught an exception while trying to load user last used magazine presets");
+            L.Warning($"Caught an exception while trying to load user last used magazine presets\n{ex}");
         }
     }
 
@@ -76,8 +75,7 @@ public static class ProfileMagazinePresetStore
         }
         catch (Exception ex)
         {
-            ContinuousLoadAmmo.LogSource.LogWarning(ex);
-            ContinuousLoadAmmo.LogSource.LogWarning("Caught an exception while trying to save user last used magazine presets");
+            L.Warning($"Caught an exception while trying to save user last used magazine presets\n{ex}");
         }
     }
 }

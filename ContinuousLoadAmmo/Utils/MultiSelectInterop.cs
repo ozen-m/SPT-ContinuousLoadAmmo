@@ -53,11 +53,11 @@ internal static class MultiSelectInterop
                     throw new InvalidOperationException("UI Fixes interop: Required method or field could not be found.");
                 }
 
-                ContinuousLoadAmmo.LogSource.LogInfo("UI Fixes interop loaded successfully");
+                L.Info("UI Fixes interop loaded successfully");
             }
             catch (Exception ex)
             {
-                ContinuousLoadAmmo.LogSource.LogWarning(
+                L.Warning(
                     $"UI Fixes {pluginInfo!.Metadata.Version} is present but something went wrong, interop will not work\n{ex}"
                 );
                 _uiFixesLoaded = false;
@@ -66,7 +66,7 @@ internal static class MultiSelectInterop
 
         if (present && !correctVersion)
         {
-            ContinuousLoadAmmo.LogSource.LogWarning(
+            L.Warning(
                 $"UI Fixes {pluginInfo.Metadata.Version} is present but minimum version: {_requiredVersion} is required, interop will not work"
             );
         }

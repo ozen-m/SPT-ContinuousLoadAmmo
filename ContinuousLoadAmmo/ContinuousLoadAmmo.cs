@@ -1,7 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
-using BepInEx.Logging;
 using Comfort.Common;
 using ContinuousLoadAmmo.Models;
 using ContinuousLoadAmmo.Patches;
@@ -14,21 +12,19 @@ namespace ContinuousLoadAmmo;
 
 [BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.2.0")]
 [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
-[SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible")]
 public class ContinuousLoadAmmo : BaseUnityPlugin
 {
-    public static ManualLogSource LogSource;
-    public static ConfigEntry<float> SpeedLimit;
-    public static ConfigEntry<bool> ReachableOnly;
-    public static ConfigEntry<bool> InventoryTabs;
-    public static ConfigEntry<bool> MagPresetFallback;
-    public static ConfigEntry<bool> QuickLoadNotify;
-    public static ConfigEntry<QuickLoadMode> QuickLoadMode;
-    public static ConfigEntry<KeyboardShortcut> QuickLoadHotkey;
+    public static ConfigEntry<float> SpeedLimit { get; private set; }
+    public static ConfigEntry<bool> ReachableOnly { get; private set; }
+    public static ConfigEntry<bool> InventoryTabs { get; private set; }
+    public static ConfigEntry<bool> MagPresetFallback { get; private set; }
+    public static ConfigEntry<bool> QuickLoadNotify { get; private set; }
+    public static ConfigEntry<QuickLoadMode> QuickLoadMode { get; private set; }
+    public static ConfigEntry<KeyboardShortcut> QuickLoadHotkey { get; private set; }
 
     public void Awake()
     {
-        LogSource = Logger;
+        L.SetLogger(Logger);
 
         SpeedLimit = Config.Bind(
             "General",

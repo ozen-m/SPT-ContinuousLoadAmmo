@@ -35,10 +35,10 @@ public class RegisterPlayerPatch : ModulePatch
             var loadAmmoUI = new LoadAmmoUI();
             loadAmmoUI.Initialize(CommonUtils.EftBattleUIScreenTransform, _loadAmmoController);
 
-            ContinuousLoadAmmo.LogSource.LogInfo($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
+            L.Info($"Added LoadAmmoComponent to player: {player.Profile.Nickname}");
             return;
         }
-        ContinuousLoadAmmo.LogSource.LogError($"Unable to add LoadAmmoComponent to player: {iPlayer.Profile.Nickname}");
+        L.Error($"Unable to add LoadAmmoComponent to player: {iPlayer.Profile.Nickname}");
     }
 
     public static void DisposeLoadAmmoController()

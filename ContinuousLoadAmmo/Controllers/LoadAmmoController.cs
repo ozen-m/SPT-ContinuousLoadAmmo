@@ -260,7 +260,7 @@ public class LoadAmmoController : IDisposable
     {
         if (_magazine is null)
         {
-            ContinuousLoadAmmo.LogSource.LogError("Magazine is null while trying to get ammo count");
+            L.Error("Magazine is null while trying to get ammo count");
             return "MAG NULL";
         }
 
