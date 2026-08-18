@@ -23,9 +23,10 @@ public class LoadAmmoController : IDisposable
     public event Action<float, int, int> OnStartLoading;
     public event Action<Item> OnCloseInventoryLoading;
     public event Action OnEndLoading;
-    public event Action OnPlayerDestroy;
+    public event Action OnDispose;
 
     public bool IsActive => PlayerInventoryController._loadProcess is not null || _magazinePresetLoader.PresetLoaderIsActive;
+    public bool CanLoadOutsideInventory => !PlayerInventoryController.HasAnyHandsActionNonLinq() && _isReachable;
     public bool IsInventoryOpened => _player.IsInventoryOpened;
     public PlayerInventoryController PlayerInventoryController { get; }
 
@@ -49,14 +50,9 @@ public class LoadAmmoController : IDisposable
         _player.InventoryController.ActiveEventsChanged += LoadingEnd; // Can't use since always CommandStatus.Begin, but why
         */
         _player.OnHandsControllerChanged += StopLoadingOnHandsChange;
-        _player.OnIPlayerDeadOrUnspawn += OnDestroy;
+        _player.OnIPlayerDeadOrUnspawn += OnDestroyPlayer;
 
         _magazinePresetLoader = new MagazinePresetLoader(this);
-    }
-
-    public bool CanLoadOutsideInventory()
-    {
-        return !PlayerInventoryController.HasAnyHandsActionNonLinq() && _isReachable;
     }
 
     public bool IsQuickLoadAvailable(out List<Ammo> reachableAmmo, out Magazine foundMagazine, string caliber = null)
@@ -120,7 +116,7 @@ public class LoadAmmoController : IDisposable
     public void LoadMagazine(Ammo ammo, Magazine magazine)
     {
         var loadCount = Mathf.Min(ammo.StackObjectsCount, magazine.MaxCount - magazine.Count);
-        _ = LoadMagazineAsync(ammo, magazine, loadCount, CancellationToken.None);
+        _ = PlayerInventoryController.LoadMagazine(ammo, magazine, loadCount, false);
     }
 
     public async Task LoadMagazineAsync(Ammo ammo, Magazine magazine, int? ammoCount = null, CancellationToken token = default)
@@ -309,13 +305,13 @@ public class LoadAmmoController : IDisposable
             UnloadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
             LoadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
             _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
-            _player.OnIPlayerDeadOrUnspawn -= OnDestroy;
+            _player.OnIPlayerDeadOrUnspawn -= OnDestroyPlayer;
         }
-        OnPlayerDestroy?.Invoke();
+        OnDispose?.Invoke();
         OnStartLoading = null;
         OnCloseInventoryLoading = null;
         OnEndLoading = null;
-        OnPlayerDestroy = null;
+        OnDispose = null;
     }
 
     private void LoadingStart(ItemEventArgs eventArgs)
@@ -350,7 +346,7 @@ public class LoadAmmoController : IDisposable
 
     private void LoadingOutsideInventory()
     {
-        if (IsActive && CanLoadOutsideInventory())
+        if (IsActive && CanLoadOutsideInventory)
         {
             _ = SetPlayerStateAsync(true);
             OnCloseInventoryLoading?.Invoke(_magazine);
@@ -463,7 +459,7 @@ public class LoadAmmoController : IDisposable
         }
     }
 
-    private void OnDestroy(IPlayer player)
+    private void OnDestroyPlayer(IPlayer player)
     {
         Dispose();
     }

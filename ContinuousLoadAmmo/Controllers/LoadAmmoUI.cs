@@ -17,7 +17,7 @@ public class LoadAmmoUI
     private ItemViewLoadAmmoComponent _itemViewLoadAmmoComponent;
     private Image _magImage;
     private ItemIcon _itemIcon;
-    private Action _unbindImageLoader;
+    private Action _imageSubscription;
     private TextMeshProUGUI _magValue;
 
     public void Initialize(Transform parent, LoadAmmoController loadAmmoController)
@@ -51,7 +51,7 @@ public class LoadAmmoUI
         _loadAmmoController.OnEndLoading += Close;
         _loadAmmoController.PlayerInventoryController.OnAmmoLoaded += UpdateTextValue;
         _loadAmmoController.PlayerInventoryController.OnAmmoUnloaded += UpdateTextValue;
-        _loadAmmoController.OnPlayerDestroy += Dispose;
+        _loadAmmoController.OnDispose += Dispose;
     }
 
     private void PrepareGameObjects(Transform parent)
@@ -104,9 +104,9 @@ public class LoadAmmoUI
 
     private void GetImage(Item item)
     {
-        _unbindImageLoader?.Invoke();
+        _imageSubscription?.Invoke();
         _itemIcon = ItemViewFactory.LoadItemIcon(item);
-        _unbindImageLoader = _itemIcon?.Changed.Bind(UpdateImage);
+        _imageSubscription = _itemIcon?.Changed.Bind(UpdateImage);
     }
 
     private void UpdateImage()
@@ -137,8 +137,8 @@ public class LoadAmmoUI
         {
             _magImage.enabled = false;
         }
-        _unbindImageLoader?.Invoke();
-        _unbindImageLoader = null;
+        _imageSubscription?.Invoke();
+        _imageSubscription = null;
         if (_magValue != null)
         {
             _magValue.enabled = false;
@@ -159,7 +159,7 @@ public class LoadAmmoUI
         _loadAmmoController.OnEndLoading -= Close;
         _loadAmmoController.PlayerInventoryController.OnAmmoLoaded -= UpdateTextValue;
         _loadAmmoController.PlayerInventoryController.OnAmmoUnloaded -= UpdateTextValue;
-        _loadAmmoController.OnPlayerDestroy -= Dispose;
+        _loadAmmoController.OnDispose -= Dispose;
         _loadAmmoController = null;
     }
 

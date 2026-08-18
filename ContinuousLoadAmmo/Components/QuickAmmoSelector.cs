@@ -68,7 +68,7 @@ public class QuickAmmoSelector : InputNode
 
         var quickAmmoSelector = gameObject.GetComponent<QuickAmmoSelector>();
         quickAmmoSelector._loadAmmoControllerController = loadAmmoControllerController;
-        quickAmmoSelector._loadAmmoControllerController.OnPlayerDestroy += quickAmmoSelector.Destroy;
+        quickAmmoSelector._loadAmmoControllerController.OnDispose += quickAmmoSelector.Destroy;
         quickAmmoSelector.CreateCancelView();
         CommonUtils.InputTree.Add(quickAmmoSelector);
         return quickAmmoSelector;
@@ -85,7 +85,7 @@ public class QuickAmmoSelector : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (!_loadAmmoControllerController.CanLoadOutsideInventory())
+        if (!_loadAmmoControllerController.CanLoadOutsideInventory)
         {
             return ETranslateResult.Ignore;
         }
@@ -181,7 +181,7 @@ public class QuickAmmoSelector : InputNode
         {
             Close();
         }
-        _loadAmmoControllerController.OnPlayerDestroy -= Destroy;
+        _loadAmmoControllerController.OnDispose -= Destroy;
         CommonUtils.InputTree.Remove(this);
     }
 
