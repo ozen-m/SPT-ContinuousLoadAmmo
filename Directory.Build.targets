@@ -14,7 +14,7 @@
   </Target>
 
   <!-- To Fika Dir -->
-  <Target Name="CopyOutputFikaHeadless" AfterTargets="Build" Condition="'$(FikaPath)' != ''">
+  <Target Name="CopyOutputFikaHeadless" AfterTargets="Build" Condition="'$(FikaHeadPath)' != ''">
     <Copy SourceFiles="@(OutputDLL)" DestinationFolder="$(FikaHeadPath)$(DestDir)" />
     <Copy SourceFiles="@(Config)" DestinationFolder="$(FikaHeadPath)$(DestDir)\config\%(RecursiveDir)" />
     <Copy SourceFiles="@(Bundles)" DestinationFolder="$(FikaHeadPath)$(DestDir)\bundles\%(RecursiveDir)" />
