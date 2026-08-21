@@ -12,6 +12,7 @@ namespace ContinuousLoadAmmo;
 
 [BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.2.0")]
 [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
 public class ContinuousLoadAmmo : BaseUnityPlugin
 {
     private PatchManager _patchManager;
@@ -97,6 +98,7 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
 
         _patchManager = new PatchManager(this, true);
         _patchManager.EnablePatches();
+        LoadingEndPatches.Enable();
 
         if (MultiSelectInterop.StopLoadingMethod is not null)
         {
@@ -117,6 +119,8 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
     public void OnDestroy()
     {
         _patchManager.DisablePatches();
+        LoadingEndPatches.Disable();
+
         if (MultiSelectInterop.StopLoadingMethod is not null)
         {
             new ScreensPatches.MultiSelectStopLoadingPatch().Disable();

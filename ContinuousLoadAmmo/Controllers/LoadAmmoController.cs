@@ -41,14 +41,10 @@ public class LoadAmmoController : IDisposable
         PlayerInventoryController = playerInvCont;
         PlayerInventoryController.SetNextProcessLocked(false);
 
-        PlayerInventoryController.ActiveEventAdded += LoadingStart; // Always CommandStatus.Begin
+        PlayerInventoryController.ActiveEventAdded += LoadingStart;
+        LoadingEndPatches.OnLoadingEnd += LoadingEnd;
         InventoryScreenClosePatch.OnInventoryClose += LoadingOutsideInventory; // Sucks to have to use this workaround
-        UnloadMagazineStartPatch.OnLoadingEnd += LoadingEnd;
-        LoadMagazineStartPatch.OnLoadingEnd += LoadingEnd;
-        /*
-         _player.OnInventoryOpened += LoadingOutsideInventory; // Why does BSG CALL THIS _TWICE_
-        _player.InventoryController.ActiveEventsChanged += LoadingEnd; // Can't use since always CommandStatus.Begin, but why
-        */
+        // _player.OnInventoryOpened += LoadingOutsideInventory; // Why does BSG CALL THIS _TWICE_
         _player.OnHandsControllerChanged += StopLoadingOnHandsChange;
         _player.OnIPlayerDeadOrUnspawn += OnDestroyPlayer;
 
@@ -301,9 +297,8 @@ public class LoadAmmoController : IDisposable
         }
         if (_player != null)
         {
+            LoadingEndPatches.OnLoadingEnd -= LoadingEnd;
             InventoryScreenClosePatch.OnInventoryClose -= LoadingOutsideInventory;
-            UnloadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
-            LoadMagazineStartPatch.OnLoadingEnd -= LoadingEnd;
             _player.OnHandsControllerChanged -= StopLoadingOnHandsChange;
             _player.OnIPlayerDeadOrUnspawn -= OnDestroyPlayer;
         }
