@@ -14,6 +14,8 @@ namespace ContinuousLoadAmmo;
 [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
 public class ContinuousLoadAmmo : BaseUnityPlugin
 {
+    private PatchManager _patchManager;
+
     public static ConfigEntry<float> SpeedLimit { get; private set; }
     public static ConfigEntry<bool> ReachableOnly { get; private set; }
     public static ConfigEntry<bool> InventoryTabs { get; private set; }
@@ -93,8 +95,8 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
             )
         );
 
-        var patchManager = new PatchManager(this, true);
-        patchManager.EnablePatches();
+        _patchManager = new PatchManager(this, true);
+        _patchManager.EnablePatches();
 
         if (MultiSelectInterop.StopLoadingMethod is not null)
         {
@@ -114,6 +116,12 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
 #if DEBUG
     public void OnDestroy()
     {
+        _patchManager.DisablePatches();
+        if (MultiSelectInterop.StopLoadingMethod is not null)
+        {
+            new ScreensPatches.MultiSelectStopLoadingPatch().Disable();
+        }
+
         RegisterPlayerPatch.DisposeLoadAmmoController();
     }
 #endif
