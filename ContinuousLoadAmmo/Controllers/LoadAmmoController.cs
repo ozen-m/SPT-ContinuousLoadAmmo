@@ -279,9 +279,10 @@ public class LoadAmmoController : IDisposable
 
     public string GetCurrentWeaponCaliber()
     {
-        if (_player.HandsController is FirearmController fc)
+        // The current is the last equipped
+        if (_player.LastEquippedWeaponOrKnifeItem is Weapon weapon)
         {
-            return fc.Weapon.GetWeaponCaliber();
+            return weapon.GetWeaponCaliber();
         }
 
         return string.Empty;
