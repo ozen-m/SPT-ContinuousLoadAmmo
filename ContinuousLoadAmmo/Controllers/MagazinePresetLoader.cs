@@ -39,7 +39,8 @@ public class MagazinePresetLoader : IDisposable
             return;
         }
 
-        _ = LoadingMagPresetInternalAsync(preset, [magazine], availableAmmo);
+        var token = StartNewLoadMagPreset();
+        _ = LoadingMagPresetInternalAsync(preset, [magazine], availableAmmo, token);
     }
 
     public void CancelMagPresetLoading()
@@ -61,11 +62,11 @@ public class MagazinePresetLoader : IDisposable
         return preset is not null;
     }
 
-    private void StartNewLoadMagPreset(out CancellationToken token)
+    private CancellationToken StartNewLoadMagPreset()
     {
         CancelMagPresetLoading();
         _loadPresetCancellationSource = new CancellationTokenSource();
-        token = _loadPresetCancellationSource.Token;
+        return _loadPresetCancellationSource.Token;
     }
 
     private void InventoryLoadMagPreset(MagPreset preset, List<Magazine> magazines)
@@ -77,22 +78,22 @@ public class MagazinePresetLoader : IDisposable
                 ENotificationIconType.Alert,
                 true
             );
-            CancelMagPresetLoading();
             return;
         }
 
-        _ = LoadingMagPresetInternalAsync(preset, magazines, availableAmmo);
+        var token = StartNewLoadMagPreset();
+        _ = LoadingMagPresetInternalAsync(preset, magazines, availableAmmo, token);
     }
 
     private async Task LoadingMagPresetInternalAsync(
         MagPreset preset,
         List<Magazine> magazines,
-        List<Ammo> availableAmmo
+        List<Ammo> availableAmmo,
+        CancellationToken token = default
     )
     {
         try
         {
-            StartNewLoadMagPreset(out var token);
             foreach (var magazine in magazines)
             {
                 token.ThrowIfCancellationRequested();
@@ -166,6 +167,7 @@ public class MagazinePresetLoader : IDisposable
         }
         catch (OperationCanceledException)
         {
+            // CancelMagPresetLoading is called elsewhere
             return;
         }
 

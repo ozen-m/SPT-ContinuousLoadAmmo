@@ -36,7 +36,7 @@ public class ApplyMagPresetPatch : ModulePatch
         __result = Task.FromResult(default(Option)); // Task only used by mag presets window, which we disable in-raid
         OnApplyMagPreset?.Invoke(
             preset,
-            magazines as List<Magazine> ?? magazines.ToList() /* Safeguard, all calls are lists */
+            magazines as List<Magazine> ?? [.. magazines] /* Safeguard, all calls are lists */
         );
         return false;
     }
