@@ -1,27 +1,31 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using Comfort.Common;
 using ContinuousLoadAmmo.Controllers;
 using ContinuousLoadAmmo.Models;
 using ContinuousLoadAmmo.Utils;
 using EFT;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
+using EFT.UI;
 using EFT.UI.DragAndDrop;
-using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace ContinuousLoadAmmo.Components;
 
-public class LoadAmmoComponent : InputNode
+public class QuickAmmoSelector : InputNode
 {
-    private readonly List<GridItemView> _gridItemViews = [];
-    private readonly List<AmmoItemClass> _ammoItems = [];
+    private readonly List<GridItemView> _ammoViews = [];
+    private readonly List<Ammo> _ammoItems = [];
     private readonly HashSet<MongoID> _seenAmmoTplScratch = [];
+    private readonly EmptyItemContext _emptyItemContext = new();
     private LoadAmmoController _loadAmmoControllerController;
-    private TaskCompletionSource<AmmoItemClass> _chosenAmmoTcs;
-    private GClass3450 _emptySourceContext = new();
+    private TaskCompletionSource<Ammo> _chosenAmmoTcs;
+
+    private Transform _cancelView;
+    private Image _backgroundColor;
 
     public bool IsShown => _chosenAmmoTcs is not null;
 
@@ -39,12 +43,35 @@ public class LoadAmmoComponent : InputNode
         }
     }
 
-    public static LoadAmmoComponent Create(GameObject target, LoadAmmoController loadAmmoControllerController)
+    public static QuickAmmoSelector Create(Transform parent, LoadAmmoController loadAmmoControllerController)
     {
-        var loadAmmoSelector = target.AddComponent<LoadAmmoComponent>();
-        loadAmmoSelector._loadAmmoControllerController = loadAmmoControllerController;
-        CommonUtils.InputTree.Add(loadAmmoSelector);
-        return loadAmmoSelector;
+        var gameObject = new GameObject(
+            nameof(QuickAmmoSelector),
+            typeof(RectTransform),
+            typeof(HorizontalLayoutGroup),
+            typeof(QuickAmmoSelector)
+        );
+        gameObject.transform.SetParent(parent);
+
+        var rectTransform = gameObject.GetComponent<RectTransform>();
+        CommonUtils.SetUI(rectTransform, new Vector2(0, -150f));
+        rectTransform.anchorMin = new Vector2(0f, 0.5f);
+        rectTransform.anchorMax = new Vector2(1f, 0.5f);
+
+        var layoutGroup = gameObject.GetComponent<HorizontalLayoutGroup>();
+        layoutGroup.spacing = 4f;
+        layoutGroup.childControlWidth = false;
+        layoutGroup.childControlHeight = false;
+        layoutGroup.childForceExpandWidth = false;
+        layoutGroup.childForceExpandHeight = false;
+        layoutGroup.childAlignment = TextAnchor.MiddleCenter;
+
+        var quickAmmoSelector = gameObject.GetComponent<QuickAmmoSelector>();
+        quickAmmoSelector._loadAmmoControllerController = loadAmmoControllerController;
+        quickAmmoSelector._loadAmmoControllerController.OnDispose += quickAmmoSelector.Destroy;
+        quickAmmoSelector.CreateCancelView();
+        CommonUtils.InputTree.Add(quickAmmoSelector);
+        return quickAmmoSelector;
     }
 
     public void Update()
@@ -58,7 +85,7 @@ public class LoadAmmoComponent : InputNode
 
     public override ETranslateResult TranslateCommand(ECommand command)
     {
-        if (!_loadAmmoControllerController.CanLoadOutsideInventory())
+        if (!_loadAmmoControllerController.CanLoadOutsideInventory)
         {
             return ETranslateResult.Ignore;
         }
@@ -150,8 +177,11 @@ public class LoadAmmoComponent : InputNode
 
     public void OnDestroy()
     {
-        _chosenAmmoTcs?.TrySetResult(null);
-        _chosenAmmoTcs = null;
+        if (IsShown)
+        {
+            Close();
+        }
+        _loadAmmoControllerController.OnDispose -= Destroy;
         CommonUtils.InputTree.Remove(this);
     }
 
@@ -169,23 +199,23 @@ public class LoadAmmoComponent : InputNode
         var chosenAmmo = await ShowAcceptableAmmoAsync(reachableAmmo, _loadAmmoControllerController.PlayerInventoryController);
         if (chosenAmmo is not null)
         {
-            _loadAmmoControllerController.LoadMagazine(chosenAmmo, foundMagazine);
+            _ = _loadAmmoControllerController.LoadMagazineAsync(chosenAmmo, foundMagazine);
         }
     }
 
-    private bool ShouldRemoveFromList(AmmoItemClass ammo)
+    private bool ShouldRemoveFromList(Ammo ammo)
     {
         return !_seenAmmoTplScratch.Add(ammo.TemplateId);
     }
 
     [SuppressMessage("Usage", "VSTHRD003:Avoid awaiting foreign Tasks")]
-    private Task<AmmoItemClass> ShowAcceptableAmmoAsync(List<AmmoItemClass> foundAmmo, InventoryController inventoryController) // method_5
+    private Task<Ammo> ShowAcceptableAmmoAsync(List<Ammo> foundAmmo, InventoryController inventoryController) // method_5
     {
         foreach (var ammo in foundAmmo)
         {
             var view = GridItemView.Create(
                 ammo,
-                _emptySourceContext,
+                _emptyItemContext,
                 ItemRotation.Horizontal,
                 inventoryController,
                 inventoryController,
@@ -195,126 +225,111 @@ public class LoadAmmoComponent : InputNode
                 null,
                 null
             );
-
-            _gridItemViews.Add(view);
-            _ammoItems.Add(ammo);
+            AddAmmoView(view, ammo);
         }
-        AddCancelView(foundAmmo[0], inventoryController);
+        _cancelView.gameObject.SetActive(true);
+        _cancelView.transform.SetAsLastSibling();
 
-        SetLayout();
         _index = 0;
         HighlightIndex(_index, 0);
 
         SetChosenAmmo(null);
-        _chosenAmmoTcs = new TaskCompletionSource<AmmoItemClass>();
-
+        _chosenAmmoTcs = new TaskCompletionSource<Ammo>();
         return _chosenAmmoTcs.Task;
     }
 
-    private void SetChosenAmmo(AmmoItemClass ammo)
+    private void SetChosenAmmo(Ammo ammo)
     {
         _chosenAmmoTcs?.SetResult(ammo);
         _chosenAmmoTcs = null;
     }
 
-    private AmmoItemClass GetSelectedAmmo()
+    private Ammo GetSelectedAmmo()
     {
         return _index == _ammoItems.Count
-                   ? null // Cancel/no option is selected
-                   : _ammoItems[_index];
+            ? null // Cancel/no option is selected
+            : _ammoItems[_index];
     }
 
-    private void Close()
+    public void Close()
     {
-        foreach (var gridItemView in _gridItemViews)
+        HighlightAmmoView(_index, false);
+        for (var i = _ammoViews.Count - 1; i >= 0; i--)
         {
-            gridItemView.Highlight(false);
-            gridItemView.Kill();
+            HighlightAmmoView(i, false);
+            RemoveAmmoView(i);
         }
-        _gridItemViews.Clear();
-        _ammoItems.Clear();
+        _cancelView.gameObject.SetActive(false);
         SetChosenAmmo(null);
     }
 
-    private void Previous() // method_3
+    private void Previous()
     {
-        var num = _gridItemViews.Count;
+        var num = _ammoViews.Count + 1;
         Index = (Index + 1) % num;
     }
 
-    private void Next() // method_4
+    private void Next()
     {
-        var num = _gridItemViews.Count;
+        var num = _ammoViews.Count + 1;
         Index = ((Index - 1) + num) % num;
     }
 
-    private void AddCancelView(AmmoItemClass templateItem, InventoryController inventoryController)
+    private void HighlightIndex(int prevSelectionIndex, int currentSelectionIndex)
     {
-        var cancelView = GridItemView.Create(
-            templateItem,
-            _emptySourceContext,
-            ItemRotation.Horizontal,
-            inventoryController,
-            inventoryController,
-            null,
-            null,
-            null,
-            null,
-            null
-        );
-
-        _infoPanelField(cancelView).gameObject.SetActive(false);
-        _backgroundColorField(cancelView) = Color.clear;
-        _mainImageAlphaField(cancelView) = 0f; // method_4 checks this for alpha
-        var mainImage = _mainImageField(cancelView);
-        mainImage.color = mainImage.color with { a = 0f };
-        cancelView.ChangeSelectedStatus(true); // Red stripes
-        cancelView.UpdateColor(); // Update color with alpha 0f
-        _gridItemViews.Add(cancelView);
+        HighlightAmmoView(prevSelectionIndex, false);
+        HighlightAmmoView(currentSelectionIndex, true);
     }
 
-    private void SetLayout()
+    private void HighlightAmmoView(int index, bool isSelected)
     {
-        if (_gridItemViews.Count <= 0) return;
-
-        const float spacing = 5f;
-        var gridWidth = ((RectTransform)_gridItemViews[0].transform).rect.width;
-
-        var totalGridWidth = spacing + gridWidth;
-        var totalWidth = ((_gridItemViews.Count - 1) * totalGridWidth) - spacing;
-        var startX = -totalWidth / 2f;
-
-        for (var i = 0; i < _gridItemViews.Count; i++)
+        if (index < _ammoViews.Count)
         {
-            var viewTransform = _gridItemViews[i].transform;
-            viewTransform.SetParent(CommonUtils.EftBattleUIScreenTransform, false);
-            LoadAmmoUI.SetUI(viewTransform, new Vector2(startX + (i * totalGridWidth), -150f));
+            _ammoViews[index].Highlight(isSelected);
+        }
+        else if (index == _ammoViews.Count)
+        {
+            _backgroundColor.color = isSelected ? Color.red : Color.grey;
         }
     }
 
-    private void HighlightIndex(int prevSelectionIndex, int currentSelectionIndex) // method_1
+    public void AddAmmoView(GridItemView view, Ammo ammo)
     {
-        HighlightGridItemView(prevSelectionIndex, false);
-        HighlightGridItemView(currentSelectionIndex, true);
+        var layoutElement = view.gameObject.AddComponent<LayoutElement>();
+        var rectTransform = view.GetComponent<RectTransform>();
+        var sizeDelta = rectTransform.sizeDelta;
+        layoutElement.preferredWidth = sizeDelta.x;
+        layoutElement.preferredHeight = sizeDelta.y;
+        rectTransform.SetParent(transform, worldPositionStays: false);
+        _ammoViews.Add(view);
+        _ammoItems.Add(ammo);
+        view.gameObject.SetActive(true);
     }
 
-    private void HighlightGridItemView(int index, bool isSelected) // method_2
+    public void RemoveAmmoView(int index)
     {
-        if (index < _gridItemViews.Count)
-        {
-            _gridItemViews[index].Highlight(isSelected);
-        }
+        var gridItemView = _ammoViews[index];
+        gridItemView.transform.SetParent(null);
+        Destroy(gridItemView.gameObject.GetComponent<LayoutElement>());
+        _ammoViews.RemoveAt(index);
+        _ammoItems.RemoveAt(index);
+        gridItemView.Kill();
     }
 
-    private static readonly AccessTools.FieldRef<GridItemView, Image> _mainImageField =
-        AccessTools.FieldRefAccess<GridItemView, Image>("MainImage");
+    /// <summary>
+    /// Clone EftBattleUIScreen._cancelView for QuickAmmoSelector's use
+    /// </summary>
+    private void CreateCancelView()
+    {
+        var battleUiScreen = Singleton<CommonUI>.Instance.EftBattleUIScreen;
+        _cancelView = Instantiate(battleUiScreen.AmmoSelector._cancelView, transform, false).transform;
+        _cancelView.transform.localPosition = Vector3.zero;
+        _backgroundColor = _cancelView.Find("Image").GetComponent<Image>();
+        _cancelView.gameObject.SetActive(false);
+    }
 
-    private static readonly AccessTools.FieldRef<GridItemView, float> _mainImageAlphaField =
-        AccessTools.FieldRefAccess<GridItemView, float>("_mainImageAlpha");
-
-    private static readonly AccessTools.FieldRef<GridItemView, Color> _backgroundColorField =
-        AccessTools.FieldRefAccess<GridItemView, Color>("BackgroundColor");
-
-    private static readonly AccessTools.FieldRef<GridItemView, RectTransform> _infoPanelField =
-        AccessTools.FieldRefAccess<GridItemView, RectTransform>("_infoPanel");
+    private void Destroy()
+    {
+        Destroy(this);
+    }
 }

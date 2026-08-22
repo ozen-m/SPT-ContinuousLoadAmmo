@@ -21,18 +21,18 @@ public class InventoryScreenClosePatch : ModulePatch
     /// UI, Patch to NOT stop loading ammo on close
     /// </summary>
     [PatchPrefix]
-    protected static void Prefix(ref InventoryController ___inventoryController_0)
+    protected static void Prefix(ref InventoryController ____inventoryController)
     {
         if (!CommonUtils.InRaid) return;
 
-        if (___inventoryController_0 is Player.PlayerInventoryController playerInventoryController)
+        if (____inventoryController is Player.PlayerInventoryController playerInventoryController)
         {
             // It looks like only Load/UnloadMagazine checks for process locked, this should be fine
             playerInventoryController.SetNextProcessLocked(false);
         }
 
         // Skip StopProcesses and SetNextProcessLocked(true) after prefix
-        ___inventoryController_0 = null;
+        ____inventoryController = null;
 
         OnInventoryClose?.Invoke();
     }

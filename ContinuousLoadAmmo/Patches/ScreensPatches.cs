@@ -95,7 +95,7 @@ public static class ScreensPatches
             return typeof(InventoryPlayerModelWithStatsWindow).GetMethod(
                 nameof(InventoryPlayerModelWithStatsWindow.Show),
                 [
-                    typeof(GInterface214), typeof(int), typeof(EMemberCategory), typeof(ProfileStats), typeof(LastPlayerStateClass),
+                    typeof(IProfileDataContainer), typeof(int), typeof(EMemberCategory), typeof(ProfileStats), typeof(PlayerVisualRepresentation),
                     typeof(InventoryController), typeof(bool),
                 ]
             );

@@ -1,33 +1,33 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
-using BepInEx.Logging;
+using Comfort.Common;
 using ContinuousLoadAmmo.Models;
 using ContinuousLoadAmmo.Patches;
 using ContinuousLoadAmmo.Utils;
+using EFT;
 using SPT.Reflection.Patching;
 using UnityEngine;
 
 namespace ContinuousLoadAmmo;
 
-[BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.1.6")]
+[BepInPlugin("com.ozen.continuousloadammo", "Continuous Load Ammo", "1.2.0")]
 [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
-[BepInDependency("Tyfon.UIFixes", BepInDependency.DependencyFlags.SoftDependency)] // Old version; TODO: Remove in 4.1.x
-[SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible")]
+[BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
 public class ContinuousLoadAmmo : BaseUnityPlugin
 {
-    public static ManualLogSource LogSource;
-    public static ConfigEntry<float> SpeedLimit;
-    public static ConfigEntry<bool> ReachableOnly;
-    public static ConfigEntry<bool> InventoryTabs;
-    public static ConfigEntry<bool> MagPresetFallback;
-    public static ConfigEntry<bool> QuickLoadNotify;
-    public static ConfigEntry<QuickLoadMode> QuickLoadMode;
-    public static ConfigEntry<KeyboardShortcut> QuickLoadHotkey;
+    private PatchManager _patchManager;
+
+    public static ConfigEntry<float> SpeedLimit { get; private set; }
+    public static ConfigEntry<bool> ReachableOnly { get; private set; }
+    public static ConfigEntry<bool> InventoryTabs { get; private set; }
+    public static ConfigEntry<bool> MagPresetFallback { get; private set; }
+    public static ConfigEntry<bool> QuickLoadNotify { get; private set; }
+    public static ConfigEntry<QuickLoadMode> QuickLoadMode { get; private set; }
+    public static ConfigEntry<KeyboardShortcut> QuickLoadHotkey { get; private set; }
 
     public void Awake()
     {
-        LogSource = Logger;
+        L.SetLogger(Logger);
 
         SpeedLimit = Config.Bind(
             "General",
@@ -78,7 +78,7 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
         QuickLoadMode = Config.Bind(
             "Quick Load",
             "Mode",
-            Models.QuickLoadMode.LastMagazinePreset,
+            Models.QuickLoadMode.HighestPenetration,
             new ConfigDescription(
                 "Highest Penetration Available - choose ammo that has the highest penetration power.\nLast Bullet in Magazine - prioritize the last ammo of the current weapon's magazine.\nLast Used Magazine Preset - load the last used magazine preset",
                 null,
@@ -96,8 +96,9 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
             )
         );
 
-        var patchManager = new PatchManager(this, true);
-        patchManager.EnablePatches();
+        _patchManager = new PatchManager(this, true);
+        _patchManager.EnablePatches();
+        LoadingEndPatches.Enable();
 
         if (MultiSelectInterop.StopLoadingMethod is not null)
         {
@@ -105,5 +106,27 @@ public class ContinuousLoadAmmo : BaseUnityPlugin
         }
 
         ProfileMagazinePresetStore.LoadProfileLastPresets();
+
+#if DEBUG
+        if (Singleton<GameWorld>.Instance is { MainPlayer: { } player } gameWorld)
+        {
+            RegisterPlayerPatch.Postfix(gameWorld, player);
+        }
+#endif
     }
+
+#if DEBUG
+    public void OnDestroy()
+    {
+        _patchManager.DisablePatches();
+        LoadingEndPatches.Disable();
+
+        if (MultiSelectInterop.StopLoadingMethod is not null)
+        {
+            new ScreensPatches.MultiSelectStopLoadingPatch().Disable();
+        }
+
+        RegisterPlayerPatch.DisposeLoadAmmoController();
+    }
+#endif
 }

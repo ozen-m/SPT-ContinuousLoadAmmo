@@ -17,7 +17,7 @@ public class SetSubInteractionsPatch : ModulePatch
     }
 
     [PatchPrefix]
-    protected static bool Prefix(ref GClass3829 __result)
+    protected static bool Prefix(ref WindowContext __result)
     {
         if (!CommonUtils.InRaid) return true;
 

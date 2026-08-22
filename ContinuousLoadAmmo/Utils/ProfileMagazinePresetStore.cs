@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using EFT;
+using EFT.Builds;
 using Newtonsoft.Json;
 using SPT.Reflection.Utils;
 
@@ -12,20 +13,14 @@ public static class ProfileMagazinePresetStore
 {
     private const string StoreFilename = "lastMagPresets.json";
 
-    // TODO: 4.1.x, move assembly to its own folder
-    // TODO: 4.1.x, update storeFileNameDirectory
-    private static readonly string _storeFileNameDirectory = Path.Combine(
-        Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
-        "ozen-ContinuousLoadAmmo"
-    );
-
-    private static readonly string _pathToStoreFile = Path.Combine(_storeFileNameDirectory, StoreFilename);
+    private static readonly string _modFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+    private static readonly string _pathToStoreFile = Path.Combine(_modFolder, StoreFilename);
 
     private static ProfileLastMagPresets _profileLastMagPresets = [];
 
     private static string ProfileId => field ??= ClientAppUtils.GetMainApp().Session.Profile.ProfileId;
 
-    public static MagazineBuildPresetClass GetMagPreset(string caliber)
+    public static MagPreset GetMagPreset(string caliber)
     {
         if (!_profileLastMagPresets.TryGetValue(ProfileId, out var caliberLastPreset)) return null;
         if (!caliberLastPreset.TryGetValue(caliber, out var presetId)) return null;
@@ -34,7 +29,7 @@ public static class ProfileMagazinePresetStore
         return magBuildsStorage?.TryFindPresetById(presetId, out var preset) == true ? preset : null;
     }
 
-    public static void UpdateMagPreset(MagazineBuildPresetClass preset)
+    public static void UpdateMagPreset(MagPreset preset)
     {
         if (!_profileLastMagPresets.TryGetValue(ProfileId, out var caliberLastPreset))
         {
@@ -67,18 +62,12 @@ public static class ProfileMagazinePresetStore
         }
         catch (Exception ex)
         {
-            ContinuousLoadAmmo.LogSource.LogWarning(ex);
-            ContinuousLoadAmmo.LogSource.LogWarning("Caught an exception while trying to load user last used magazine presets");
+            L.Warning($"Caught an exception while trying to load user last used magazine presets\n{ex}");
         }
     }
 
     private static void SaveProfileLastPresets()
     {
-        if (!Directory.Exists(_storeFileNameDirectory))
-        {
-            Directory.CreateDirectory(_storeFileNameDirectory);
-        }
-
         try
         {
             var json = JsonConvert.SerializeObject(_profileLastMagPresets);
@@ -86,8 +75,7 @@ public static class ProfileMagazinePresetStore
         }
         catch (Exception ex)
         {
-            ContinuousLoadAmmo.LogSource.LogWarning(ex);
-            ContinuousLoadAmmo.LogSource.LogWarning("Caught an exception while trying to save user last used magazine presets");
+            L.Warning($"Caught an exception while trying to save user last used magazine presets\n{ex}");
         }
     }
 }

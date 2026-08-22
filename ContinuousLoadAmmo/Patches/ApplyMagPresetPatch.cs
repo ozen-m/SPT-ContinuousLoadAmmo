@@ -4,6 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using ContinuousLoadAmmo.Utils;
+using Diz.LanguageExtensions;
+using EFT.Builds;
+using EFT.InventoryLogic;
 using EFT.UI;
 using SPT.Reflection.Patching;
 
@@ -11,7 +14,7 @@ namespace ContinuousLoadAmmo.Patches;
 
 public class ApplyMagPresetPatch : ModulePatch
 {
-    public static event Action<MagazineBuildPresetClass, List<MagazineItemClass>> OnApplyMagPreset;
+    public static event Action<MagPreset, List<Magazine>> OnApplyMagPreset;
 
     protected override MethodBase GetTargetMethod()
     {
@@ -21,19 +24,19 @@ public class ApplyMagPresetPatch : ModulePatch
     [PatchPrefix]
     protected static bool Prefix(
         ItemUiContext __instance,
-        MagazineBuildPresetClass preset,
-        IReadOnlyCollection<MagazineItemClass> magazines,
-        ref Task<GStruct155> __result
+        MagPreset preset,
+        IReadOnlyCollection<Magazine> magazines,
+        ref Task<Option> __result
     )
     {
         ProfileMagazinePresetStore.UpdateMagPreset(preset);
 
         if (!CommonUtils.InRaid) return true;
 
-        __result = Task.FromResult(default(GStruct155)); // Task only used by mag presets window, which we disable in-raid
+        __result = Task.FromResult(default(Option)); // Task only used by mag presets window, which we disable in-raid
         OnApplyMagPreset?.Invoke(
             preset,
-            magazines as List<MagazineItemClass> ?? magazines.ToList() /* Safeguard, all calls are lists */
+            magazines as List<Magazine> ?? [.. magazines] /* Safeguard, all calls are lists */
         );
         return false;
     }

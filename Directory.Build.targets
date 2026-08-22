@@ -1,23 +1,44 @@
 <Project>
+  <!-- Paths -->
   <PropertyGroup>
-    <!-- Paths -->
     <SPTPath Condition=" '$(SPTPath)' == '' ">$(SolutionDir)..\..\</SPTPath>
+    <FikaHeadPath Condition=" '$(FikaHeadPath)' == '' ">$(SolutionDir)..\..\..\SPTarkov.4.1-Fika-Headless\</FikaHeadPath>
+    <FikaClientPath Condition=" '$(FikaClientPath)' == '' ">$(SolutionDir)..\..\..\SPTarkov.4.1-Fika-Client\</FikaClientPath>
   </PropertyGroup>
 
+  <!-- To SPT Dir -->
   <Target Name="CopyOutput" AfterTargets="Build">
-    <!-- To SPT Dir -->
-    <Copy SourceFiles="@(OutputDLL)" DestinationFolder="$(SPTPath)$(DestDir)" Condition="@(OutputDLL.Count) != 0" />
-    <Copy SourceFiles="@(PDB)" DestinationFolder="$(SPTPath)$(DestDir)" Condition="'$(Configuration)' != 'Release' AND @(PDB.Count) != 0" />
+    <Copy SourceFiles="@(OutputDLL)" DestinationFolder="$(SPTPath)$(DestDir)" />
+    <Copy SourceFiles="@(Config)" DestinationFolder="$(SPTPath)$(DestDir)\config\%(RecursiveDir)" />
+    <Copy SourceFiles="@(Bundles)" DestinationFolder="$(SPTPath)$(DestDir)\bundles\%(RecursiveDir)" />
+  </Target>
 
-    <!-- Release -->
+  <!-- To Fika Dir -->
+  <Target Name="CopyOutputFikaHeadless" AfterTargets="Build" Condition="'$(FikaHeadPath)' != ''">
+    <Copy SourceFiles="@(OutputDLL)" DestinationFolder="$(FikaHeadPath)$(DestDir)" />
+    <Copy SourceFiles="@(Config)" DestinationFolder="$(FikaHeadPath)$(DestDir)\config\%(RecursiveDir)" />
+    <Copy SourceFiles="@(Bundles)" DestinationFolder="$(FikaHeadPath)$(DestDir)\bundles\%(RecursiveDir)" />
+  </Target>
+  <Target Name="CopyOutputFikaClient" AfterTargets="Build" Condition="'$(FikaClientPath)' != ''">
+    <Copy SourceFiles="@(OutputDLL)" DestinationFolder="$(FikaClientPath)$(DestDir)" />
+    <Copy SourceFiles="@(Config)" DestinationFolder="$(FikaClientPath)$(DestDir)\config\%(RecursiveDir)" />
+    <Copy SourceFiles="@(Bundles)" DestinationFolder="$(FikaClientPath)$(DestDir)\bundles\%(RecursiveDir)" />
+  </Target>
+
+  <!--  Release -->
+  <Target Name="CopyOutputRelease" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <Copy
       SourceFiles="@(OutputDLL)"
-      DestinationFolder="$(SolutionDir)Dist\$(Authors)-$(RootNamespace)\$(DestDir)"
-      Condition="'$(Configuration)' == 'Release' AND @(OutputDLL.Count) != 0" />
+      DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)" />
+    <Copy
+      SourceFiles="@(Config)"
+      DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)\config\%(RecursiveDir)" />
+    <Copy
+      SourceFiles="@(Bundles)"
+      DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)\bundles\%(RecursiveDir)" />
     <ZipDirectory
-      SourceDirectory="$(SolutionDir)Dist\$(Authors)-$(RootNamespace)"
-      DestinationFile="$(SolutionDir)Dist\$(Authors)-$(RootNamespace)-$(Version).zip"
-      Overwrite="true"
-      Condition="'$(Configuration)' == 'Release'" />
+      SourceDirectory="$(SolutionDir)Dist\$(SolutionName)"
+      DestinationFile="$(SolutionDir)Dist\$(Authors).$(SolutionName)-$(Version).zip"
+      Overwrite="true" />
   </Target>
 </Project>
